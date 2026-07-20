@@ -503,3 +503,104 @@ class SupabaseReportSink:
             "summary": row.get("summary"),
             "history": history,
         }
+
+    def extract_analytics_batch(
+        self,
+        *,
+        reports_watermark: datetime | None,
+        events_watermark: datetime | None,
+        sync_until: datetime,
+        full_reload: bool = False,
+        page_size: int = 500,
+    ):
+        """
+        Privacy-projected extract for BigQuery analytics ETL (ANLY-01 / D-16).
+
+        Dual-watermark: new reports by created_at + refresh reports touched by
+        new status_events; events append by created_at. Never reads access_tokens.
+        """
+        from app.jobs.etl_supabase_to_bigquery import (
+            ANALYTICS_EVENT_COLUMNS,
+            ANALYTICS_REPORT_COLUMNS,
+            ExtractBatch,
+            _max_ts,
+            _project_event_row,
+            _project_report_row,
+        )
+
+        if not self.enabled:
+            raise RuntimeError("Supabase is not configured for ETL extract")
+
+        client = self.get_client()
+        sync_iso = sync_until.astimezone(timezone.utc).isoformat()
+
+        def _page_select(table: str, columns: str, apply_filters):
+            rows: list[dict] = []
+            offset = 0
+            while True:
+                query = client.table(table).select(columns)
+                query = apply_filters(query)
+                query = query.order("created_at").range(offset, offset + page_size - 1)
+                response = query.execute()
+                batch = response.data or []
+                rows.extend(batch)
+                if len(batch) < page_size:
+                    break
+                offset += page_size
+            return rows
+
+        report_cols = ",".join(ANALYTICS_REPORT_COLUMNS)
+        event_cols = ",".join(ANALYTICS_EVENT_COLUMNS)
+
+        def _events_filters(query):
+            query = query.lt("created_at", sync_iso)
+            if not full_reload and events_watermark is not None:
+                query = query.gt(
+                    "created_at",
+                    events_watermark.astimezone(timezone.utc).isoformat(),
+                )
+            return query
+
+        event_rows = _page_select("status_events", event_cols, _events_filters)
+        projected_events = [_project_event_row(r) for r in event_rows]
+
+        touched_ids = {e["report_id"] for e in projected_events if e.get("report_id")}
+
+        def _new_reports_filters(query):
+            query = query.lt("created_at", sync_iso)
+            if not full_reload and reports_watermark is not None:
+                query = query.gt(
+                    "created_at",
+                    reports_watermark.astimezone(timezone.utc).isoformat(),
+                )
+            return query
+
+        new_report_rows = _page_select("reports", report_cols, _new_reports_filters)
+        reports_by_id = {
+            r["report_id"]: _project_report_row(r) for r in new_report_rows
+        }
+
+        # Dimension refresh for reports touched by new status events (no updated_at).
+        missing = touched_ids - set(reports_by_id)
+        if missing:
+            # PostgREST `.in_` batches to avoid oversized URLs.
+            missing_list = sorted(missing)
+            for i in range(0, len(missing_list), page_size):
+                chunk = missing_list[i : i + page_size]
+                response = (
+                    client.table("reports")
+                    .select(report_cols)
+                    .in_("report_id", chunk)
+                    .execute()
+                )
+                for row in response.data or []:
+                    reports_by_id[row["report_id"]] = _project_report_row(row)
+
+        projected_reports = list(reports_by_id.values())
+        return ExtractBatch(
+            reports=projected_reports,
+            events=projected_events,
+            max_report_created_at=_max_ts(projected_reports),
+            max_event_created_at=_max_ts(projected_events),
+            full_reload=full_reload,
+        )

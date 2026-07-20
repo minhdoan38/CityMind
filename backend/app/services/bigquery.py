@@ -217,3 +217,208 @@ class BigQueryReportSink:
                 )
             ]
         )
+
+
+class BigQueryAnalyticsWarehouse:
+    """
+    Analytics-only BigQuery writer for Supabase → BQ ETL (ANLY-01).
+
+    Ops CRUD stays on Supabase (D-04). WatermarkStore protocol: get/set.
+    """
+
+    PIPELINE_REPORTS = "reports"
+    PIPELINE_EVENTS = "status_events"
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+        self.enabled = settings.enable_bigquery
+        self.project = settings.google_cloud_project
+        self.dataset = settings.bigquery_dataset
+        self.reports_table = (
+            f"{self.project}.{self.dataset}.reports_analytics"
+        )
+        self.events_table = (
+            f"{self.project}.{self.dataset}.status_events_analytics"
+        )
+        self.watermarks_table = (
+            f"{self.project}.{self.dataset}.etl_watermarks"
+        )
+        self.reports_staging = (
+            f"{self.project}.{self.dataset}.reports_analytics_staging"
+        )
+        self.client = (
+            bigquery.Client(project=self.project) if self.enabled else None
+        )
+
+    def get(self, pipeline: str) -> datetime | None:
+        if not self.enabled or self.client is None:
+            return None
+        query = f"""
+        SELECT watermark
+        FROM `{self.watermarks_table}`
+        WHERE pipeline = @pipeline
+        LIMIT 1
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("pipeline", "STRING", pipeline)
+            ]
+        )
+        rows = list(self.client.query(query, job_config=job_config).result())
+        if not rows:
+            return None
+        value = rows[0].get("watermark")
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return value
+
+    def set(self, pipeline: str, watermark: datetime) -> None:
+        if not self.enabled or self.client is None:
+            raise RuntimeError("BigQuery is not enabled for watermark write")
+        if watermark.tzinfo is None:
+            watermark = watermark.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        merge = f"""
+        MERGE `{self.watermarks_table}` T
+        USING (
+          SELECT @pipeline AS pipeline, @watermark AS watermark, @updated_at AS updated_at
+        ) S
+        ON T.pipeline = S.pipeline
+        WHEN MATCHED THEN UPDATE SET
+          watermark = S.watermark,
+          updated_at = S.updated_at
+        WHEN NOT MATCHED THEN INSERT (pipeline, watermark, updated_at)
+        VALUES (S.pipeline, S.watermark, S.updated_at)
+        """
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=[
+                bigquery.ScalarQueryParameter("pipeline", "STRING", pipeline),
+                bigquery.ScalarQueryParameter(
+                    "watermark", "TIMESTAMP", watermark
+                ),
+                bigquery.ScalarQueryParameter(
+                    "updated_at", "TIMESTAMP", now
+                ),
+            ]
+        )
+        self.client.query(merge, job_config=job_config).result()
+
+    def load_analytics_batch(self, batch, *, full_reload: bool = False) -> bool:
+        """Stage + MERGE reports; MERGE/append events by event_id. Raises on failure."""
+        if not self.enabled or self.client is None:
+            raise RuntimeError("BigQuery is not enabled for analytics load")
+
+        if full_reload:
+            self._truncate(self.reports_table)
+            self._truncate(self.events_table)
+
+        reports = list(getattr(batch, "reports", []) or [])
+        events = list(getattr(batch, "events", []) or [])
+
+        if reports:
+            self._merge_reports(reports)
+        if events:
+            self._merge_events(events)
+        return True
+
+    def _truncate(self, table_id: str) -> None:
+        assert self.client is not None
+        self.client.query(f"TRUNCATE TABLE `{table_id}`").result()
+
+    def _load_json_rows(self, table_id: str, rows: list[dict], write_disposition: str) -> None:
+        assert self.client is not None
+        job_config = bigquery.LoadJobConfig(
+            write_disposition=write_disposition,
+            source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+            autodetect=False,
+        )
+        # Ensure TIMESTAMP-friendly ISO strings.
+        normalized = []
+        for row in rows:
+            item = dict(row)
+            for key, value in list(item.items()):
+                if isinstance(value, datetime):
+                    item[key] = value.astimezone(timezone.utc).isoformat()
+            normalized.append(item)
+        job = self.client.load_table_from_json(
+            normalized, table_id, job_config=job_config
+        )
+        result = job.result()
+        if job.errors:
+            raise RuntimeError(f"BigQuery load failed for {table_id}: {job.errors}")
+        _ = result
+
+    def _ensure_staging_reports(self) -> None:
+        assert self.client is not None
+        ddl = f"""
+        CREATE TABLE IF NOT EXISTS `{self.reports_staging}` (
+          report_id STRING NOT NULL,
+          created_at TIMESTAMP NOT NULL,
+          category STRING,
+          severity INT64,
+          priority STRING,
+          current_status STRING,
+          latitude FLOAT64,
+          longitude FLOAT64
+        )
+        """
+        self.client.query(ddl).result()
+
+    def _merge_reports(self, reports: list[dict]) -> None:
+        assert self.client is not None
+        self._ensure_staging_reports()
+        self._load_json_rows(
+            self.reports_staging,
+            reports,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+        )
+        merge = f"""
+        MERGE `{self.reports_table}` T
+        USING `{self.reports_staging}` S
+        ON T.report_id = S.report_id
+        WHEN MATCHED THEN UPDATE SET
+          created_at = S.created_at,
+          category = S.category,
+          severity = S.severity,
+          priority = S.priority,
+          current_status = S.current_status,
+          latitude = S.latitude,
+          longitude = S.longitude
+        WHEN NOT MATCHED THEN INSERT (
+          report_id, created_at, category, severity, priority,
+          current_status, latitude, longitude
+        )
+        VALUES (
+          S.report_id, S.created_at, S.category, S.severity, S.priority,
+          S.current_status, S.latitude, S.longitude
+        )
+        """
+        self.client.query(merge).result()
+
+    def _merge_events(self, events: list[dict]) -> None:
+        assert self.client is not None
+        staging = f"{self.project}.{self.dataset}.status_events_analytics_staging"
+        ddl = f"""
+        CREATE TABLE IF NOT EXISTS `{staging}` (
+          event_id STRING NOT NULL,
+          report_id STRING NOT NULL,
+          status STRING NOT NULL,
+          created_at TIMESTAMP NOT NULL
+        )
+        """
+        self.client.query(ddl).result()
+        self._load_json_rows(
+            staging,
+            events,
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+        )
+        merge = f"""
+        MERGE `{self.events_table}` T
+        USING `{staging}` S
+        ON T.event_id = S.event_id
+        WHEN NOT MATCHED THEN INSERT (event_id, report_id, status, created_at)
+        VALUES (S.event_id, S.report_id, S.status, S.created_at)
+        """
+        self.client.query(merge).result()
