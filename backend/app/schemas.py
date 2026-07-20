@@ -35,3 +35,20 @@ class AnalyzeResponse(BaseModel):
     analysis: ReportAnalysis
     persisted: bool
     access_token: str | None = None
+
+
+class CitizenStatusHistoryItem(BaseModel):
+    status: str
+    note: str | None = None
+    created_at: str
+
+
+class CitizenStatusResponse(BaseModel):
+    status: str
+    summary: str | None = None
+    history: list[CitizenStatusHistoryItem]
+
+
+class CitizenStatusRequest(BaseModel):
+    report_id: str = Field(min_length=1, max_length=64)
+    token: str = Field(min_length=1, max_length=128)

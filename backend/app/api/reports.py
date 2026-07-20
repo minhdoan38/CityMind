@@ -23,13 +23,19 @@ from fastapi import (
 from fastapi.responses import StreamingResponse
 
 from app.config import get_settings
-from app.schemas import AnalyzeResponse, Category, Priority
+from app.schemas import (
+    AnalyzeResponse,
+    Category,
+    CitizenStatusRequest,
+    CitizenStatusResponse,
+    Priority,
+)
 from app.security import OfficerPrincipal, enforce_report_rate_limit, require_officer
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
 from app.services.supabase import EXPORT_SOFT_ROW_CAP, SORT_COLUMNS, SupabaseReportSink
-from app.services.tokens import issue_access_token
+from app.services.tokens import hash_access_token, issue_access_token, token_binds_report
 
 VALID_STATUSES = {"new", "reviewing", "resolved", "rejected"}
 VALID_CATEGORIES = {category.value for category in Category}
@@ -49,8 +55,14 @@ EXPORT_FIELDS = [
 XLSX_MEDIA_TYPE = (
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
+# CIT-03 / D-16 — identical detail for all citizen verify failures (never 404).
+CITIZEN_STATUS_UNAUTHORIZED_DETAIL = "We could not verify that report and token."
 
 router = APIRouter()
+
+
+def _citizen_status_unauthorized() -> HTTPException:
+    return HTTPException(401, CITIZEN_STATUS_UNAUTHORIZED_DETAIL)
 
 
 @lru_cache
@@ -165,6 +177,32 @@ async def analyze_report(
         persisted=persisted,
         access_token=access_token,
     )
+
+
+@router.post("/status", response_model=CitizenStatusResponse)
+async def citizen_report_status(
+    body: CitizenStatusRequest,
+) -> CitizenStatusResponse:
+    """Public citizen status lookup — token proof only; uniform 401 on any verify miss."""
+    token_hash = hash_access_token(body.token)
+    try:
+        sink = get_sink()
+        row = sink.get_access_token_by_hash(token_hash)
+        if not token_binds_report(row, body.report_id):
+            raise _citizen_status_unauthorized()
+        payload = sink.get_citizen_status(body.report_id)
+        if not payload:
+            raise _citizen_status_unauthorized()
+        return CitizenStatusResponse(
+            status=payload["status"],
+            summary=payload.get("summary"),
+            history=payload.get("history") or [],
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logging.exception("Citizen status lookup failed")
+        raise HTTPException(502, "Status lookup failed") from exc
 
 
 @router.get("/recent")

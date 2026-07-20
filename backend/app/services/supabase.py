@@ -451,3 +451,55 @@ class SupabaseReportSink:
         client = self.get_client()
         client.table("access_tokens").insert(row).execute()
         return True
+
+    def get_access_token_by_hash(self, token_hash: str) -> dict | None:
+        """Service-role lookup by token_hash PK (no plaintext; no report_id-first scan)."""
+        if not self.enabled:
+            return None
+        client = self.get_client()
+        response = (
+            client.table("access_tokens")
+            .select("token_hash, report_id, expires_at")
+            .eq("token_hash", token_hash)
+            .limit(1)
+            .execute()
+        )
+        if not response.data:
+            return None
+        return response.data[0]
+
+    def get_citizen_status(self, report_id: str) -> dict | None:
+        """Citizen-safe projection: status, summary, history without actor_id (CIT-02)."""
+        if not self.enabled:
+            return None
+        client = self.get_client()
+        report_response = (
+            client.table("reports")
+            .select("report_id, summary, current_status")
+            .eq("report_id", report_id)
+            .limit(1)
+            .execute()
+        )
+        if not report_response.data:
+            return None
+        row = report_response.data[0]
+        events_response = (
+            client.table("status_events")
+            .select("status, note, created_at")
+            .eq("report_id", report_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+        history = [
+            {
+                "status": event.get("status"),
+                "note": event.get("note"),
+                "created_at": event.get("created_at"),
+            }
+            for event in (events_response.data or [])
+        ]
+        return {
+            "status": row.get("current_status") or "new",
+            "summary": row.get("summary"),
+            "history": history,
+        }
