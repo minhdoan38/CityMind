@@ -83,7 +83,7 @@ completed: 2026-07-20
 1. **Task 1: Wave 0 failing stubs** - `b8466e2` (test)
 2. **Task 2: Analytics DDL/views + ETL job** - `d671b92` (feat)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `ade6773` (docs: complete plan)
 
 ## Files Created/Modified
 
