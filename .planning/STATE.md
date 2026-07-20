@@ -5,16 +5,16 @@ milestone_name: Platform
 current_phase: 2
 current_phase_name: public-experience
 status: verifying
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-07-20T12:20:00.965Z"
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-07-20T12:20:55.787Z"
 last_activity: 2026-07-20
 last_activity_desc: Completed 02-02-PLAN.md
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 11
-  completed_plans: 10
-  percent: 14
+  completed_plans: 11
+  percent: 29
 ---
 
 # Project State
@@ -52,6 +52,7 @@ Progress: [███████░░░] 73%
 | Phase 02 P03 | 4min | 2 tasks | 7 files |
 | Phase 02-public-experience P03 | 4min | 2 tasks | 7 files |
 | Phase 02-public-experience P04 | 8min | 2 tasks | 11 files |
+| Phase 02 P05 | 4 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Login EN copy inline outside [locale] during Wave 2 — Avoid message-file conflicts with parallel Plan 02-04
 - [Phase 02]: Exact RHF pins 7.82.0 / zod 4.4.3 / resolvers 5.4.0 after human checkpoint — SUS react-hook-form required blocking approval before install (T-02-SC)
 - [Phase 02]: Success flash uses sessionStorage reportId/accessToken mapped from API snake_case — D-11/D-18 PUB-04 — never put token in query string; soft A→B from 02-01
+- [Phase 02]: Inline EN dashboard copy outside [locale] — Avoid Wave 2 catalog conflicts with parallel 02-04
+- [Phase 02]: Text Priority:/Status: badges on ReportCard — Meets D-16 badge text (not color-only) without depending on parallel badge.tsx
+- [Phase 02]: Legacy /reports/[reportId] redirects into /dashboard/reports — Keeps AUTH-04 proxy matcher coverage for old links
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T12:20:00.956Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-07-20T12:20:15.657Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

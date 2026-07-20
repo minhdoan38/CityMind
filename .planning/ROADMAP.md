@@ -12,7 +12,7 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 ## Phases
 
 - [ ] **Phase 1: Supabase Foundation** — Postgres schema, RLS, API migration, UI scaffolds
-- [ ] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login
+- [x] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (completed 2026-07-20)
 - [ ] **Phase 3: Dashboard Polish** — Table, filters, pagination, export, resolve workflow
 - [ ] **Phase 4: Citizen Status** — Token-based public status lookup
 - [ ] **Phase 5: Analytics Pipeline** — Supabase → BigQuery ETL and dashboard analytics
@@ -63,7 +63,7 @@ Plans:
 3. Officer logs in via Supabase Auth; dashboard routes protected by proxy.ts (`getClaims`, returnUrl)
 4. API returns generic errors; rate limit and image validation work behind proxy
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 
@@ -71,7 +71,7 @@ Plans:
 - [x] 02-02-PLAN.md — **Track B i18n** — Always-prefix EN/VI Home, message catalogs, locale proxy seam
 - [x] 02-03-PLAN.md — **Track C auth** — Supabase Auth, proxy.ts `/dashboard` gate + returnUrl
 - [x] 02-04-PLAN.md — **Track B form** — RHF+Zod ReportForm, success flash (soft A→B access_token)
-- [ ] 02-05-PLAN.md — **Track C dashboard** — Report cards, Bearer officerFetch, detail under `/dashboard/reports`
+- [x] 02-05-PLAN.md — **Track C dashboard** — Report cards, Bearer officerFetch, detail under `/dashboard/reports`
 
 ---
 
@@ -179,7 +179,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
-| 2. Public Experience | v2.0 | 4/5 | In Progress|  |
+| 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
 | 4. Citizen Status | v2.0 | 0/3 | Not started | - |
 | 5. Analytics Pipeline | v2.0 | 0/3 | Not started | - |
