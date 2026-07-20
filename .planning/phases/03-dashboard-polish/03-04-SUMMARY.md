@@ -75,7 +75,7 @@ Each task was committed atomically:
 1. **Task 1 (RED): Failing export smoke** - `07b4984` (test)
 2. **Task 1 (GREEN): Export UI/BFF + focus wiring** - `0dba051` (feat)
 
-**Plan metadata:** _(see docs commit after this SUMMARY)_
+**Plan metadata:** `4978969` (docs: complete plan)
 
 _TDD: test → feat_
 
