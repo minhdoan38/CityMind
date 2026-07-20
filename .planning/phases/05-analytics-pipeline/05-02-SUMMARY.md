@@ -83,7 +83,7 @@ Each task was committed atomically:
 2. **Task 2: Public aggregate API + BFF with k≥3 and dedicated rate limiter** — `d7c84f4` (feat)
 3. **Task 3: Home PublicStatsStrip SSR with EN/VI and graceful degrade** — `ad0d185` (feat)
 
-**Plan metadata:** `c39a4fc` (docs: complete plan)
+**Plan metadata:** `118bf6e` (docs: complete plan)
 
 ## Files Created/Modified
 
