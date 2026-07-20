@@ -4,16 +4,16 @@ milestone: v2.0
 milestone_name: Platform
 current_phase: 2
 current_phase_name: public-experience
-status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-07-20T12:15:05.031Z"
+status: verifying
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-07-20T12:20:00.965Z"
 last_activity: 2026-07-20
 last_activity_desc: Completed 02-02-PLAN.md
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 11
-  completed_plans: 9
+  completed_plans: 10
   percent: 14
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 Phase: 2 (public-experience) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-20 — Completed 02-02-PLAN.md
 
 Progress: [███████░░░] 73%
@@ -51,6 +51,7 @@ Progress: [███████░░░] 73%
 | Phase 02 P02 | 4min | 2 tasks | 15 files |
 | Phase 02 P03 | 4min | 2 tasks | 7 files |
 | Phase 02-public-experience P03 | 4min | 2 tasks | 7 files |
+| Phase 02-public-experience P04 | 8min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Authorize via supabase.auth.getClaims + app_metadata.role (officer|admin) — Supabase SSR docs: getClaims validates JWT; getSession alone is not trusted for authz
 - [Phase 02]: AUTH-04 protects /dashboard/:path* only — never public Home (D-17) — Path correction vs legacy REQUIREMENTS that mentioned root protection
 - [Phase 02]: Login EN copy inline outside [locale] during Wave 2 — Avoid message-file conflicts with parallel Plan 02-04
+- [Phase 02]: Exact RHF pins 7.82.0 / zod 4.4.3 / resolvers 5.4.0 after human checkpoint — SUS react-hook-form required blocking approval before install (T-02-SC)
+- [Phase 02]: Success flash uses sessionStorage reportId/accessToken mapped from API snake_case — D-11/D-18 PUB-04 — never put token in query string; soft A→B from 02-01
 
 ### Pending Todos
 
@@ -96,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T12:15:05.015Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-07-20T12:20:00.956Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None

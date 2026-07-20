@@ -29,8 +29,8 @@
 
 - [x] **PUB-01**: Home page with hero, how-it-works, about/contact/instructions sections, footer
 - [x] **PUB-02**: Bilingual EN/VI via next-intl with locale switcher
-- [ ] **PUB-03**: Report form uses React Hook Form + Zod validation
-- [ ] **PUB-04**: Submit success shows report_id + access token + copyable status link
+- [x] **PUB-03**: Report form uses React Hook Form + Zod validation
+- [x] **PUB-04**: Submit success shows report_id + access token + copyable status link
 - [ ] **PUB-05**: shadcn/ui component library installed and themed consistently
 - [x] **PUB-06**: Public pages are mobile-responsive and accessible (focus states, aria)
 
@@ -112,8 +112,8 @@ Deferred beyond Milestone v2.
 | DATA-10 | Phase 2 | Complete |
 | PUB-01 | Phase 2 | Complete |
 | PUB-02 | Phase 2 | Complete |
-| PUB-03 | Phase 2 | Pending |
-| PUB-04 | Phase 2 | Pending |
+| PUB-03 | Phase 2 | Complete |
+| PUB-04 | Phase 2 | Complete |
 | PUB-06 | Phase 2 | Complete |
 | AUTH-04 | Phase 2 | Complete |
 | DATA-04 | Phase 3 | Pending |

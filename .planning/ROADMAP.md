@@ -63,14 +63,14 @@ Plans:
 3. Officer logs in via Supabase Auth; dashboard routes protected by proxy.ts (`getClaims`, returnUrl)
 4. API returns generic errors; rate limit and image validation work behind proxy
 
-**Plans**: 3/5 plans executed
+**Plans**: 4/5 plans executed
 
 Plans:
 
 - [x] 02-01-PLAN.md — **Track A** — Access tokens (hash-at-rest), XFF rate limit + BFF forward, magic bytes, generic errors
 - [x] 02-02-PLAN.md — **Track B i18n** — Always-prefix EN/VI Home, message catalogs, locale proxy seam
 - [x] 02-03-PLAN.md — **Track C auth** — Supabase Auth, proxy.ts `/dashboard` gate + returnUrl
-- [ ] 02-04-PLAN.md — **Track B form** — RHF+Zod ReportForm, success flash (soft A→B access_token)
+- [x] 02-04-PLAN.md — **Track B form** — RHF+Zod ReportForm, success flash (soft A→B access_token)
 - [ ] 02-05-PLAN.md — **Track C dashboard** — Report cards, Bearer officerFetch, detail under `/dashboard/reports`
 
 ---
@@ -179,7 +179,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
-| 2. Public Experience | v2.0 | 3/5 | In Progress|  |
+| 2. Public Experience | v2.0 | 4/5 | In Progress|  |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
 | 4. Citizen Status | v2.0 | 0/3 | Not started | - |
 | 5. Analytics Pipeline | v2.0 | 0/3 | Not started | - |
