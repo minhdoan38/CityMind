@@ -142,10 +142,20 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
+**Wave 1**
 
 - [ ] 05-01-PLAN.md — **Track A1** — Wave 0 stubs, analytics DDL/views, daily ETL job (ANLY-01/02)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-04-PLAN.md — **Track A2** — Officer GET /api/v1/analytics API seam (ANLY-03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-03-PLAN.md — **Track C** — recharts SUS checkpoint, Analytics tab charts + URL date selector
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 05-02-PLAN.md — **Track B** — Optional public Home stats strip (k≥3, rate-limited)
 
 ---
