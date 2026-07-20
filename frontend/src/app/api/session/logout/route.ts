@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
-
-import { SESSION_COOKIE } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
-  const response = new NextResponse(null, {
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+  } catch {
+    // Ignore error on logout
+  }
+
+  return new NextResponse(null, {
     status: 303,
     headers: { Location: "/login" },
   });
-  response.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
-  return response;
 }

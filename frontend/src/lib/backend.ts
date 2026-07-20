@@ -1,5 +1,5 @@
 import "server-only";
-
+import { getSessionToken } from "./auth";
 
 function backendUrl() {
   return (
@@ -13,9 +13,11 @@ export function backendEndpoint(path: string) {
   return `${backendUrl()}${path}`;
 }
 
-export function officerFetch(path: string, init: RequestInit = {}) {
+export async function officerFetch(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
-  const key = process.env.OFFICER_API_KEY;
-  if (key) headers.set("X-CityMind-Officer-Key", key);
+  const token = await getSessionToken();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
   return fetch(backendEndpoint(path), { ...init, headers });
 }

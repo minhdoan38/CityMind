@@ -1,10 +1,10 @@
-import { getSession } from "@/lib/auth";
+import { getClaims } from "@/lib/auth";
 import { officerFetch } from "@/lib/backend";
 
 type Context = { params: Promise<{ reportId: string }> };
 
 export async function GET(_request: Request, { params }: Context) {
-  if (!(await getSession())) return Response.json({ detail: "Unauthorized" }, { status: 401 });
+  if (!(await getClaims())) return Response.json({ detail: "Unauthorized" }, { status: 401 });
   const { reportId } = await params;
   const response = await officerFetch(
     `/api/v1/reports/${encodeURIComponent(reportId)}/image`,

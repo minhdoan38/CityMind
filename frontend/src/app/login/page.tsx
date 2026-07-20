@@ -1,4 +1,11 @@
-import { quickOfficerAccessEnabled } from "@/lib/auth";
+import { getTranslations } from "next-intl/server";
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 type Props = {
   searchParams: Promise<{ error?: string }>;
@@ -6,35 +13,71 @@ type Props = {
 
 export default async function LoginPage({ searchParams }: Props) {
   const { error } = await searchParams;
-  const quickAccess = quickOfficerAccessEnabled();
+  const t = await getTranslations("login");
+  const nav = await getTranslations("navigation");
+
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-950 p-4 text-slate-100">
-      <section className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6">
-        <h1 className="text-2xl font-bold">Officer sign in</h1>
-        <p className="mt-2 text-sm text-slate-400">Protected CityMind operations dashboard.</p>
-        <form action="/api/session/login" method="post" className="mt-6">
-          <label className="grid gap-2 text-sm text-slate-300">
-            Access password
-            <input name="password" type="password" required autoComplete="current-password" className="min-h-11 rounded-lg border border-slate-700 bg-slate-950 px-3 text-base" />
-          </label>
-          {error && <p role="alert" className="mt-3 text-sm text-red-300">Invalid password.</p>}
-          <button type="submit" className="mt-5 min-h-11 w-full rounded-lg bg-blue-600 font-semibold hover:bg-blue-500">Sign in</button>
-        </form>
-        {quickAccess && (
-          <div className="mt-5 border-t border-slate-800 pt-5">
-            <p className="text-sm text-slate-400">
-              Evaluating the prototype? Continue without entering a password.
-            </p>
-            <form action="/api/session/login" method="post">
-              <input type="hidden" name="mode" value="quick" />
-              <button type="submit" className="mt-3 min-h-11 w-full rounded-lg border border-emerald-700 font-semibold text-emerald-300 hover:bg-emerald-950">
-                Access Officer Dashboard
-              </button>
-            </form>
+    <main className="grid min-h-screen place-items-center bg-background p-4 text-foreground">
+      <div className="absolute top-4 right-4">
+        <LocaleSwitcher />
+      </div>
+      
+      <Card className="w-full max-w-md border border-border shadow-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
+          <CardDescription>{t("subtitle")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form action="/api/session/login" method="post" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">{t("email")}</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="officer@citymind.gov"
+                required
+                autoComplete="email"
+                className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="password">{t("password")}</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+              />
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{t("error")}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full min-h-11 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 transition-colors"
+            >
+              {t("submit")}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <Link
+              href="/report"
+              className="text-sm font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            >
+              {nav("report")}
+            </Link>
           </div>
-        )}
-        <a href="/report" className="mt-5 inline-block text-sm text-blue-400">Submit a public report</a>
-      </section>
+        </CardContent>
+      </Card>
     </main>
   );
 }

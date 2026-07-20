@@ -1,10 +1,10 @@
-import { getSession } from "@/lib/auth";
+import { getClaims } from "@/lib/auth";
 import { officerFetch } from "@/lib/backend";
 
 type Context = { params: Promise<{ reportId: string }> };
 
 export async function PATCH(request: Request, { params }: Context) {
-  if (!(await getSession())) return Response.json({ detail: "Unauthorized" }, { status: 401 });
+  if (!(await getClaims())) return Response.json({ detail: "Unauthorized" }, { status: 401 });
   const { reportId } = await params;
   const incoming = new URL(request.url).searchParams;
   const query = new URLSearchParams();

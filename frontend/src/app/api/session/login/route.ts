@@ -1,31 +1,42 @@
 import { NextResponse } from "next/server";
-
-import {
-  SESSION_COOKIE,
-  authenticate,
-  createSessionToken,
-  quickOfficerAccessEnabled,
-  sessionCookieOptions,
-} from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const form = await request.formData();
-  const mode = String(form.get("mode") ?? "");
-  const password = String(form.get("password") ?? "");
-  const role = mode === "quick" && quickOfficerAccessEnabled()
-    ? "officer"
-    : authenticate(password);
-  if (!role) {
+  try {
+    const form = await request.formData();
+    const email = String(form.get("email") ?? "");
+    const password = String(form.get("password") ?? "");
+
+    const supabase = await createClient();
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !user) {
+      return new NextResponse(null, {
+        status: 303,
+        headers: { Location: "/login?error=1" },
+      });
+    }
+
+    const role = user.app_metadata?.role;
+    if (role !== "officer" && role !== "admin") {
+      await supabase.auth.signOut();
+      return new NextResponse(null, {
+        status: 303,
+        headers: { Location: "/login?error=1" },
+      });
+    }
+
+    return new NextResponse(null, {
+      status: 303,
+      headers: { Location: "/dashboard" },
+    });
+  } catch {
     return new NextResponse(null, {
       status: 303,
       headers: { Location: "/login?error=1" },
     });
   }
-
-  const response = new NextResponse(null, {
-    status: 303,
-    headers: { Location: "/" },
-  });
-  response.cookies.set(SESSION_COOKIE, createSessionToken(role), sessionCookieOptions);
-  return response;
 }
