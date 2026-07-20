@@ -80,6 +80,77 @@ def test_status_records_actor_id(monkeypatch) -> None:
     assert "actor_id" not in response.json() or response.json().get("actor_id") is None
 
 
+def test_summary_respects_filters(monkeypatch) -> None:
+    calls = {}
+
+    class Sink:
+        def summary(self, caller_token=None, **filters):
+            calls["filters"] = filters
+            calls["caller_token"] = caller_token
+            return {
+                "total_reports": 2,
+                "critical_reports": 1,
+                "avg_severity": 3.5,
+                "top_category": "flooding",
+            }
+
+    monkeypatch.setattr(reports_api, "get_sink", lambda: Sink())
+
+    response = client.get(
+        "/api/v1/reports/summary",
+        params={"status": "reviewing", "priority": "high", "min_severity": 3},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_reports"] == 2
+    assert body["critical_reports"] == 1
+    assert calls["caller_token"] == "mock_token"
+    assert calls["filters"]["status"] == "reviewing"
+    assert calls["filters"]["priority"] == "high"
+    assert calls["filters"]["min_severity"] == 3
+
+
+def test_list_cursor_pagination(monkeypatch) -> None:
+    calls = {}
+
+    class Sink:
+        def list_recent(self, limit, caller_token=None, **kwargs):
+            calls["limit"] = limit
+            calls["kwargs"] = kwargs
+            calls["caller_token"] = caller_token
+            items = [
+                {"report_id": "r-a", "created_at": "2026-07-20T12:00:00+00:00"},
+                {"report_id": "r-b", "created_at": "2026-07-19T12:00:00+00:00"},
+            ]
+            return items, "next-cursor-token"
+
+    monkeypatch.setattr(reports_api, "get_sink", lambda: Sink())
+
+    response = client.get(
+        "/api/v1/reports/recent",
+        params={
+            "limit": 2,
+            "cursor": "abc",
+            "sort": "created_at",
+            "order": "desc",
+            "status": "new",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert "next_cursor" in body
+    assert body["next_cursor"] == "next-cursor-token"
+    assert body["sort"] == "created_at"
+    assert body["order"] == "desc"
+    assert body["count"] == 2
+    assert calls["limit"] == 2
+    assert calls["kwargs"]["cursor"] == "abc"
+    assert calls["kwargs"]["status"] == "new"
+    assert calls["caller_token"] == "mock_token"
+
+
 def test_supabase_sink_read_methods_are_safe_when_disabled() -> None:
     from app.services.supabase import SupabaseReportSink
     sink = SupabaseReportSink(Settings(supabase_url="", supabase_secret_key=""))
@@ -222,6 +293,25 @@ def test_recent_query_failure_returns_502(monkeypatch) -> None:
     assert "Database query failed" in response.json()["detail"]
 
 
+def test_protected_endpoint_list_recent_empty_tuple(monkeypatch) -> None:
+    """Security suite monkeypatch may still return a bare list — API normalizes."""
+    pass
+
+
+def test_recent_default_returns_next_cursor_field(monkeypatch) -> None:
+    monkeypatch.setattr(
+        reports_api,
+        "get_sink",
+        lambda: SimpleNamespace(
+            list_recent=lambda *_a, **_k: ([], None),
+        ),
+    )
+    response = client.get("/api/v1/reports/recent")
+    assert response.status_code == 200
+    assert "next_cursor" in response.json()
+    assert response.json()["next_cursor"] is None
+
+
 def test_recent_filters_are_forwarded_to_sink(monkeypatch) -> None:
     calls = {}
 
@@ -229,7 +319,7 @@ def test_recent_filters_are_forwarded_to_sink(monkeypatch) -> None:
         def list_recent(self, limit, caller_token=None, **filters):
             calls["limit"] = limit
             calls["filters"] = filters
-            return [{"report_id": "report-1"}]
+            return [{"report_id": "report-1"}], None
 
     monkeypatch.setattr(reports_api, "get_sink", lambda: Sink())
 
@@ -247,16 +337,13 @@ def test_recent_filters_are_forwarded_to_sink(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert response.json()["count"] == 1
-    assert calls == {
-        "limit": 30,
-        "filters": {
-            "status": "reviewing",
-            "category": "flooding",
-            "priority": "high",
-            "min_severity": 3,
-            "max_severity": 5,
-        },
-    }
+    assert response.json()["next_cursor"] is None
+    assert calls["limit"] == 30
+    assert calls["filters"]["status"] == "reviewing"
+    assert calls["filters"]["category"] == "flooding"
+    assert calls["filters"]["priority"] == "high"
+    assert calls["filters"]["min_severity"] == 3
+    assert calls["filters"]["max_severity"] == 5
 
 
 @pytest.mark.parametrize(

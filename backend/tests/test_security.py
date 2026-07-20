@@ -76,7 +76,7 @@ def test_protected_endpoint_accepts_valid_jwt(monkeypatch) -> None:
     monkeypatch.setattr(
         reports_api,
         "get_sink",
-        lambda: SimpleNamespace(list_recent=lambda *_args, **_kwargs: []),
+        lambda: SimpleNamespace(list_recent=lambda *_args, **_kwargs: ([], None)),
     )
 
     # Bypass autouse Principal override so real require_officer runs
