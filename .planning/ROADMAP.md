@@ -39,7 +39,7 @@ Plans:
 - [x] 01-01: **Track A1** — Supabase schema/RLS, FastAPI cutover, JWT boundary, storage, blocking schema push
 - [x] 01-02: **Track A2** — BigQuery demo-data migration, Supabase seed adaptation, reconciliation
 - [x] 01-03: **Track B1** — Audited shadcn dependency install, generated core primitives, civic theme
-- [ ] 01-04: **Track B2** — Public Home shell, next-intl EN/VI scaffold, locale interaction
+- [x] 01-04: **Track B2** — Public Home shell, next-intl EN/VI scaffold, locale interaction
 - [ ] 01-05: **Track C1** — Supabase SSR auth, login/logout, bearer-token BFF bridge
 - [ ] 01-06: **Track C2** — Protected responsive dashboard shell, sidebar navigation, detail routing
 

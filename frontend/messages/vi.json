@@ -1,0 +1,51 @@
+{
+  "public": {
+    "title": "CityMind AI",
+    "subtitle": "Nền tảng Trí tuệ Quyết định hỗ trợ bởi AI cho Đô thị Thông minh",
+    "reportCTA": "Báo cáo sự cố",
+    "description": "Trao quyền cho người dân và cơ quan quản lý đô thị để cùng giải quyết các sự cố, nâng cao chất lượng dịch vụ công cộng.",
+    "footer": "© 2026 CityMind AI. Bảo lưu mọi quyền."
+  },
+  "login": {
+    "title": "Đăng nhập Cán bộ",
+    "subtitle": "Truy cập bảng điều khiển hỗ trợ quyết định của cán bộ",
+    "email": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "submit": "Đăng nhập",
+    "loading": "Đang đăng nhập...",
+    "error": "Email hoặc mật khẩu không hợp lệ."
+  },
+  "dashboard": {
+    "title": "Bảng điều khiển CityMind AI",
+    "subtitle": "Hỗ trợ quyết định đối với các báo cáo sự cố gần đây. Cán bộ giữ vai trò duyệt cuối.",
+    "totalReports": "Tổng số báo cáo",
+    "critical": "Nghiêm trọng",
+    "avgSeverity": "Mức độ TB",
+    "topCategory": "Nhóm hàng đầu",
+    "filters": "Bộ lọc báo cáo",
+    "applyFilters": "Áp dụng bộ lọc",
+    "clearFilters": "Xóa bộ lọc"
+  },
+  "navigation": {
+    "home": "Trang chủ",
+    "dashboard": "Bảng điều khiển",
+    "report": "Mẫu báo cáo",
+    "login": "Đăng nhập cán bộ"
+  },
+  "empty": {
+    "noReports": "Không tìm thấy báo cáo nào.",
+    "noMatch": "Không có báo cáo nào khớp với bộ lọc."
+  },
+  "error": {
+    "apiConnection": "Không thể kết nối đến API CityMind.",
+    "loadFailed": "Không thể tải danh sách báo cáo."
+  },
+  "locale": {
+    "label": "Ngôn ngữ",
+    "en": "English",
+    "vi": "Tiếng Việt"
+  },
+  "logout": {
+    "submit": "Đăng xuất"
+  }
+}

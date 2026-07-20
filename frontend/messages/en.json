@@ -1,0 +1,51 @@
+{
+  "public": {
+    "title": "CityMind AI",
+    "subtitle": "AI-assisted Decision Intelligence Platform for Smart Communities",
+    "reportCTA": "Report an issue",
+    "description": "Empowering citizens and city officials to collaborate on urban incident reports to improve municipal services.",
+    "footer": "© 2026 CityMind AI. All rights reserved."
+  },
+  "login": {
+    "title": "Sign in as Officer",
+    "subtitle": "Access the officer decision-support dashboard",
+    "email": "Email address",
+    "password": "Password",
+    "submit": "Sign in",
+    "loading": "Signing in...",
+    "error": "Invalid email or password."
+  },
+  "dashboard": {
+    "title": "CityMind AI Dashboard",
+    "subtitle": "Decision support for recent citizen reports. Officers make final decisions.",
+    "totalReports": "Total Reports",
+    "critical": "Critical",
+    "avgSeverity": "Avg Severity",
+    "topCategory": "Top Category",
+    "filters": "Report filters",
+    "applyFilters": "Apply filters",
+    "clearFilters": "Clear filters"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "report": "Report Form",
+    "login": "Officer Login"
+  },
+  "empty": {
+    "noReports": "No reports found.",
+    "noMatch": "No reports match these filters."
+  },
+  "error": {
+    "apiConnection": "Could not connect to the CityMind API.",
+    "loadFailed": "Could not load reports."
+  },
+  "locale": {
+    "label": "Language",
+    "en": "English",
+    "vi": "Tiếng Việt"
+  },
+  "logout": {
+    "submit": "Sign out"
+  }
+}
