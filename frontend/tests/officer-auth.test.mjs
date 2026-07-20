@@ -1,30 +1,71 @@
 import test from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test('auth helpers exist and reference correct modules', () => {
-  const authContent = fs.readFileSync(path.resolve('src/lib/auth.ts'), 'utf8');
-  assert.ok(authContent.includes('getClaims'), 'auth.ts must define getClaims');
-  assert.ok(authContent.includes('getSessionToken'), 'auth.ts must define getSessionToken');
-  assert.ok(authContent.includes('requireOfficerSession'), 'auth.ts must define requireOfficerSession');
+const root = path.resolve('.');
+const src = (...parts) => path.join(root, 'src', ...parts);
+const read = (filePath) => fs.readFileSync(filePath, 'utf8');
+
+test('auth helpers exist and use supabase getClaims (not getUser alone)', () => {
+  const authContent = read(src('lib', 'auth.ts'));
+  assert.match(authContent, /getClaims/);
+  assert.match(authContent, /getSessionToken/);
+  assert.match(authContent, /requireOfficerSession/);
+  assert.match(authContent, /\.auth\.getClaims\s*\(/);
+  assert.doesNotMatch(authContent, /citymind_officer_session|createHmac|HMAC/);
 });
 
-test('supabase client configs exist', () => {
-  assert.ok(fs.existsSync(path.resolve('src/lib/supabase/client.ts')), 'client.ts must exist');
-  assert.ok(fs.existsSync(path.resolve('src/lib/supabase/server.ts')), 'server.ts must exist');
+test('supabase client configs exist with SSR helpers', () => {
+  assert.ok(fs.existsSync(src('lib', 'supabase', 'client.ts')), 'client.ts must exist');
+  assert.ok(fs.existsSync(src('lib', 'supabase', 'server.ts')), 'server.ts must exist');
+  const browser = read(src('lib', 'supabase', 'client.ts'));
+  const server = read(src('lib', 'supabase', 'server.ts'));
+  assert.match(browser, /createBrowserClient/);
+  assert.match(server, /createServerClient/);
+});
+
+test('login route uses signInWithPassword and safe returnUrl (D-15)', () => {
+  const loginRoute = read(src('app', 'api', 'session', 'login', 'route.ts'));
+  assert.match(loginRoute, /signInWithPassword/);
+  assert.match(loginRoute, /returnUrl/);
+  assert.match(loginRoute, /\/dashboard/);
+  assert.doesNotMatch(loginRoute, /citymind_officer_session|createHmac|createSessionToken/);
+});
+
+test('logout route clears Supabase session', () => {
+  const logoutRoute = read(src('app', 'api', 'session', 'logout', 'route.ts'));
+  assert.match(logoutRoute, /signOut/);
+  assert.doesNotMatch(logoutRoute, /citymind_officer_session/);
+});
+
+test('login page honors returnUrl and stays outside [locale]', () => {
+  assert.ok(fs.existsSync(src('app', 'login', 'page.tsx')));
+  assert.equal(fs.existsSync(src('app', '[locale]', 'login', 'page.tsx')), false);
+  const loginPage = read(src('app', 'login', 'page.tsx'));
+  assert.match(loginPage, /returnUrl/);
+  assert.match(loginPage, /type=["']email["']/);
+  assert.match(loginPage, /type=["']password["']/);
+  assert.doesNotMatch(loginPage, /getTranslations|LocaleSwitcher/);
+});
+
+test('safeReturnUrl rejects open redirects (T-02-09)', () => {
+  const helperPath = src('lib', 'safe-return-url.ts');
+  assert.ok(fs.existsSync(helperPath), 'safe-return-url.ts must exist');
+  const helper = read(helperPath);
+  assert.match(helper, /export function safeReturnUrl/);
 });
 
 test('api routes use getClaims for validation', () => {
-  const statusRoute = fs.readFileSync(path.resolve('src/app/api/officer/reports/[reportId]/status/route.ts'), 'utf8');
-  assert.ok(statusRoute.includes('getClaims'), 'status route must use getClaims');
+  const statusRoute = read(src('app', 'api', 'officer', 'reports', '[reportId]', 'status', 'route.ts'));
+  assert.match(statusRoute, /getClaims/);
 
-  const imageRoute = fs.readFileSync(path.resolve('src/app/api/officer/reports/[reportId]/image/route.ts'), 'utf8');
-  assert.ok(imageRoute.includes('getClaims'), 'image route must use getClaims');
+  const imageRoute = read(src('app', 'api', 'officer', 'reports', '[reportId]', 'image', 'route.ts'));
+  assert.match(imageRoute, /getClaims/);
 });
 
 test('backend fetch forwards bearer authorization', () => {
-  const backendContent = fs.readFileSync(path.resolve('src/lib/backend.ts'), 'utf8');
-  assert.ok(backendContent.includes('Authorization'), 'backend.ts must define Authorization headers');
-  assert.ok(backendContent.includes('Bearer'), 'backend.ts must use Bearer schema');
+  const backendContent = read(src('lib', 'backend.ts'));
+  assert.match(backendContent, /Authorization/);
+  assert.match(backendContent, /Bearer/);
 });
