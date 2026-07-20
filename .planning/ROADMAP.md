@@ -12,7 +12,7 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 ## Phases
 
 - [ ] **Phase 1: Supabase Foundation** — Postgres schema, RLS, API migration, UI scaffolds
-- [ ] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (verification gaps_found 2026-07-20 — D-03 Home section order)
+- [ ] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (verification human_needed 2026-07-20 — D-03 closed; live UAT pending)
 - [ ] **Phase 3: Dashboard Polish** — Table, filters, pagination, export, resolve workflow
 - [ ] **Phase 4: Citizen Status** — Token-based public status lookup
 - [ ] **Phase 5: Analytics Pipeline** — Supabase → BigQuery ETL and dashboard analytics
