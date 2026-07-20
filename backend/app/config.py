@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     report_rate_limit_per_minute: int = 0
     # Separate citizen status lookup limiter (CIT-04). 0 = disabled locally; prod ~30.
     status_rate_limit_per_minute: int = 0
+    # Public Home stats aggregate limiter (D-13). 0 = disabled locally; prod recommend ~60.
+    public_stats_rate_limit_per_minute: int = 0
     # Peel N rightmost X-Forwarded-For hops for rate-limit keying (default: rightmost).
     trusted_proxy_count: int = 1
 

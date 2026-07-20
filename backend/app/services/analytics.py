@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import statistics
-from datetime import date
+from datetime import date, timedelta
 from functools import lru_cache
 
 from google.cloud import bigquery
@@ -16,6 +16,8 @@ from app.schemas import (
     AnalyticsSlaBucket,
     AnalyticsSlaSummary,
     AnalyticsVolumePoint,
+    PublicCategoryStat,
+    PublicStatsResponse,
 )
 
 # View names from infra/bigquery/analytics_views.sql (ANLY-02).
@@ -26,6 +28,9 @@ VIEW_HOTSPOT_CATEGORY = "v_hotspot_category"
 
 MAX_ANALYTICS_SPAN_DAYS = 366
 HOTSPOT_TOP_N = 10
+PUBLIC_STATS_WINDOW_DAYS = 30
+PUBLIC_STATS_TOP_N = 2
+PUBLIC_STATS_K_MIN = 3
 
 _SLA_BUCKETS: tuple[tuple[str, int | None], ...] = (
     ("0-1", 1),
@@ -59,6 +64,21 @@ class AnalyticsService:
 
     def _reports_table(self) -> str:
         return f"{self.project}.{self.dataset}.reports_analytics"
+
+    def fetch_public_stats(self) -> PublicStatsResponse:
+        """Last-30d public aggregates with k≥3 category filter (D-11 / D-17)."""
+        date_to = date.today()
+        date_from = date_to - timedelta(days=PUBLIC_STATS_WINDOW_DAYS - 1)
+        if not self.enabled or self.client is None:
+            return PublicStatsResponse(total_last_30d=0, top_categories=[])
+
+        total = self._query_total_reports(date_from, date_to)
+        category_mix = self._query_category_mix(date_from, date_to)
+        top_categories = _public_top_categories(category_mix)
+        return PublicStatsResponse(
+            total_last_30d=total,
+            top_categories=top_categories,
+        )
 
     def fetch(
         self,
@@ -100,6 +120,23 @@ class AnalyticsService:
             bigquery.ScalarQueryParameter("from_date", "DATE", date_from),
             bigquery.ScalarQueryParameter("to_date", "DATE", date_to),
         ]
+
+    def _query_total_reports(self, date_from: date, date_to: date) -> int:
+        assert self.client is not None
+        query = f"""
+        SELECT COUNT(*) AS report_count
+        FROM `{self._reports_table()}`
+        WHERE DATE(created_at) BETWEEN @from_date AND @to_date
+        """
+        rows = list(
+            self.client.query(
+                query,
+                job_config=bigquery.QueryJobConfig(
+                    query_parameters=self._date_params(date_from, date_to)
+                ),
+            ).result()
+        )
+        return int(rows[0]["report_count"]) if rows else 0
 
     def _query_volume(
         self, date_from: date, date_to: date
@@ -212,6 +249,18 @@ class AnalyticsService:
             )
             for row in rows
         ]
+
+
+def _public_top_categories(
+    category_mix: list[AnalyticsCategoryCount],
+) -> list[PublicCategoryStat]:
+    """Omit cells under k-anonymity threshold; cap at top 1–2 (D-17)."""
+    eligible = [
+        PublicCategoryStat(category=row.category, count=row.report_count)
+        for row in category_mix
+        if row.report_count >= PUBLIC_STATS_K_MIN
+    ]
+    return eligible[:PUBLIC_STATS_TOP_N]
 
 
 def _build_sla_histogram(days: list[int]) -> list[AnalyticsSlaBucket]:

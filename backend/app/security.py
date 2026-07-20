@@ -46,6 +46,7 @@ class SlidingWindowLimiter:
 
 report_limiter = SlidingWindowLimiter()
 status_limiter = SlidingWindowLimiter()
+public_stats_limiter = SlidingWindowLimiter()
 
 
 def require_officer(
@@ -142,5 +143,17 @@ def enforce_status_rate_limit(request: Request) -> None:
         raise HTTPException(
             429,
             "Status lookup rate limit exceeded",
+            headers={"Retry-After": "60"},
+        )
+
+
+def enforce_public_stats_rate_limit(request: Request) -> None:
+    """Public Home stats limiter — separate keyspace from analyze/status (D-13)."""
+    limit = get_settings().public_stats_rate_limit_per_minute
+    key = f"stats:{client_ip(request)}"
+    if not public_stats_limiter.allow(key, limit):
+        raise HTTPException(
+            429,
+            "Public stats rate limit exceeded",
             headers={"Retry-After": "60"},
         )

@@ -98,3 +98,18 @@ class AnalyticsResponse(BaseModel):
     hotspots: list[AnalyticsHotspotRow] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
+
+
+# --- Public Home stats DTOs (D-11 / D-16 / D-17) — count/category only ---
+
+
+class PublicCategoryStat(BaseModel):
+    category: str
+    count: int
+
+
+class PublicStatsResponse(BaseModel):
+    """Thin public aggregates for Home strip — no PII or officer fields."""
+
+    total_last_30d: int
+    top_categories: list[PublicCategoryStat] = Field(default_factory=list)

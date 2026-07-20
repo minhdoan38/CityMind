@@ -9,6 +9,7 @@ from app import security
 from app.api import analytics as analytics_api
 from app.main import app
 from app.schemas import PublicCategoryStat, PublicStatsResponse
+from app.services.analytics import AnalyticsCategoryCount, _public_top_categories
 
 client = TestClient(app)
 
@@ -37,6 +38,22 @@ def _clear_limiters():
     security.status_limiter.clear()
     if hasattr(security, "public_stats_limiter"):
         security.public_stats_limiter.clear()
+
+
+def test_public_top_categories_filters_k_anonymity() -> None:
+    """D-17 — service helper drops cells under 3 and caps at two categories."""
+    raw = [
+        AnalyticsCategoryCount(category="pothole", report_count=10),
+        AnalyticsCategoryCount(category="lighting", report_count=5),
+        AnalyticsCategoryCount(category="graffiti", report_count=2),
+        AnalyticsCategoryCount(category="noise", report_count=4),
+    ]
+
+    top = _public_top_categories(raw)
+    assert len(top) == 2
+    assert top[0].category == "pothole"
+    assert top[1].category == "lighting"
+    assert all(item.count >= 3 for item in top)
 
 
 def test_public_stats_k_anonymity_omits_small_cells(monkeypatch) -> None:

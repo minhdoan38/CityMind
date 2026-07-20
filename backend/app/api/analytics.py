@@ -2,13 +2,18 @@
 
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from app.schemas import AnalyticsResponse
-from app.security import OfficerPrincipal, require_officer
+from app.schemas import AnalyticsResponse, PublicStatsResponse
+from app.security import (
+    OfficerPrincipal,
+    enforce_public_stats_rate_limit,
+    require_officer,
+)
 from app.services.analytics import get_analytics_service, validate_analytics_range
 
 router = APIRouter()
+public_router = APIRouter()
 
 
 @router.get("", response_model=AnalyticsResponse, response_model_by_alias=True)
@@ -34,3 +39,22 @@ async def get_officer_analytics(
         raise
     except Exception as exc:
         raise HTTPException(502, f"Analytics query failed: {exc}") from exc
+
+
+@public_router.get("/stats", response_model=PublicStatsResponse)
+async def get_public_stats(
+    request: Request,
+    _: None = Depends(enforce_public_stats_rate_limit),
+) -> PublicStatsResponse:
+    """
+    Public Home aggregates for the last 30 days (D-11 / D-13 / D-17).
+
+    Unauthenticated count/category-only payload — no warehouse credentials to browser.
+    """
+    _ = request
+    try:
+        return get_analytics_service().fetch_public_stats()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(502, "Public stats unavailable") from None
