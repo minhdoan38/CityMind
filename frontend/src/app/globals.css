@@ -1,26 +1,127 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.375rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Light-only CityMind Civic Palette */
+  --background: #FFFFFF;
+  --foreground: #14201D; /* Ink */
+  --card: #FFFFFF;
+  --card-foreground: #14201D;
+  --popover: #FFFFFF;
+  --popover-foreground: #14201D;
+  --primary: #0F766E; /* Teal primary */
+  --primary-foreground: #FFFFFF;
+  --secondary: #F0F4F3;
+  --secondary-foreground: #0F766E;
+  --muted: #F0F4F3;
+  --muted-foreground: #5C6B66; /* Muted text */
+  --accent: #E2ECE9;
+  --accent-foreground: #0F766E;
+  --destructive: #B42318;
+  --destructive-foreground: #FFFFFF;
+  --border: #D5DEDB;
+  --input: #D5DEDB;
+  --ring: #0F766E;
+  --radius: 0.25rem;
+  
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #14201D;
+  --sidebar-primary: #0F766E;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F0F4F3;
+  --sidebar-accent-foreground: #0F766E;
+  --sidebar-border: #D5DEDB;
+  --sidebar-ring: #0F766E;
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
-}
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Accessible Civic Hierarchy */
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  small {
+    font-size: 14px;
+  }
+
+  /* 44px accessible touch target sizing for primary elements */
+  button, a, input, select, textarea {
+    min-height: 44px;
+  }
+
+  /* Focus styling */
+  button:focus-visible, a:focus-visible, input:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* Reduced Motion Rules */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-delay: -1ms !important;
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      background-attachment: initial !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0s !important;
+      transition-delay: 0s !important;
+    }
+  }
 }
