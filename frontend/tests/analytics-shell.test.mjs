@@ -60,6 +60,20 @@ test('DateRangeToolbar documents URL keys range|from|to', () => {
   assert.ok(toolbar.includes('to'), 'toolbar must sync to param');
 });
 
+test('chart components exist for volume, category, SLA, and hotspots', () => {
+  for (const file of [
+    'VolumeChart.tsx',
+    'CategoryChart.tsx',
+    'SlaChart.tsx',
+    'HotspotTable.tsx',
+  ]) {
+    assert.ok(
+      fs.existsSync(path.resolve(root, `src/components/analytics/${file}`)),
+      `${file} must exist`,
+    );
+  }
+});
+
 test('message catalogs include dashboard.analytics keys', () => {
   for (const locale of ['en', 'vi']) {
     const messages = JSON.parse(

@@ -2,7 +2,11 @@ import { getTranslations } from "next-intl/server";
 
 import { officerFetch } from "@/lib/backend";
 import AnalyticsErrorAlert from "@/components/analytics/AnalyticsErrorAlert";
+import CategoryChart from "@/components/analytics/CategoryChart";
 import DateRangeToolbar from "@/components/analytics/DateRangeToolbar";
+import HotspotTable from "@/components/analytics/HotspotTable";
+import SlaChart from "@/components/analytics/SlaChart";
+import VolumeChart from "@/components/analytics/VolumeChart";
 import {
   resolveAnalyticsRange,
   type AnalyticsResponse,
@@ -45,6 +49,8 @@ export default async function AnalyticsPage({ searchParams }: Props) {
     data = result.data;
     error = result.error;
   }
+  const warehouseEmpty = Boolean(data?.empty);
+
   return (
     <div className="w-full max-w-none space-y-8">
       <div className="space-y-2">
@@ -60,10 +66,19 @@ export default async function AnalyticsPage({ searchParams }: Props) {
       {error ? <AnalyticsErrorAlert kind={error} /> : null}
 
       {range.valid && !error && data ? (
-        <div className="space-y-6" data-testid="analytics-chart-slots">
-          <p className="text-sm text-muted-foreground">
-            {t("freshnessNote")}
-          </p>
+        <div className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <VolumeChart
+              data={data.volume}
+              warehouseEmpty={warehouseEmpty}
+            />
+            <CategoryChart
+              data={data.category_mix}
+              warehouseEmpty={warehouseEmpty}
+            />
+          </div>
+          <SlaChart data={data.sla} warehouseEmpty={warehouseEmpty} />
+          <HotspotTable data={data.hotspots} warehouseEmpty={warehouseEmpty} />
         </div>
       ) : null}
     </div>
