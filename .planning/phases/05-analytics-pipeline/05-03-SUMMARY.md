@@ -81,7 +81,7 @@ Each task was committed atomically:
 2. **Task 2: Install shadcn chart + Analytics shell with URL date range and API fetch** — `2c2e9c1` (feat)
 3. **Task 3: Three chart blocks + hotspot list with empty/loading/error states** — `47e254b` (feat)
 
-**Plan metadata:** `c2bed82` (docs: complete plan)
+**Plan metadata:** `89d2b64` (docs: complete plan)
 
 ## Files Created/Modified
 
