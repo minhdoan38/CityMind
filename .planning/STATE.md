@@ -4,14 +4,14 @@ milestone: v2.0
 milestone_name: Platform
 current_phase: 4
 current_phase_name: citizen-status
-status: phase_complete
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-07-20T14:20:26.021Z"
+status: human_verification_needed
+stopped_at: Phase 4 plans complete; awaiting UAT (04-UAT.md)
+last_updated: "2026-07-20T14:24:35Z"
 last_activity: 2026-07-20
-last_activity_desc: Completed 04-03 officer Copy status link (DASH-08)
+last_activity_desc: Phase 4 verification human_needed — UAT checklist persisted
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 3
   total_plans: 18
   completed_plans: 14
   percent: 78
@@ -24,14 +24,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 4 — citizen-status (complete); next Phase 5 plan
+**Current focus:** Phase 4 — citizen-status (plans done; live UAT pending)
 
 ## Current Position
 
-Phase: 4 (citizen-status) — COMPLETE (3/3 plans)
+Phase: 4 (citizen-status) — plans 3/3 complete; verification **human_needed**
 Plan: —
-Status: Ready for `$gsd-plan-phase 5` / `$gsd-verify-work 4`
-Last activity: 2026-07-20 — Completed 04-03-PLAN.md (DASH-08 Copy status link)
+Status: Run `$gsd-verify-work 4` for browser/clipboard UAT before marking phase complete
+Last activity: 2026-07-20 — 04-VERIFICATION.md + 04-UAT.md (human_needed)
 
 Progress: [████████░░] 78%
 
