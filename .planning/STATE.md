@@ -4,17 +4,17 @@ milestone: v2.0
 milestone_name: Platform
 current_phase: 2
 current_phase_name: public-experience
-status: verifying
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-07-20T12:22:16.048Z"
+status: gaps_found
+stopped_at: "Phase 2 verification gaps_found — D-03 Home section order"
+last_updated: "2026-07-20T12:25:00Z"
 last_activity: 2026-07-20
-last_activity_desc: Completed 02-02-PLAN.md
+last_activity_desc: "Verified Phase 2 — gaps_found (D-03 section order); see 02-VERIFICATION.md"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 1
   total_plans: 11
   completed_plans: 11
-  percent: 29
+  percent: 14
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 2 — public-experience
+**Current focus:** Phase 2 — public-experience (verification gaps)
 
 ## Current Position
 
-Phase: 2 (public-experience) — EXECUTING
+Phase: 2 (public-experience) — VERIFICATION GAPS
 Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-07-20 — Completed 02-02-PLAN.md
+Status: gaps_found — fix or override D-03 Home section order, then re-verify
+Last activity: 2026-07-20 — Wrote 02-VERIFICATION.md (status gaps_found)
 
-Progress: [███████░░░] 73%
+Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap checkbox cleared)
 
 ## Performance Metrics
 
