@@ -115,7 +115,7 @@ Each task was committed atomically:
 2. **Task 2: POST /status hash verify + citizen DTO** - `03cdce9` (feat)
 3. **Task 3: Separate status rate limiter + settings** - `5a16dd3` (feat)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `5599abd` (docs: complete plan)
 
 ## Files Created/Modified
 
