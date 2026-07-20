@@ -171,12 +171,12 @@ The current v4 CLI no longer exposes the old `--style new-york --base-color zinc
 | `tailwindcss-animate` for new shadcn v4 setup | `tw-animate-css@1.4.0` | shadcn deprecated the former in its Tailwind v4 setup. `[CITED: https://ui.shadcn.com/docs/tailwind-v4]` |
 | shadcn `toast` component | `alert` for Phase 1; `sonner` only when toast UX is required | shadcn deprecated `toast` in favor of `sonner`; Phase 1 only needs inline auth errors. `[CITED: https://ui.shadcn.com/docs/tailwind-v4]` |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which reviewed shadcn preset/config output represents the locked “new-york + zinc” contract in CLI 4.13.1?**
-   - What we know: CLI v4 supports `--base radix`, CSS variables, and presets, while Base UI is now the default. `[CITED: https://ui.shadcn.com/docs/cli]` `[CITED: https://ui.shadcn.com/docs/changelog]`
-   - What's unclear: the approved UI-SPEC predates the current named-preset workflow and contains no preset code.
-   - Recommendation: treat `components.json` review as part of the existing human-verification checkpoint; require Radix, new-york style, zinc base, CSS variables, and official registry only before proceeding.
+1. **RESOLVED — Which reviewed shadcn preset/config output represents the locked “new-york + zinc” contract in CLI 4.13.1?**
+   - Decision: run the exact pinned CLI with `--base radix --css-variables`, then treat the generated `components.json` as acceptable only when review confirms Radix base, new-york style, zinc base color, CSS variables, `@/` aliases, and official registry items only. Base UI output is rejected.
+   - Gate: this configuration review is part of the single existing blocking package-verification checkpoint before any install. If the CLI cannot produce that contract, stop and re-research rather than accepting defaults or changing the UI-SPEC.
+   - Basis: CLI v4 supports explicit Radix base and CSS variables while Base UI is now the default. `[CITED: https://ui.shadcn.com/docs/cli]` `[CITED: https://ui.shadcn.com/docs/changelog]`
 
 ## Assumptions Log
 
