@@ -293,11 +293,6 @@ def test_recent_query_failure_returns_502(monkeypatch) -> None:
     assert "Database query failed" in response.json()["detail"]
 
 
-def test_protected_endpoint_list_recent_empty_tuple(monkeypatch) -> None:
-    """Security suite monkeypatch may still return a bare list — API normalizes."""
-    pass
-
-
 def test_recent_default_returns_next_cursor_field(monkeypatch) -> None:
     monkeypatch.setattr(
         reports_api,

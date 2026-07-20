@@ -14,6 +14,7 @@ class MockSupabaseTable:
         self._order_by = None
         self._limit_val = None
         self._update_row = None
+        self._or_filter = None
 
     def insert(self, row):
         if self.table_name not in self.data_store:
@@ -42,14 +43,18 @@ class MockSupabaseTable:
         self._limit_val = value
         return self
 
+    def or_(self, expression):
+        self._or_filter = expression
+        return self
+
     def update(self, row):
         self._update_row = row
         return self
 
     def execute(self):
         # Retrieve items for the table
-        items = self.data_store.get(self.table_name, [])
-        if hasattr(self, "_update_row") and self._update_row is not None:
+        items = list(self.data_store.get(self.table_name, []))
+        if self._update_row is not None:
             for item in items:
                 match = True
                 for col, val in self._eq_filters.items():
@@ -61,7 +66,7 @@ class MockSupabaseTable:
             return SimpleNamespace(data=items)
 
         filtered_items = []
-        
+
         for item in items:
             match = True
             for col, val in self._eq_filters.items():
@@ -73,9 +78,18 @@ class MockSupabaseTable:
                 if self.table_name == "reports":
                     report_id = item.get("report_id")
                     events = self.data_store.get("status_events", [])
-                    item["status_events"] = [e for e in events if e.get("report_id") == report_id]
-                filtered_items.append(item)
-                
+                    # Copy so nested mutation does not leak across calls
+                    row = dict(item)
+                    row["status_events"] = [
+                        e for e in events if e.get("report_id") == report_id
+                    ]
+                    filtered_items.append(row)
+                else:
+                    filtered_items.append(item)
+
+        if self._limit_val is not None:
+            filtered_items = filtered_items[: self._limit_val]
+
         return SimpleNamespace(data=filtered_items)
 
 

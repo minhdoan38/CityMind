@@ -1,20 +1,48 @@
+import base64
 import json
-from datetime import datetime, timezone
 from collections import Counter
-from supabase import create_client, Client
+from collections.abc import Iterator
+from datetime import datetime, timezone
+
+from supabase import Client, create_client
 from supabase.lib.client_options import ClientOptions
+
 from app.config import Settings
+
+# Soft export row cap for Cloud Run memory/time (RESEARCH A3).
+EXPORT_SOFT_ROW_CAP = 10_000
+
+SORT_COLUMNS = {
+    "created_at": "created_at",
+    "priority": "priority",
+    "status": "current_status",
+    "category": "category",
+}
+
+
+def encode_cursor(sort: str, order: str, value: str, report_id: str) -> str:
+    raw = f"{sort}:{order}:{value}:{report_id}"
+    return base64.urlsafe_b64encode(raw.encode("utf-8")).decode("ascii").rstrip("=")
+
+
+def decode_cursor(cursor: str) -> tuple[str, str, str, str]:
+    pad = "=" * (-len(cursor) % 4)
+    raw = base64.urlsafe_b64decode(cursor + pad).decode("utf-8")
+    parts = raw.split(":", 3)
+    if len(parts) != 4:
+        raise ValueError("Invalid cursor")
+    return parts[0], parts[1], parts[2], parts[3]
 
 
 class SupabaseReportSink:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.enabled = bool(settings.supabase_url and settings.supabase_secret_key)
-        
+
         if self.enabled:
             self.service_role_client = create_client(
                 settings.supabase_url,
-                settings.supabase_secret_key
+                settings.supabase_secret_key,
             )
         else:
             self.service_role_client = None
@@ -25,7 +53,7 @@ class SupabaseReportSink:
             return create_client(
                 self.settings.supabase_url,
                 self.settings.supabase_publishable_key,
-                options=options
+                options=options,
             )
         if self.service_role_client is None:
             raise RuntimeError("Supabase client is not configured (missing URL or keys)")
@@ -44,7 +72,6 @@ class SupabaseReportSink:
         if not self.enabled:
             return False
 
-        # Convert urban_context to dict if it is a JSON string, or keep dict
         context_data = urban_context
         if isinstance(urban_context, str):
             try:
@@ -78,21 +105,20 @@ class SupabaseReportSink:
         client.table("reports").insert(row).execute()
         return True
 
-    def list_recent(
+    def _apply_filters(
         self,
-        limit: int = 20,
+        query,
+        *,
         status: str | None = None,
         category: str | None = None,
         priority: str | None = None,
         min_severity: int | None = None,
         max_severity: int | None = None,
-        caller_token: str | None = None,
-    ) -> list[dict]:
-        if not self.enabled:
-            return []
-        client = self.get_client(caller_token)
-        query = client.table("reports").select("*, status_events(status, note, created_at)")
-        
+        created_after: str | None = None,
+        created_before: str | None = None,
+    ):
+        if status is not None:
+            query = query.eq("current_status", status)
         if category is not None:
             query = query.eq("category", category)
         if priority is not None:
@@ -101,84 +127,233 @@ class SupabaseReportSink:
             query = query.gte("severity", min_severity)
         if max_severity is not None:
             query = query.lte("severity", max_severity)
-            
-        # We order by created_at of reports desc
-        query = query.order("created_at", desc=True)
-        response = query.execute()
-        
-        results = []
-        for row in response.data:
-            events = row.get("status_events", [])
-            latest_event = None
-            if events:
-                sorted_events = sorted(events, key=lambda x: x.get("created_at", ""), reverse=True)
-                latest_event = sorted_events[0]
-                
-            current_status = row.get("current_status")
-            if not current_status:
-                current_status = (
-                    latest_event.get("status", "new") if latest_event else "new"
-                )
+        if created_after is not None:
+            query = query.gte("created_at", created_after)
+        if created_before is not None:
+            query = query.lte("created_at", created_before)
+        return query
 
-            if status is not None and current_status != status:
-                continue
-                
-            mapped = {
-                "report_id": row["report_id"],
-                "created_at": row["created_at"],
-                "description": row["description"],
-                "latitude": row["latitude"],
-                "longitude": row["longitude"],
-                "category": row["category"],
-                "severity": row["severity"],
-                "confidence": row["confidence"],
-                "summary": row["summary"],
-                "recommendation": row["recommendation"],
-                "priority": row["priority"],
-                "estimated_impact": row["estimated_impact"],
-                "evidence": row["evidence"] or [],
-                "uncertainty": row["uncertainty"] or [],
-                "urban_context": row["urban_context"],
-                "image_gcs_uri": row["image_gcs_uri"],
-                "status": current_status,
-                "status_note": latest_event.get("note") if latest_event else None,
-            }
-            results.append(mapped)
-            if len(results) >= limit:
-                break
-        return results
+    def _map_report_row(self, row: dict) -> dict:
+        events = row.get("status_events", []) or []
+        latest_event = None
+        if events:
+            sorted_events = sorted(
+                events, key=lambda x: x.get("created_at", ""), reverse=True
+            )
+            latest_event = sorted_events[0]
 
-    def summary(self, caller_token: str | None = None) -> dict:
+        current_status = row.get("current_status")
+        if not current_status:
+            current_status = (
+                latest_event.get("status", "new") if latest_event else "new"
+            )
+
+        return {
+            "report_id": row["report_id"],
+            "created_at": row["created_at"],
+            "description": row.get("description"),
+            "latitude": row.get("latitude"),
+            "longitude": row.get("longitude"),
+            "category": row.get("category"),
+            "severity": row.get("severity"),
+            "confidence": row.get("confidence"),
+            "summary": row.get("summary"),
+            "recommendation": row.get("recommendation"),
+            "priority": row.get("priority"),
+            "estimated_impact": row.get("estimated_impact"),
+            "evidence": row.get("evidence") or [],
+            "uncertainty": row.get("uncertainty") or [],
+            "urban_context": row.get("urban_context"),
+            "image_gcs_uri": row.get("image_gcs_uri"),
+            "status": current_status,
+            "status_note": latest_event.get("note") if latest_event else None,
+        }
+
+    def _apply_keyset(
+        self,
+        query,
+        *,
+        sort: str,
+        order: str,
+        cursor: str | None,
+    ):
+        column = SORT_COLUMNS[sort]
+        descending = order == "desc"
+        query = query.order(column, desc=descending).order(
+            "report_id", desc=descending
+        )
+        if not cursor:
+            return query
+
+        cursor_sort, cursor_order, value, report_id = decode_cursor(cursor)
+        if cursor_sort != sort or cursor_order != order:
+            raise ValueError("Cursor does not match sort/order")
+
+        if descending:
+            query = query.or_(
+                f"{column}.lt.{value},and({column}.eq.{value},report_id.lt.{report_id})"
+            )
+        else:
+            query = query.or_(
+                f"{column}.gt.{value},and({column}.eq.{value},report_id.gt.{report_id})"
+            )
+        return query
+
+    def list_recent(
+        self,
+        limit: int = 25,
+        status: str | None = None,
+        category: str | None = None,
+        priority: str | None = None,
+        min_severity: int | None = None,
+        max_severity: int | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        cursor: str | None = None,
+        sort: str = "created_at",
+        order: str = "desc",
+        caller_token: str | None = None,
+    ) -> tuple[list[dict], str | None]:
         if not self.enabled:
-            return {
-                "total_reports": 0,
-                "critical_reports": 0,
-                "avg_severity": 0.0,
-                "top_category": "none",
-            }
+            return [], None
+        if sort not in SORT_COLUMNS:
+            raise ValueError(f"Unsupported sort: {sort}")
+        if order not in {"asc", "desc"}:
+            raise ValueError(f"Unsupported order: {order}")
+
         client = self.get_client(caller_token)
-        response = client.table("reports").select("severity, priority, category").execute()
-        rows = response.data
+        query = client.table("reports").select(
+            "*, status_events(status, note, created_at)"
+        )
+        query = self._apply_filters(
+            query,
+            status=status,
+            category=category,
+            priority=priority,
+            min_severity=min_severity,
+            max_severity=max_severity,
+            created_after=created_after,
+            created_before=created_before,
+        )
+        query = self._apply_keyset(query, sort=sort, order=order, cursor=cursor)
+        query = query.limit(limit + 1)
+        response = query.execute()
+
+        rows = response.data or []
+        has_more = len(rows) > limit
+        page_rows = rows[:limit]
+        items = [self._map_report_row(row) for row in page_rows]
+
+        next_cursor = None
+        if has_more and page_rows:
+            last = page_rows[-1]
+            column = SORT_COLUMNS[sort]
+            sort_value = last.get(column)
+            if sort == "status":
+                sort_value = last.get("current_status") or items[-1]["status"]
+            next_cursor = encode_cursor(
+                sort, order, str(sort_value), last["report_id"]
+            )
+        return items, next_cursor
+
+    def summary(
+        self,
+        caller_token: str | None = None,
+        status: str | None = None,
+        category: str | None = None,
+        priority: str | None = None,
+        min_severity: int | None = None,
+        max_severity: int | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+    ) -> dict:
+        empty = {
+            "total_reports": 0,
+            "critical_reports": 0,
+            "avg_severity": 0.0,
+            "top_category": "none",
+        }
+        if not self.enabled:
+            return empty
+        client = self.get_client(caller_token)
+        query = client.table("reports").select(
+            "severity, priority, category, current_status"
+        )
+        query = self._apply_filters(
+            query,
+            status=status,
+            category=category,
+            priority=priority,
+            min_severity=min_severity,
+            max_severity=max_severity,
+            created_after=created_after,
+            created_before=created_before,
+        )
+        response = query.execute()
+        rows = response.data or []
         if not rows:
-            return {
-                "total_reports": 0,
-                "critical_reports": 0,
-                "avg_severity": 0.0,
-                "top_category": "none",
-            }
+            return empty
         total_reports = len(rows)
         critical_reports = sum(1 for r in rows if r.get("priority") == "critical")
-        avg_severity = round(sum(r.get("severity", 0) for r in rows) / total_reports, 2)
-        
+        avg_severity = round(
+            sum(r.get("severity", 0) or 0 for r in rows) / total_reports, 2
+        )
         categories = [r.get("category") for r in rows if r.get("category")]
-        top_category = Counter(categories).most_common(1)[0][0] if categories else "none"
-        
+        top_category = (
+            Counter(categories).most_common(1)[0][0] if categories else "none"
+        )
         return {
             "total_reports": total_reports,
             "critical_reports": critical_reports,
             "avg_severity": avg_severity,
             "top_category": top_category,
         }
+
+    def iter_filtered(
+        self,
+        *,
+        status: str | None = None,
+        category: str | None = None,
+        priority: str | None = None,
+        min_severity: int | None = None,
+        max_severity: int | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        caller_token: str | None = None,
+        page_size: int = 100,
+        soft_cap: int = EXPORT_SOFT_ROW_CAP,
+    ) -> Iterator[dict]:
+        """Yield filtered report rows via keyset pages (never materialize all rows)."""
+        if not self.enabled:
+            return
+        cursor = None
+        yielded = 0
+        while yielded < soft_cap:
+            batch_limit = min(page_size, soft_cap - yielded)
+            items, next_cursor = self.list_recent(
+                limit=batch_limit,
+                status=status,
+                category=category,
+                priority=priority,
+                min_severity=min_severity,
+                max_severity=max_severity,
+                created_after=created_after,
+                created_before=created_before,
+                cursor=cursor,
+                sort="created_at",
+                order="desc",
+                caller_token=caller_token,
+            )
+            if not items:
+                break
+            for item in items:
+                yield item
+                yielded += 1
+                if yielded >= soft_cap:
+                    return
+            if not next_cursor:
+                break
+            cursor = next_cursor
 
     def update_status(
         self,
@@ -199,64 +374,57 @@ class SupabaseReportSink:
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         client.table("status_events").insert(row).execute()
-        # Keep denormalized current_status in sync for SQL filter/sort (DATA-04/05).
         client.table("reports").update({"current_status": status}).eq(
             "report_id", report_id
         ).execute()
         return True
 
-    def get_image_gcs_uri(self, report_id: str, caller_token: str | None = None) -> str | None:
+    def get_image_gcs_uri(
+        self, report_id: str, caller_token: str | None = None
+    ) -> str | None:
         if not self.enabled:
             return None
         client = self.get_client(caller_token)
-        response = client.table("reports").select("image_gcs_uri").eq("report_id", report_id).execute()
+        response = (
+            client.table("reports")
+            .select("image_gcs_uri")
+            .eq("report_id", report_id)
+            .execute()
+        )
         if response.data:
             return response.data[0].get("image_gcs_uri")
         return None
 
-    def get_report(self, report_id: str, caller_token: str | None = None) -> dict | None:
+    def get_report(
+        self, report_id: str, caller_token: str | None = None
+    ) -> dict | None:
         if not self.enabled:
             return None
         client = self.get_client(caller_token)
-        response = client.table("reports").select("*, status_events(status, note, created_at)").eq("report_id", report_id).execute()
+        response = (
+            client.table("reports")
+            .select("*, status_events(status, note, created_at)")
+            .eq("report_id", report_id)
+            .execute()
+        )
         if not response.data:
             return None
         row = response.data[0]
-        events = row.get("status_events", [])
+        mapped = self._map_report_row(row)
+        events = row.get("status_events", []) or []
         latest_event = None
         if events:
-            sorted_events = sorted(events, key=lambda x: x.get("created_at", ""), reverse=True)
-            latest_event = sorted_events[0]
+            latest_event = sorted(
+                events, key=lambda x: x.get("created_at", ""), reverse=True
+            )[0]
+        mapped["status_updated_at"] = (
+            latest_event.get("created_at") if latest_event else None
+        )
+        return mapped
 
-        current_status = row.get("current_status")
-        if not current_status:
-            current_status = (
-                latest_event.get("status", "new") if latest_event else "new"
-            )
-
-        return {
-            "report_id": row["report_id"],
-            "created_at": row["created_at"],
-            "description": row["description"],
-            "latitude": row["latitude"],
-            "longitude": row["longitude"],
-            "category": row["category"],
-            "severity": row["severity"],
-            "confidence": row["confidence"],
-            "summary": row["summary"],
-            "recommendation": row["recommendation"],
-            "priority": row["priority"],
-            "estimated_impact": row["estimated_impact"],
-            "evidence": row["evidence"] or [],
-            "uncertainty": row["uncertainty"] or [],
-            "urban_context": row["urban_context"],
-            "image_gcs_uri": row["image_gcs_uri"],
-            "status": current_status,
-            "status_note": latest_event.get("note") if latest_event else None,
-            "status_updated_at": latest_event.get("created_at") if latest_event else None,
-        }
-
-    def status_history(self, report_id: str, caller_token: str | None = None) -> list[dict]:
+    def status_history(
+        self, report_id: str, caller_token: str | None = None
+    ) -> list[dict]:
         if not self.enabled:
             return []
         client = self.get_client(caller_token)
@@ -269,14 +437,16 @@ class SupabaseReportSink:
         )
         return response.data
 
-    def insert_access_token(self, report_id: str, token_hash: str, expires_at: datetime) -> bool:
+    def insert_access_token(
+        self, report_id: str, token_hash: str, expires_at: datetime
+    ) -> bool:
         if not self.enabled:
             return False
         row = {
             "token_hash": token_hash,
             "report_id": report_id,
             "expires_at": expires_at.isoformat(),
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         client = self.get_client()
         client.table("access_tokens").insert(row).execute()

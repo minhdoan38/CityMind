@@ -1,7 +1,15 @@
+import csv
+import io
+import logging
+import os
+import tempfile
+from collections.abc import Iterator
 from functools import lru_cache
 from typing import Union
 from uuid import uuid4
 
+import filetype
+import xlsxwriter
 from fastapi import (
     APIRouter,
     Depends,
@@ -12,22 +20,35 @@ from fastapi import (
     Response,
     UploadFile,
 )
+from fastapi.responses import StreamingResponse
 
-import logging
-import filetype
 from app.config import get_settings
 from app.schemas import AnalyzeResponse, Category, Priority
 from app.security import OfficerPrincipal, enforce_report_rate_limit, require_officer
-from app.services.supabase import SupabaseReportSink
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
+from app.services.supabase import EXPORT_SOFT_ROW_CAP, SORT_COLUMNS, SupabaseReportSink
 from app.services.tokens import issue_access_token
 
 VALID_STATUSES = {"new", "reviewing", "resolved", "rejected"}
 VALID_CATEGORIES = {category.value for category in Category}
 VALID_PRIORITIES = {priority.value for priority in Priority}
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+EXPORT_FIELDS = [
+    "report_id",
+    "created_at",
+    "category",
+    "priority",
+    "status",
+    "summary",
+    "severity",
+    "recommendation",
+    "status_note",
+]
+XLSX_MEDIA_TYPE = (
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
 router = APIRouter()
 
@@ -50,6 +71,28 @@ def get_context_service() -> UrbanContextService:
 @lru_cache
 def get_evidence_storage() -> EvidenceStorage:
     return EvidenceStorage(get_settings())
+
+
+def _validate_report_filters(
+    *,
+    status: str | None,
+    category: str | None,
+    priority: str | None,
+    min_severity: int | None,
+    max_severity: int | None,
+) -> None:
+    if status is not None and status not in VALID_STATUSES:
+        raise HTTPException(422, "Invalid status filter")
+    if category is not None and category not in VALID_CATEGORIES:
+        raise HTTPException(422, "Invalid category filter")
+    if priority is not None and priority not in VALID_PRIORITIES:
+        raise HTTPException(422, "Invalid priority filter")
+    if (
+        min_severity is not None
+        and max_severity is not None
+        and min_severity > max_severity
+    ):
+        raise HTTPException(422, "min_severity cannot exceed max_severity")
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -126,50 +169,195 @@ async def analyze_report(
 
 @router.get("/recent")
 async def recent_reports(
-    limit: int = 20,
+    limit: int = 25,
+    cursor: str | None = None,
+    sort: str = "created_at",
+    order: str = "desc",
     status: str | None = None,
     category: str | None = None,
     priority: str | None = None,
     min_severity: int | None = Query(default=None, ge=1, le=5),
     max_severity: int | None = Query(default=None, ge=1, le=5),
+    created_after: str | None = None,
+    created_before: str | None = None,
     officer: OfficerPrincipal = Depends(require_officer),
 ):
     if limit < 1 or limit > 100:
         raise HTTPException(422, "limit must be between 1 and 100")
-    if status is not None and status not in VALID_STATUSES:
-        raise HTTPException(422, "Invalid status filter")
-    if category is not None and category not in VALID_CATEGORIES:
-        raise HTTPException(422, "Invalid category filter")
-    if priority is not None and priority not in VALID_PRIORITIES:
-        raise HTTPException(422, "Invalid priority filter")
-    if (
-        min_severity is not None
-        and max_severity is not None
-        and min_severity > max_severity
-    ):
-        raise HTTPException(422, "min_severity cannot exceed max_severity")
+    if sort not in SORT_COLUMNS:
+        raise HTTPException(422, "Invalid sort")
+    if order not in {"asc", "desc"}:
+        raise HTTPException(422, "Invalid order")
+    _validate_report_filters(
+        status=status,
+        category=category,
+        priority=priority,
+        min_severity=min_severity,
+        max_severity=max_severity,
+    )
 
     try:
-        items = get_sink().list_recent(
+        items, next_cursor = get_sink().list_recent(
             limit,
             status=status,
             category=category,
             priority=priority,
             min_severity=min_severity,
             max_severity=max_severity,
+            created_after=created_after,
+            created_before=created_before,
+            cursor=cursor,
+            sort=sort,
+            order=order,
             caller_token=officer.token,
         )
-        return {"items": items, "count": len(items)}
+        return {
+            "items": items,
+            "count": len(items),
+            "next_cursor": next_cursor,
+            "sort": sort,
+            "order": order,
+        }
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
         raise HTTPException(502, f"Database query failed: {exc}") from exc
 
 
 @router.get("/summary")
-async def reports_summary(officer: OfficerPrincipal = Depends(require_officer)):
+async def reports_summary(
+    status: str | None = None,
+    category: str | None = None,
+    priority: str | None = None,
+    min_severity: int | None = Query(default=None, ge=1, le=5),
+    max_severity: int | None = Query(default=None, ge=1, le=5),
+    created_after: str | None = None,
+    created_before: str | None = None,
+    officer: OfficerPrincipal = Depends(require_officer),
+):
+    _validate_report_filters(
+        status=status,
+        category=category,
+        priority=priority,
+        min_severity=min_severity,
+        max_severity=max_severity,
+    )
     try:
-        return get_sink().summary(caller_token=officer.token)
+        return get_sink().summary(
+            caller_token=officer.token,
+            status=status,
+            category=category,
+            priority=priority,
+            min_severity=min_severity,
+            max_severity=max_severity,
+            created_after=created_after,
+            created_before=created_before,
+        )
     except Exception as exc:
         raise HTTPException(502, f"Database summary failed: {exc}") from exc
+
+
+def _csv_iter(rows: Iterator[dict]) -> Iterator[str]:
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=EXPORT_FIELDS, extrasaction="ignore")
+    writer.writeheader()
+    yield buf.getvalue()
+    buf.seek(0)
+    buf.truncate(0)
+    for row in rows:
+        writer.writerow({key: row.get(key) for key in EXPORT_FIELDS})
+        yield buf.getvalue()
+        buf.seek(0)
+        buf.truncate(0)
+
+
+def _build_xlsx_path(rows: Iterator[dict]) -> str:
+    """Write XLSX with constant_memory; caller streams then deletes the temp file."""
+    fd, path = tempfile.mkstemp(suffix=".xlsx")
+    os.close(fd)
+    workbook = xlsxwriter.Workbook(path, {"constant_memory": True})
+    worksheet = workbook.add_worksheet("reports")
+    for col, name in enumerate(EXPORT_FIELDS):
+        worksheet.write(0, col, name)
+    for row_idx, row in enumerate(rows, start=1):
+        for col, name in enumerate(EXPORT_FIELDS):
+            value = row.get(name)
+            worksheet.write(row_idx, col, "" if value is None else value)
+    workbook.close()
+    return path
+
+
+@router.get("/export")
+async def export_reports(
+    format: str = Query(default="csv", pattern="^(csv|xlsx)$"),
+    status: str | None = None,
+    category: str | None = None,
+    priority: str | None = None,
+    min_severity: int | None = Query(default=None, ge=1, le=5),
+    max_severity: int | None = Query(default=None, ge=1, le=5),
+    created_after: str | None = None,
+    created_before: str | None = None,
+    officer: OfficerPrincipal = Depends(require_officer),
+):
+    """Stream filtered CSV/XLSX. Soft row cap ~10k (EXPORT_SOFT_ROW_CAP)."""
+    _validate_report_filters(
+        status=status,
+        category=category,
+        priority=priority,
+        min_severity=min_severity,
+        max_severity=max_severity,
+    )
+    filter_kwargs = {
+        "status": status,
+        "category": category,
+        "priority": priority,
+        "min_severity": min_severity,
+        "max_severity": max_severity,
+        "created_after": created_after,
+        "created_before": created_before,
+        "caller_token": officer.token,
+        "soft_cap": EXPORT_SOFT_ROW_CAP,
+    }
+
+    try:
+        if format == "csv":
+            rows = get_sink().iter_filtered(**filter_kwargs)
+            return StreamingResponse(
+                _csv_iter(rows),
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": 'attachment; filename="reports.csv"'
+                },
+            )
+
+        # XLSX: constant_memory write to temp file, then stream (never list(all)).
+        path = _build_xlsx_path(get_sink().iter_filtered(**filter_kwargs))
+
+        def file_chunks() -> Iterator[bytes]:
+            try:
+                with open(path, "rb") as handle:
+                    while True:
+                        chunk = handle.read(64 * 1024)
+                        if not chunk:
+                            break
+                        yield chunk
+            finally:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+
+        return StreamingResponse(
+            file_chunks(),
+            media_type=XLSX_MEDIA_TYPE,
+            headers={
+                "Content-Disposition": 'attachment; filename="reports.xlsx"'
+            },
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(502, f"Export failed: {exc}") from exc
 
 
 @router.patch("/{report_id}/status")
