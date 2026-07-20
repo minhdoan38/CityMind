@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-07-20T16:01:18.550Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-07-20T16:09:04.767Z"
 last_activity: 2026-07-20
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 22
-  completed_plans: 16
+  completed_plans: 17
   percent: 43
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 03 (dashboard-polish) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-20
 
-Progress: [███████░░░] 73%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Progress: [███████░░░] 73%
 | Phase 04 P02 | 5min | 3 tasks | 7 files |
 | Phase 04 P03 | 15 min | 2 tasks | 6 files |
 | Phase 03 P02 | 5min | 1 tasks | 15 files |
+| Phase 03 P03 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Previous pagination clears cursor (next_cursor-only API) — Backend exposes opaque next_cursor only
 - [Phase 03]: Column visibility localStorage citymind.dashboard.columnVisibility; severity hidden by default — D-01/D-05 client preference only
 - [Phase 03]: No ExportButton in 03-02 — owned by 03-04 — Plan scope boundary
+- [Phase 03]: Preserve CopyStatusLink on detail (DASH-08 already shipped) — Phase 4 control present; plan forbids removal
+- [Phase 03]: Evidence owns image+signals; AI panel owns summary/recommendation/uncertainty — Aligns D-19 Evidence vs AI advisory split
+- [Phase 03]: reviewing immediate; resolved/rejected Dialog-gated with required note — D-11/D-12 UI-SPEC Dialog contract
 
 ### Pending Todos
 
@@ -122,7 +126,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T16:01:17.993Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-07-20T16:09:04.762Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)
