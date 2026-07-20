@@ -131,7 +131,7 @@ Plans:
 **Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: ANLY-01, ANLY-02, ANLY-03
-**Parallel tracks**: A ∥ B ∥ C
+**Parallel tracks**: A → C → B (A APIs first; C officer UI; B optional public strip after message-file wave)
 
 **Success Criteria**:
 
@@ -143,9 +143,9 @@ Plans:
 
 Plans:
 
-- [ ] 05-01: **Track A** — ETL job, BigQuery views, analytics read API
-- [ ] 05-02: **Track B** — Optional public stats section on Home (non-sensitive aggregates)
-- [ ] 05-03: **Track C** — Analytics tab with trend charts and date selector
+- [ ] 05-01-PLAN.md — **Track A** — Wave 0 stubs, ETL job, BigQuery views, officer analytics read API
+- [ ] 05-03-PLAN.md — **Track C** — recharts SUS checkpoint, Analytics tab charts + URL date selector
+- [ ] 05-02-PLAN.md — **Track B** — Optional public Home stats strip (k≥3, rate-limited)
 
 ---
 
