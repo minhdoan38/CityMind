@@ -5,15 +5,15 @@ milestone_name: Platform
 current_phase: 3
 current_phase_name: dashboard-polish
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-07-20T14:10:32.263Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-07-20T14:16:49.709Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 3 execution resumed (wave continue)
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 18
-  completed_plans: 12
+  completed_plans: 13
   percent: 29
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 3 (dashboard-polish) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-20 — Phase 3 execution resumed (wave continue)
 
@@ -54,6 +54,7 @@ Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap c
 | Phase 02-public-experience P04 | 8min | 2 tasks | 11 files |
 | Phase 02 P05 | 4 min | 2 tasks | 4 files |
 | Phase 04 P01 | 3min | 3 tasks | 9 files |
+| Phase 04 P02 | 5min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Separate status_limiter with status:{ip} keys — CIT-04; must not share analyze report_limiter
 - [Phase 04]: Citizen history strips actor_id; notes as plain text — CIT-02 / D-05 / D-06
 - Phase 5 context: daily incremental ETL; 3 officer charts + hotspot list; 30d default; thin public Home stats with k≥3; no maps; strict BQ privacy exclusions
+- [Phase 04]: Client-side status lookup with Suspense/useSearchParams for deep-link auto-fetch — Keeps access token out of RSC data fetches (RESEARCH A1 / T-04-09)
+- [Phase 04]: Map only 401/429/network to catalog strings; ignore API detail text — CIT-03 / D-16 anti-enumeration on the public UI surface
 
 ### Pending Todos
 
@@ -112,7 +115,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:10:32.253Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-07-20T14:16:49.703Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)

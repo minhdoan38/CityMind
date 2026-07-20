@@ -36,7 +36,7 @@
 
 ### Citizen Status (CIT)
 
-- [ ] **CIT-01**: Public `/status` page accepts report_id + access token
+- [x] **CIT-01**: Public `/status` page accepts report_id + access token
 - [x] **CIT-02**: Token-validated API returns status, summary, and status history only
 - [x] **CIT-03**: Invalid token returns 401 without leaking report existence
 - [x] **CIT-04**: Status lookup endpoint is rate-limited
@@ -126,7 +126,7 @@ Deferred beyond Milestone v2.
 | DASH-05 | Phase 3 | Pending |
 | DASH-06 | Phase 3 | Pending |
 | DASH-07 | Phase 3 | Pending |
-| CIT-01 | Phase 4 | Pending |
+| CIT-01 | Phase 4 | Complete |
 | CIT-02 | Phase 4 | Complete |
 | CIT-03 | Phase 4 | Complete |
 | CIT-04 | Phase 4 | Complete |
