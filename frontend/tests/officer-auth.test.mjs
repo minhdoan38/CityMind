@@ -82,6 +82,38 @@ test('backend fetch forwards bearer authorization', () => {
   assert.match(backendContent, /Bearer/);
 });
 
+test('officerFetch sends Bearer JWT from getSessionToken (T-02-08)', () => {
+  const backendContent = read(src('lib', 'backend.ts'));
+  assert.match(backendContent, /officerFetch/);
+  assert.match(backendContent, /getSessionToken/);
+  assert.match(backendContent, /Authorization.*Bearer|Bearer.*\$\{/);
+  // Bearer JWT is the primary officer auth path — not the legacy API key header
+  assert.doesNotMatch(backendContent, /X-CityMind-Officer-Key/);
+});
+
+test('dashboard lists recent reports as ReportCard list (D-16)', () => {
+  const reportCardPath = src('components', 'dashboard', 'ReportCard.tsx');
+  assert.ok(fs.existsSync(reportCardPath), 'ReportCard.tsx must exist');
+
+  const reportCard = read(reportCardPath);
+  assert.match(reportCard, /category/);
+  assert.match(reportCard, /priority/);
+  assert.match(reportCard, /status/);
+  assert.match(reportCard, /summary/);
+  assert.match(reportCard, /\/dashboard\/reports\//);
+  // Badge text labels — not color-only
+  assert.match(reportCard, /Priority:|priority/i);
+  assert.match(reportCard, /Status:|status/i);
+
+  const dashboard = read(src('app', 'dashboard', 'page.tsx'));
+  assert.match(dashboard, /ReportCard/);
+  assert.match(dashboard, /officerFetch/);
+  assert.match(dashboard, /\/api\/v1\/reports\/recent/);
+  assert.match(dashboard, /No reports yet/);
+  assert.doesNotMatch(dashboard, /DataTable|<table|KPI|export.*csv|resolve.?note/i);
+  assert.equal(fs.existsSync(src('app', '[locale]', 'dashboard', 'page.tsx')), false);
+});
+
 test('proxy.ts gates /dashboard with getClaims + returnUrl (AUTH-04 / D-15 / D-17)', () => {
   assert.ok(fs.existsSync(src('proxy.ts')), 'proxy.ts must exist (not middleware.ts)');
   assert.equal(fs.existsSync(path.join(root, 'src', 'middleware.ts')), false);
