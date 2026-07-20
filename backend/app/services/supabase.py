@@ -241,3 +241,16 @@ class SupabaseReportSink:
         client = self.get_client(caller_token)
         response = client.table("status_events").select("status, note, created_at").eq("report_id", report_id).order("created_at", desc=True).execute()
         return response.data
+
+    def insert_access_token(self, report_id: str, token_hash: str, expires_at: datetime) -> bool:
+        if not self.enabled:
+            return False
+        row = {
+            "token_hash": token_hash,
+            "report_id": report_id,
+            "expires_at": expires_at.isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        client = self.get_client()
+        client.table("access_tokens").insert(row).execute()
+        return True

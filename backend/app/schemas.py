@@ -34,3 +34,4 @@ class AnalyzeResponse(BaseModel):
     report_id: str
     analysis: ReportAnalysis
     persisted: bool
+    access_token: str | None = None

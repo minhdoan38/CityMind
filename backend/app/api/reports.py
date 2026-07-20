@@ -13,6 +13,8 @@ from fastapi import (
     UploadFile,
 )
 
+import logging
+import filetype
 from app.config import get_settings
 from app.schemas import AnalyzeResponse, Category, Priority
 from app.security import enforce_report_rate_limit, require_officer
@@ -20,6 +22,7 @@ from app.services.supabase import SupabaseReportSink
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
+from app.services.tokens import issue_access_token
 
 VALID_STATUSES = {"new", "reviewing", "resolved", "rejected"}
 VALID_CATEGORIES = {category.value for category in Category}
@@ -63,19 +66,20 @@ async def analyze_report(
     image_bytes = None
     mime_type = None
     if image is not None:
-        mime_type = image.content_type
         image_bytes = await image.read()
 
         if not image_bytes:
             image_bytes = None
-            mime_type = None
-        elif mime_type not in ALLOWED_IMAGE_TYPES:
-            raise HTTPException(
-                415,
-                f"Only JPEG, PNG, or WebP images are accepted. Received: {mime_type}",
-            )
-        elif len(image_bytes) > get_settings().max_image_bytes:
-            raise HTTPException(413, "Image exceeds configured size limit")
+        else:
+            kind = filetype.guess(image_bytes)
+            if kind is None or kind.mime not in ALLOWED_IMAGE_TYPES:
+                raise HTTPException(
+                    415,
+                    f"Only JPEG, PNG, or WebP images are accepted. Received: {kind.mime if kind else 'unknown'}",
+                )
+            mime_type = kind.mime
+            if len(image_bytes) > get_settings().max_image_bytes:
+                raise HTTPException(413, "Image exceeds configured size limit")
 
     if not description.strip() and image_bytes is None:
         raise HTTPException(422, "Provide description or image")
@@ -103,13 +107,20 @@ async def analyze_report(
             urban_context=urban_context,
             image_gcs_uri=image_gcs_uri,
         )
+        access_token = None
+        if persisted:
+            plaintext, token_hash, expires_at = issue_access_token()
+            get_sink().insert_access_token(report_id, token_hash, expires_at)
+            access_token = plaintext
     except Exception as exc:
-        raise HTTPException(502, f"Report analysis failed: {exc}") from exc
+        logging.exception("Report analysis failed")
+        raise HTTPException(502, "Report analysis failed") from exc
 
     return AnalyzeResponse(
         report_id=report_id,
         analysis=analysis,
         persisted=persisted,
+        access_token=access_token,
     )
 
 

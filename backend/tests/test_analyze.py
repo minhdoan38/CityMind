@@ -1,3 +1,4 @@
+import hashlib
 from types import SimpleNamespace
 
 import pytest
@@ -48,6 +49,9 @@ def install_successful_pipeline(monkeypatch, context=None):
         def insert(self, *args, **kwargs):
             calls["insert"] = (args, kwargs)
             return True
+        def insert_access_token(self, *args, **kwargs):
+            calls["insert_access_token"] = (args, kwargs)
+            return True
 
     monkeypatch.setattr(reports_api, "get_evidence_storage", lambda: Storage())
     monkeypatch.setattr(reports_api, "get_context_service", lambda: Context())
@@ -85,7 +89,7 @@ def test_analyze_report_with_image_and_context(monkeypatch) -> None:
             "latitude": "21.0285",
             "longitude": "105.8542",
         },
-        files={"image": ("flood.jpg", b"jpeg-data", "image/jpeg")},
+        files={"image": ("flood.jpg", b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00", "image/jpeg")},
     )
 
     assert response.status_code == 200
@@ -93,7 +97,7 @@ def test_analyze_report_with_image_and_context(monkeypatch) -> None:
     assert "Flooding at the intersection" in description
     assert "Urban context:" in description
     assert "Rain" in description
-    assert image_bytes == b"jpeg-data"
+    assert image_bytes == b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00"
     assert mime_type == "image/jpeg"
     _, insert_kwargs = calls["insert"]
     assert insert_kwargs["urban_context"] == context
@@ -138,7 +142,7 @@ def test_image_over_limit_returns_413(monkeypatch) -> None:
     response = client.post(
         "/api/v1/reports/analyze",
         data={"description": "Evidence attached"},
-        files={"image": ("evidence.png", b"1234", "image/png")},
+        files={"image": ("evidence.png", b"\x89PNG\r\n\x1a\n", "image/png")},
     )
 
     assert response.status_code == 413
@@ -194,6 +198,8 @@ def test_critical_service_failure_returns_502(monkeypatch, failing_service) -> N
             if failing_service == "sink":
                 raise RuntimeError("BigQuery unavailable")
             return True
+        def insert_access_token(self, *_args, **_kwargs):
+            return True
 
     monkeypatch.setattr(reports_api, "get_evidence_storage", lambda: Storage())
     monkeypatch.setattr(reports_api, "get_context_service", lambda: Context())
@@ -206,7 +212,7 @@ def test_critical_service_failure_returns_502(monkeypatch, failing_service) -> N
     )
 
     assert response.status_code == 502
-    assert response.json()["detail"].startswith("Report analysis failed:")
+    assert response.json()["detail"] == "Report analysis failed"
 
 
 def test_context_timeout_does_not_block_analysis(monkeypatch) -> None:
@@ -238,3 +244,22 @@ def test_context_timeout_does_not_block_analysis(monkeypatch) -> None:
     _, insert_kwargs = calls["insert"]
     assert insert_kwargs["urban_context"]["weather"]["available"] is False
     assert insert_kwargs["urban_context"]["place"]["available"] is False
+
+def test_analyze_returns_access_token(monkeypatch) -> None:
+    calls = install_successful_pipeline(monkeypatch)
+    response = client.post(
+        "/api/v1/reports/analyze",
+        data={"description": "Large pothole near the school"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["access_token"] is not None
+    assert len(data["access_token"]) > 10
+    assert "insert_access_token" in calls
+    report_id, token_hash, expires_at = calls["insert_access_token"][0]
+    assert report_id == data["report_id"]
+    assert token_hash == hashlib.sha256(data["access_token"].encode()).hexdigest()
+    assert token_hash != data["access_token"]
+    assert expires_at is not None
+
