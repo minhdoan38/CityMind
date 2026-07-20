@@ -105,7 +105,7 @@ Each task was committed atomically:
    - `5218e35` (test) — failing dashboard getClaims proxy contracts
    - `f9ba277` (feat) — compose getClaims dashboard gate on proxy.ts
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `ed58b1e` (docs: complete Track C auth gate plan)
 
 ## Files Created/Modified
 
