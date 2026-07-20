@@ -78,7 +78,7 @@ Each task was committed atomically:
 3. **Task 2 RED:** `4d00f82` — test(03-03): add failing Dialog note-gate assertions
 4. **Task 2 GREEN:** `069f2d6` — feat(03-03): gate resolve/reject with Dialog note
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `f6a474d` (docs: complete plan)
 
 ## Files Created/Modified
 
