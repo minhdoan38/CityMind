@@ -93,7 +93,14 @@
     "categoryWaste": "Waste",
     "categoryStreetlight": "Streetlight",
     "categoryObstruction": "Obstruction",
-    "categoryOther": "Other"
+    "categoryOther": "Other",
+    "stats": {
+      "sectionTitle": "Community snapshot",
+      "sectionBody": "Recent public totals only — no personal details.",
+      "totalLabel": "Reports (30 days)",
+      "categoriesLabel": "Common issues",
+      "unavailable": "Community stats unavailable right now."
+    }
   },
   "login": {
     "title": "Sign in as Officer",

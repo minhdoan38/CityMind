@@ -3,6 +3,7 @@ import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import PublicStatsStrip from "@/components/analytics/PublicStatsStrip";
 import ReportStarterBar from "@/components/ReportStarterBar";
 import { Link } from "@/i18n/navigation";
 
@@ -184,6 +185,8 @@ export default async function LocalizedHomePage() {
             </ol>
           </div>
         </section>
+
+        <PublicStatsStrip />
 
         {/* About — image + mission/vision (reference two-column) */}
         <section id="about" className="w-full scroll-mt-24 bg-secondary px-6 py-16 md:py-24">

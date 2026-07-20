@@ -93,7 +93,14 @@
     "categoryWaste": "Rác thải",
     "categoryStreetlight": "Đèn đường",
     "categoryObstruction": "Vướng mắc",
-    "categoryOther": "Khác"
+    "categoryOther": "Khác",
+    "stats": {
+      "sectionTitle": "Toàn cảnh cộng đồng",
+      "sectionBody": "Chỉ tổng hợp công khai gần đây — không có thông tin cá nhân.",
+      "totalLabel": "Báo cáo (30 ngày)",
+      "categoriesLabel": "Sự cố thường gặp",
+      "unavailable": "Thống kê cộng đồng tạm thời không có."
+    }
   },
   "login": {
     "title": "Đăng nhập cán bộ",

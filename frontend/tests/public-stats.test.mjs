@@ -27,7 +27,7 @@ test('Home page inserts PublicStatsStrip after instructions before contact', () 
   assert.ok(page.includes('PublicStatsStrip'), 'Home must render PublicStatsStrip');
   const instructionsIdx = page.indexOf('id="instructions"');
   const contactIdx = page.indexOf('id="contact"');
-  const stripIdx = page.indexOf('PublicStatsStrip');
+  const stripIdx = page.indexOf('<PublicStatsStrip');
   assert.ok(instructionsIdx >= 0, 'instructions section required');
   assert.ok(contactIdx > instructionsIdx, 'contact must follow instructions');
   assert.ok(
