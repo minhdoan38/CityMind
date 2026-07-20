@@ -105,7 +105,7 @@ Each task was committed atomically:
 1. **Task 1: Failing smoke for Copy status link reportId-only URL and catalog keys** - `02f559d` (test)
 2. **Task 2: CopyStatusLink in detail header + recovery hint + EN/VI feedback** - `3c9a036` (feat)
 
-**Plan metadata:** _(docs commit follows)_
+**Plan metadata:** `0965a83` (docs: complete plan)
 
 ## Files Created/Modified
 
