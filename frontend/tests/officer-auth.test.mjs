@@ -78,3 +78,31 @@ test('backend fetch forwards bearer authorization', () => {
   assert.match(backendContent, /Authorization/);
   assert.match(backendContent, /Bearer/);
 });
+
+test('proxy.ts gates /dashboard with getClaims + returnUrl (AUTH-04 / D-15 / D-17)', () => {
+  assert.ok(fs.existsSync(src('proxy.ts')), 'proxy.ts must exist (not middleware.ts)');
+  assert.equal(fs.existsSync(path.join(root, 'src', 'middleware.ts')), false);
+  assert.equal(fs.existsSync(path.join(root, 'middleware.ts')), false);
+
+  const proxy = read(src('proxy.ts'));
+  assert.match(proxy, /createMiddleware/);
+  assert.match(proxy, /from ['"]next-intl\/middleware['"]/);
+  assert.match(proxy, /createServerClient/);
+  assert.match(proxy, /\.auth\.getClaims\s*\(/);
+  assert.match(proxy, /returnUrl/);
+  assert.match(proxy, /\/login/);
+  assert.match(proxy, /startsWith\(['"]\/dashboard['"]\)/);
+  assert.doesNotMatch(proxy, /getSession\s*\(/);
+  // AUTH-04 path correction: never gate public Home as officer root
+  assert.doesNotMatch(proxy, /pathname\s*===\s*['"]\/['"]/);
+  assert.doesNotMatch(proxy, /citymind_officer_session/);
+});
+
+test('dashboard stays outside [locale] while public locale Home remains ungated', () => {
+  assert.ok(fs.existsSync(src('app', 'dashboard', 'page.tsx')));
+  assert.equal(fs.existsSync(src('app', '[locale]', 'dashboard', 'page.tsx')), false);
+  assert.ok(fs.existsSync(src('app', '[locale]', 'page.tsx')));
+  const proxy = read(src('proxy.ts'));
+  // Public locale routes still go through next-intl, not the auth redirect path alone
+  assert.match(proxy, /intlMiddleware/);
+});
