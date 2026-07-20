@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Check, Copy } from "lucide-react";
 
 import LocaleSwitcher from "@/components/LocaleSwitcher";
@@ -31,6 +31,7 @@ function consumeFlash(): FlashPayload | null {
 
 export default function ReportSuccessPage() {
   const t = useTranslations("public");
+  const locale = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [flash, setFlash] = useState<FlashPayload | null>(null);
@@ -53,7 +54,7 @@ export default function ReportSuccessPage() {
   }, [router, startTransition]);
 
   const statusPrepValue = flash
-    ? `/status?reportId=${encodeURIComponent(flash.reportId)}&token=${encodeURIComponent(flash.accessToken)}`
+    ? `/${locale}/status?reportId=${encodeURIComponent(flash.reportId)}&token=${encodeURIComponent(flash.accessToken)}`
     : "";
 
   async function copyText(
