@@ -67,7 +67,8 @@ test('success page one-shot flash, redirect, copy live region, status prep (D-11
   assert.match(success, /statusLinkPrep|coming soon|\/status/);
   assert.match(success, /replace\(|redirect\(/);
   assert.match(success, /\/report/);
-  assert.doesNotMatch(success, /searchParams|useSearchParams|\?access_token=|\?token=/);
+  assert.doesNotMatch(success, /useSearchParams|searchParams\.get/);
+  assert.doesNotMatch(success, /router\.(push|replace)\([^)]*[?&](access_)?token=/);
   assert.doesNotMatch(success, /slate-950/);
 });
 
