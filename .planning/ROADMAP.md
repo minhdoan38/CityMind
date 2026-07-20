@@ -94,7 +94,7 @@ Plans:
 
 Plans:
 
-- [ ] 03-01-PLAN.md — **Track A** — Schema push, cursor list, filtered summary, streaming export, actor_id + note gate
+- [x] 03-01-PLAN.md — **Track A** — Schema push, cursor list, filtered summary, streaming export, actor_id + note gate
 - [ ] 03-02-PLAN.md — **Track B** — TanStack table, filters, metrics, URL sync (not Home polish)
 - [ ] 03-03-PLAN.md — **Track C** — Detail section order, advisory AI, Dialog resolve/reject with required note
 - [ ] 03-04-PLAN.md — **Track B export** — Export button, BFF stream proxy, sidebar `?focus=export` (depends on 03-01 + 03-02; ∥ 03-03)
@@ -192,7 +192,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
 | 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
-| 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
+| 3. Dashboard Polish | v2.0 | 1/4 | In Progress|  |
 | 4. Citizen Status | v2.0 | 3/3 | UAT pending | - |
 | 5. Analytics Pipeline | v2.0 | 0/4 | Not started | - |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
