@@ -1,4 +1,6 @@
+from datetime import date
 from enum import StrEnum
+
 from pydantic import BaseModel, Field
 
 
@@ -52,3 +54,47 @@ class CitizenStatusResponse(BaseModel):
 class CitizenStatusRequest(BaseModel):
     report_id: str = Field(min_length=1, max_length=64)
     token: str = Field(min_length=1, max_length=128)
+
+
+# --- Officer analytics DTOs (ANLY-03 / D-16 / D-18) — no evidence URIs, tokens, notes ---
+
+
+class AnalyticsVolumePoint(BaseModel):
+    day: date
+    report_count: int
+
+
+class AnalyticsCategoryCount(BaseModel):
+    category: str
+    report_count: int
+
+
+class AnalyticsSlaBucket(BaseModel):
+    label: str
+    count: int
+
+
+class AnalyticsSlaSummary(BaseModel):
+    closed_count: int = 0
+    median_days: float | None = None
+    avg_days: float | None = None
+    histogram: list[AnalyticsSlaBucket] = Field(default_factory=list)
+
+
+class AnalyticsHotspotRow(BaseModel):
+    category: str
+    report_count: int
+
+
+class AnalyticsResponse(BaseModel):
+    """Chart-ready aggregates for the officer Analytics tab (D-05 / D-06 / D-10)."""
+
+    from_date: date = Field(serialization_alias="from")
+    to_date: date = Field(serialization_alias="to")
+    empty: bool
+    volume: list[AnalyticsVolumePoint] = Field(default_factory=list)
+    category_mix: list[AnalyticsCategoryCount] = Field(default_factory=list)
+    sla: AnalyticsSlaSummary = Field(default_factory=AnalyticsSlaSummary)
+    hotspots: list[AnalyticsHotspotRow] = Field(default_factory=list)
+
+    model_config = {"populate_by_name": True}

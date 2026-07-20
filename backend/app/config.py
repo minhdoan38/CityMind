@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     bigquery_dataset: str = "citymind"
     bigquery_reports_table: str = "reports"
+    # When true, ops legacy sink + officer analytics + ETL use BigQuery (server ADC only).
     enable_bigquery: bool = True
     max_image_bytes: int = 8 * 1024 * 1024
     cors_origins: str = "http://localhost:3000"
