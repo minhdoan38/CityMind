@@ -93,3 +93,57 @@ test('success page builds locale-prefixed status prep URL (D-03 / D-09)', () => 
   assert.match(page, /\/\$\{locale\}\/status\?reportId=/);
   assert.doesNotMatch(page, /`\/status\?reportId=/);
 });
+
+const DASHBOARD_COPY_KEYS = [
+  'copyStatusLink',
+  'statusLinkCopied',
+  'statusLinkRecoveryHint',
+];
+
+test('CopyStatusLink builds reportId-only status URL without token (DASH-08 / D-13 / D-14a)', () => {
+  const componentPath = src('components', 'CopyStatusLink.tsx');
+  assert.ok(
+    fs.existsSync(componentPath),
+    'expected frontend/src/components/CopyStatusLink.tsx'
+  );
+  const source = read(componentPath);
+  // Absolute /{locale}/status?reportId=… — never append token= (D-14a / T-04-10)
+  assert.match(
+    source,
+    /status\?reportId=\$\{encodeURIComponent\([^)]+\)\}/
+  );
+  assert.doesNotMatch(
+    source,
+    /status\?reportId=[^`'"]*token=/
+  );
+  assert.doesNotMatch(source, /[?&]token=/);
+  assert.match(source, /statusLinkRecoveryHint/);
+  assert.match(source, /navigator\.clipboard\.writeText/);
+});
+
+test('dashboard detail page wires CopyStatusLink in header/meta (D-13)', () => {
+  const page = read(src('app', 'dashboard', 'reports', '[reportId]', 'page.tsx'));
+  assert.match(page, /CopyStatusLink/);
+});
+
+test('dashboard.copyStatus* catalog keys exist with identical EN/VI trees (D-15 / UI-SPEC)', () => {
+  const en = JSON.parse(read(path.join(messagesDir, 'en.json')));
+  const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
+  assert.deepEqual(walkKeys(en), walkKeys(vi));
+
+  for (const key of DASHBOARD_COPY_KEYS) {
+    assert.equal(typeof en.dashboard[key], 'string', `missing en dashboard.${key}`);
+    assert.ok(en.dashboard[key].length > 0, `empty en dashboard.${key}`);
+    assert.equal(typeof vi.dashboard[key], 'string', `missing vi dashboard.${key}`);
+    assert.ok(vi.dashboard[key].length > 0, `empty vi dashboard.${key}`);
+  }
+
+  assert.equal(en.dashboard.copyStatusLink, 'Copy status link');
+  assert.equal(en.dashboard.statusLinkCopied, 'Link copied');
+  assert.equal(
+    en.dashboard.statusLinkRecoveryHint,
+    'Citizens need the access token from their submission page. The full link can’t be recovered here.'
+  );
+  assert.equal(vi.dashboard.copyStatusLink, 'Sao chép liên kết trạng thái');
+  assert.equal(vi.dashboard.statusLinkCopied, 'Đã sao chép liên kết');
+});
