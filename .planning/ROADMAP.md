@@ -91,7 +91,7 @@ Plans:
 3. Officer resolves/rejects reports with required note; actor recorded in status history
 4. Detail page shows full AI analysis, evidence, and status timeline
 
-**Plans**: 4 plans
+**Plans**: 5 plans
 
 Plans:
 
@@ -99,6 +99,7 @@ Plans:
 - [x] 03-02-PLAN.md — **Track B** — TanStack table, filters, metrics, URL sync (not Home polish)
 - [x] 03-03-PLAN.md — **Track C** — Detail section order, advisory AI, Dialog resolve/reject with required note
 - [x] 03-04-PLAN.md — **Track B export** — Export button, BFF stream proxy, sidebar `?focus=export` (depends on 03-01 + 03-02; ∥ 03-03)
+- [ ] 03-05-PLAN.md — **Gap closure** — List + detail `loading.tsx` Skeleton states (DASH-07 / D-22)
 
 ---
 
