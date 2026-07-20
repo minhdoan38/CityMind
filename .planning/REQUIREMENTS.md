@@ -23,7 +23,7 @@
 - [ ] **AUTH-01**: Officers authenticate via Supabase Auth (replace shared-password MVP)
 - [ ] **AUTH-02**: RLS policies enforce officer/admin read and update on reports
 - [ ] **AUTH-03**: Public analyze endpoint remains unauthenticated; officer endpoints require auth
-- [ ] **AUTH-04**: Next.js `proxy.ts` protects dashboard routes (`/dashboard` and `/dashboard/reports/*`); unauthenticated users redirect to `/login` with `returnUrl` (public `/` is not gated)
+- [x] **AUTH-04**: Next.js `proxy.ts` protects dashboard routes (`/dashboard` and `/dashboard/reports/*`); unauthenticated users redirect to `/login` with `returnUrl` (public `/` is not gated)
 
 ### Public / Landing (PUB)
 
@@ -115,7 +115,7 @@ Deferred beyond Milestone v2.
 | PUB-03 | Phase 2 | Pending |
 | PUB-04 | Phase 2 | Pending |
 | PUB-06 | Phase 2 | Complete |
-| AUTH-04 | Phase 2 | Pending |
+| AUTH-04 | Phase 2 | Complete |
 | DATA-04 | Phase 3 | Pending |
 | DATA-05 | Phase 3 | Pending |
 | DATA-06 | Phase 3 | Pending |

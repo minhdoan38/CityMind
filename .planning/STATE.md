@@ -5,15 +5,15 @@ milestone_name: Platform
 current_phase: 2
 current_phase_name: public-experience
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-07-20T12:09:23.632Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-07-20T12:15:05.031Z"
 last_activity: 2026-07-20
 last_activity_desc: Completed 02-02-PLAN.md
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 11
-  completed_plans: 8
+  completed_plans: 9
   percent: 14
 ---
 
@@ -29,7 +29,7 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 2 (public-experience) — EXECUTING
-Plan: 3 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-07-20 — Completed 02-02-PLAN.md
 
@@ -49,6 +49,8 @@ Progress: [███████░░░] 73%
 |-------|-------|-------|----------|
 | Phase 02-public-experience P01 | 3min | 3 tasks | 11 files |
 | Phase 02 P02 | 4min | 2 tasks | 15 files |
+| Phase 02 P03 | 4min | 2 tasks | 7 files |
+| Phase 02-public-experience P03 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -67,6 +69,11 @@ Recent decisions affecting current work:
 - [Phase 02]: Issue-once access_token: SHA-256 at rest, plaintext once in AnalyzeResponse — DATA-03 / D-18; soft contract for Plan 02-04
 - [Phase 02]: Rate limit on rightmost XFF hop; TRUSTED_PROXY_COUNT peels to hops[-N] — DATA-08 / RESEARCH Q1 RESOLVED
 - [Phase 02]: Always-prefix Home + locale-only proxy seam shipped (02-02); dashboard getClaims deferred to 02-03 — D-13/D-14/D-17 and PUB-01/02/06
+- [Phase 02]: Authorize officers via supabase.auth.getClaims + app_metadata.role; gate /dashboard in proxy.ts with returnUrl (AUTH-04/D-15/D-17) — Supabase SSR docs require getClaims for proxy authorization; D-17 path-corrects AUTH-04 away from public Home
+- [Phase 02]: Login EN copy inline outside [locale] during Wave 2 — Avoid message catalog conflicts with parallel Plan 02-04
+- [Phase 02]: Authorize via supabase.auth.getClaims + app_metadata.role (officer|admin) — Supabase SSR docs: getClaims validates JWT; getSession alone is not trusted for authz
+- [Phase 02]: AUTH-04 protects /dashboard/:path* only — never public Home (D-17) — Path correction vs legacy REQUIREMENTS that mentioned root protection
+- [Phase 02]: Login EN copy inline outside [locale] during Wave 2 — Avoid message-file conflicts with parallel Plan 02-04
 
 ### Pending Todos
 
@@ -89,6 +96,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T12:09:23.602Z
-Stopped at: Phase 1 verification human_needed — Phase 2 WIP preserved; resume Phase 2 execute after UAT or override
-Resume file: .planning/phases/02-public-experience/02-01-PLAN.md
+Last session: 2026-07-20T12:15:05.015Z
+Stopped at: Completed 02-03-PLAN.md
+Resume file: None
