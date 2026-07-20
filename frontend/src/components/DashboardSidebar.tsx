@@ -23,12 +23,13 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { FileText, Download, Settings, LogOut } from 'lucide-react';
+import { BarChart3, FileText, Download, Settings, LogOut } from 'lucide-react';
 
 export default function DashboardSidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const tNav = useTranslations('navigation');
+  const tAnalytics = useTranslations('dashboard.analytics');
   const tLogout = useTranslations('logout');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const exportFocused =
@@ -40,6 +41,12 @@ export default function DashboardSidebar({ userEmail }: { userEmail: string }) {
       url: '/dashboard',
       icon: FileText,
       active: pathname === '/dashboard' && !exportFocused,
+    },
+    {
+      title: tAnalytics('navItem'),
+      url: '/dashboard/analytics',
+      icon: BarChart3,
+      active: pathname === '/dashboard/analytics',
     },
     {
       title: 'Export',
