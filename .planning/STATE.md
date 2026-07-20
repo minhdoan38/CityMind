@@ -5,15 +5,15 @@ milestone_name: Platform
 current_phase: 2
 current_phase_name: public-experience
 status: executing
-stopped_at: Phase 3 context gathered
-last_updated: "2026-07-20T12:07:31.669Z"
+stopped_at: Completed 02-02-PLAN.md
+last_updated: "2026-07-20T12:07:46.482Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 2 execution started
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 11
-  completed_plans: 6
+  completed_plans: 8
   percent: 14
 ---
 
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 2 (public-experience) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 2
+Plan: 3 of 5
+Status: Ready to execute
 Last activity: 2026-07-20 — Phase 2 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -48,6 +48,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | — | — | — | — |
+| Phase 02-public-experience P01 | 3min | 3 tasks | 11 files |
+| Phase 02 P02 | 4min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -63,6 +65,9 @@ Recent decisions affecting current work:
 - Phase 2 waves: 02-01 ∥ 02-02 (wave 1); 02-03 ∥ 02-04 (wave 2, both depend on 02-02); 02-05 depends on 02-03 (wave 3)
 - Soft A→B: 02-04 success flash soft-consumes 02-01 `access_token` (phase-gate, not hard depends_on)
 - RESEARCH Q1–Q3 RESOLVED: rightmost XFF + optional TRUSTED_PROXY_COUNT; /login+/dashboard outside [locale]; Phase 1 FE packages verified
+- [Phase 02]: Issue-once access_token: SHA-256 at rest, plaintext once in AnalyzeResponse — DATA-03 / D-18; soft contract for Plan 02-04
+- [Phase 02]: Rate limit on rightmost XFF hop; TRUSTED_PROXY_COUNT peels to hops[-N] — DATA-08 / RESEARCH Q1 RESOLVED
+- [Phase 02]: Always-prefix Home + locale-only proxy seam shipped (02-02); dashboard getClaims deferred to 02-03 — D-13/D-14/D-17 and PUB-01/02/06
 
 ### Pending Todos
 
@@ -84,6 +89,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T12:07:31.663Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-dashboard-polish/03-CONTEXT.md
+Last session: 2026-07-20T12:07:46.476Z
+Stopped at: Completed 02-02-PLAN.md
+Resume file: None

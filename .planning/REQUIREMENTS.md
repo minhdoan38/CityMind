@@ -9,14 +9,14 @@
 
 - [ ] **DATA-01**: Reports and status events persist in Supabase Postgres (not BigQuery for ops CRUD)
 - [ ] **DATA-02**: Existing BigQuery demo data migrates to Supabase without loss
-- [ ] **DATA-03**: Access tokens stored hashed; plaintext token shown once on submit only
+- [x] **DATA-03**: Access tokens stored hashed; plaintext token shown once on submit only
 - [ ] **DATA-04**: Cursor pagination on report list API (`cursor` + `limit`)
 - [ ] **DATA-05**: Summary metrics respect active filters (not global-only)
 - [ ] **DATA-06**: Excel/CSV export endpoint streams filtered report data
 - [ ] **DATA-07**: Status updates record actor_id from authenticated officer JWT
-- [ ] **DATA-08**: Rate limiting uses client IP behind proxy (`X-Forwarded-For`)
-- [ ] **DATA-09**: Image upload validates magic bytes, not only Content-Type
-- [ ] **DATA-10**: API errors return generic messages; exceptions logged server-side
+- [x] **DATA-08**: Rate limiting uses client IP behind proxy (`X-Forwarded-For`)
+- [x] **DATA-09**: Image upload validates magic bytes, not only Content-Type
+- [x] **DATA-10**: API errors return generic messages; exceptions logged server-side
 
 ### Authentication (AUTH)
 
@@ -27,12 +27,12 @@
 
 ### Public / Landing (PUB)
 
-- [ ] **PUB-01**: Home page with hero, how-it-works, about/contact/instructions sections, footer
-- [ ] **PUB-02**: Bilingual EN/VI via next-intl with locale switcher
+- [x] **PUB-01**: Home page with hero, how-it-works, about/contact/instructions sections, footer
+- [x] **PUB-02**: Bilingual EN/VI via next-intl with locale switcher
 - [ ] **PUB-03**: Report form uses React Hook Form + Zod validation
 - [ ] **PUB-04**: Submit success shows report_id + access token + copyable status link
 - [ ] **PUB-05**: shadcn/ui component library installed and themed consistently
-- [ ] **PUB-06**: Public pages are mobile-responsive and accessible (focus states, aria)
+- [x] **PUB-06**: Public pages are mobile-responsive and accessible (focus states, aria)
 
 ### Citizen Status (CIT)
 
@@ -106,15 +106,15 @@ Deferred beyond Milestone v2.
 | AUTH-03 | Phase 1 | Pending |
 | PUB-05 | Phase 1 | Pending |
 | DASH-01 | Phase 1 | Pending |
-| DATA-03 | Phase 2 | Pending |
-| DATA-08 | Phase 2 | Pending |
-| DATA-09 | Phase 2 | Pending |
-| DATA-10 | Phase 2 | Pending |
-| PUB-01 | Phase 2 | Pending |
-| PUB-02 | Phase 2 | Pending |
+| DATA-03 | Phase 2 | Complete |
+| DATA-08 | Phase 2 | Complete |
+| DATA-09 | Phase 2 | Complete |
+| DATA-10 | Phase 2 | Complete |
+| PUB-01 | Phase 2 | Complete |
+| PUB-02 | Phase 2 | Complete |
 | PUB-03 | Phase 2 | Pending |
 | PUB-04 | Phase 2 | Pending |
-| PUB-06 | Phase 2 | Pending |
+| PUB-06 | Phase 2 | Complete |
 | AUTH-04 | Phase 2 | Pending |
 | DATA-04 | Phase 3 | Pending |
 | DATA-05 | Phase 3 | Pending |
@@ -139,6 +139,7 @@ Deferred beyond Milestone v2.
 | MAP-03 | Phase 6 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 35 total
 - Mapped to phases: 35
 - Unmapped: 0 ✓
