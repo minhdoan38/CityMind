@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const root = path.resolve('.');
 const src = (...parts) => path.join(root, 'src', ...parts);
@@ -49,11 +50,19 @@ test('login page honors returnUrl and stays outside [locale]', () => {
   assert.doesNotMatch(loginPage, /getTranslations|LocaleSwitcher/);
 });
 
-test('safeReturnUrl rejects open redirects (T-02-09)', () => {
+test('safeReturnUrl rejects open redirects (T-02-09)', async () => {
   const helperPath = src('lib', 'safe-return-url.ts');
   assert.ok(fs.existsSync(helperPath), 'safe-return-url.ts must exist');
   const helper = read(helperPath);
   assert.match(helper, /export function safeReturnUrl/);
+
+  const { safeReturnUrl } = await import(pathToFileURL(helperPath).href);
+  assert.equal(safeReturnUrl('/dashboard/reports/1'), '/dashboard/reports/1');
+  assert.equal(safeReturnUrl('/dashboard?tab=open'), '/dashboard?tab=open');
+  assert.equal(safeReturnUrl(null), '/dashboard');
+  assert.equal(safeReturnUrl('https://evil.example/phish'), '/dashboard');
+  assert.equal(safeReturnUrl('//evil.example'), '/dashboard');
+  assert.equal(safeReturnUrl('/\\evil'), '/dashboard');
 });
 
 test('api routes use getClaims for validation', () => {

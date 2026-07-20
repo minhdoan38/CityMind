@@ -6,17 +6,25 @@ import { createClient } from "./supabase/server";
 export type Role = "officer" | "admin";
 export type Session = { role: Role; userId: string };
 
+function roleFromClaims(claims: {
+  sub?: string;
+  app_metadata?: { role?: string } | Record<string, unknown>;
+} | null | undefined): Session | null {
+  if (!claims?.sub) return null;
+  const role = (claims.app_metadata as { role?: string } | undefined)?.role;
+  if (role === "officer" || role === "admin") {
+    return { role, userId: claims.sub };
+  }
+  return null;
+}
+
+/** Verify JWT via supabase.auth.getClaims() — do not authorize from getSession() alone. */
 export async function getClaims(): Promise<Session | null> {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    
-    const role = user.app_metadata?.role;
-    if (role === "officer" || role === "admin") {
-      return { role: role as Role, userId: user.id };
-    }
-    return null;
+    const { data, error } = await supabase.auth.getClaims();
+    if (error || !data?.claims) return null;
+    return roleFromClaims(data.claims);
   } catch {
     return null;
   }

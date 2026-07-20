@@ -1,36 +1,35 @@
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import LocaleSwitcher from "@/components/LocaleSwitcher";
+import { safeReturnUrl } from "@/lib/safe-return-url";
 
 type Props = {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; returnUrl?: string }>;
 };
 
+/** Officer login stays outside [locale]; EN copy is inline to avoid Wave 2 catalog conflicts. */
 export default async function LoginPage({ searchParams }: Props) {
-  const { error } = await searchParams;
-  const t = await getTranslations("login");
-  const nav = await getTranslations("navigation");
+  const params = await searchParams;
+  const error = params.error;
+  const returnUrl = safeReturnUrl(params.returnUrl);
 
   return (
     <main className="grid min-h-screen place-items-center bg-background p-4 text-foreground">
-      <div className="absolute top-4 right-4">
-        <LocaleSwitcher />
-      </div>
-      
       <Card className="w-full max-w-md border border-border shadow-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">{t("title")}</CardTitle>
-          <CardDescription>{t("subtitle")}</CardDescription>
+          <CardTitle className="text-2xl font-bold">Sign in as Officer</CardTitle>
+          <CardDescription>
+            Access the officer decision-support dashboard
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action="/api/session/login" method="post" className="space-y-4">
+            <input type="hidden" name="returnUrl" value={returnUrl} />
             <div className="space-y-2">
-              <Label htmlFor="email">{t("email")}</Label>
+              <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
                 name="email"
@@ -41,9 +40,9 @@ export default async function LoginPage({ searchParams }: Props) {
                 className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="password">{t("password")}</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 name="password"
@@ -56,7 +55,7 @@ export default async function LoginPage({ searchParams }: Props) {
 
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{t("error")}</AlertDescription>
+                <AlertDescription>Invalid email or password.</AlertDescription>
               </Alert>
             )}
 
@@ -64,16 +63,16 @@ export default async function LoginPage({ searchParams }: Props) {
               type="submit"
               className="w-full min-h-11 bg-primary text-primary-foreground font-semibold hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 transition-colors"
             >
-              {t("submit")}
+              Sign in
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <Link
-              href="/report"
+              href="/en"
               className="text-sm font-medium text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
             >
-              {nav("report")}
+              Back to home
             </Link>
           </div>
         </CardContent>

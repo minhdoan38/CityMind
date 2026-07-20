@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { safeReturnUrl } from "@/lib/safe-return-url";
 
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
+    const returnUrl = safeReturnUrl(String(form.get("returnUrl") ?? ""));
 
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.signInWithPassword({
@@ -14,9 +16,12 @@ export async function POST(request: Request) {
     });
 
     if (error || !user) {
+      const login = new URL("/login", request.url);
+      login.searchParams.set("error", "1");
+      if (returnUrl !== "/dashboard") login.searchParams.set("returnUrl", returnUrl);
       return new NextResponse(null, {
         status: 303,
-        headers: { Location: "/login?error=1" },
+        headers: { Location: `${login.pathname}${login.search}` },
       });
     }
 
@@ -31,7 +36,7 @@ export async function POST(request: Request) {
 
     return new NextResponse(null, {
       status: 303,
-      headers: { Location: "/dashboard" },
+      headers: { Location: returnUrl },
     });
   } catch {
     return new NextResponse(null, {
