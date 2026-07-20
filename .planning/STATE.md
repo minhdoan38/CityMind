@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-07-20T16:22:20.043Z"
-last_activity: 2026-07-20 -- Phase 05 execution started
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-07-20T16:29:18.537Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 22
-  completed_plans: 18
+  completed_plans: 19
   percent: 57
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 05 (analytics-pipeline) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 05
-Last activity: 2026-07-20 -- Phase 05 execution started
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-07-20
 
-Progress: [████████░░] 82%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [████████░░] 82%
 | Phase 03 P02 | 5min | 1 tasks | 15 files |
 | Phase 03 P03 | 5min | 2 tasks | 6 files |
 | Phase 03 P04 | 10min | 1 tasks | 10 files |
+| Phase 05 P01 | 15min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Export uses fetch+blob for error Alert; BFF streams from FastAPI (no SheetJS)
 - [Phase 03]: Sidebar Export active via useSearchParams with Suspense in dashboard layout
 - [Phase 03]: Additive EN/VI export keys only — preserved 03-03 detail/resolve catalog
+- [Phase 05]: New *_analytics BQ tables (not in-place DROP of legacy reports columns) — Avoid breaking leftover readers of old schema.sql shapes
+- [Phase 05]: Dual watermarks because reports has no updated_at — Status changes refresh report rows via events watermark
+- [Phase 05]: SLA open = report created_at; close = MIN(resolved/rejected) — One close per report_id (D-05/D-14)
 
 ### Pending Todos
 
@@ -130,7 +134,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T16:14:19.161Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-07-20T16:29:18.531Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)

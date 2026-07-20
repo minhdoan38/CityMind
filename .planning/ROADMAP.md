@@ -144,7 +144,7 @@ Plans:
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — **Track A1** — Wave 0 stubs, analytics DDL/views, daily ETL job (ANLY-01/02)
+- [x] 05-01-PLAN.md — **Track A1** — Wave 0 stubs, analytics DDL/views, daily ETL job (ANLY-01/02)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -194,7 +194,7 @@ Plans:
 | 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
 | 3. Dashboard Polish | v2.0 | 4/4 | Complete   | 2026-07-20 |
 | 4. Citizen Status | v2.0 | 3/3 | UAT pending | - |
-| 5. Analytics Pipeline | v2.0 | 0/4 | Not started | - |
+| 5. Analytics Pipeline | v2.0 | 1/4 | In Progress|  |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Self-help vs government AI triage | v2.0 | 0/0 | Not started | - |
 

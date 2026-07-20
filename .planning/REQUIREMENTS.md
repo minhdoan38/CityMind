@@ -54,8 +54,8 @@
 
 ### Analytics (ANLY)
 
-- [ ] **ANLY-01**: Supabase → BigQuery ETL job syncs report/status data
-- [ ] **ANLY-02**: BigQuery views for category trends, SLA/time-to-resolution, hotspots
+- [x] **ANLY-01**: Supabase → BigQuery ETL job syncs report/status data
+- [x] **ANLY-02**: BigQuery views for category trends, SLA/time-to-resolution, hotspots
 - [ ] **ANLY-03**: Dashboard analytics tab with date range selector
 
 ### Maps (MAP) — Phase 6
@@ -131,8 +131,8 @@ Deferred beyond Milestone v2.
 | CIT-03 | Phase 4 | Complete |
 | CIT-04 | Phase 4 | Complete |
 | DASH-08 | Phase 4 | Complete |
-| ANLY-01 | Phase 5 | Pending |
-| ANLY-02 | Phase 5 | Pending |
+| ANLY-01 | Phase 5 | Complete |
+| ANLY-02 | Phase 5 | Complete |
 | ANLY-03 | Phase 5 | Pending |
 | MAP-01 | Phase 6 | Pending |
 | MAP-02 | Phase 6 | Pending |
