@@ -110,7 +110,7 @@ status: complete
 2. **Task 2 (RED): add failing report-form contract tests** — `f89764c` (test)
 3. **Task 2 (GREEN): rebuild ReportForm with RHF success flash** — `c8b6d4b` (feat)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `d5a6ddf` (docs: complete plan)
 
 ## Files Created/Modified
 
