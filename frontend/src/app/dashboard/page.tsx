@@ -1,69 +1,115 @@
-import { officerFetch } from "@/lib/backend";
-import ReportCard from "@/components/dashboard/ReportCard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { getTranslations } from "next-intl/server";
 
-type Report = {
-  report_id: string;
-  created_at: string;
-  category: string;
-  priority: string;
-  status: string;
-  summary: string;
+import { officerFetch } from "@/lib/backend";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import ReportsFilters from "@/components/reports/ReportsFilters";
+import ReportsMetrics from "@/components/reports/ReportsMetrics";
+import ReportsTable from "@/components/reports/ReportsTable";
+import {
+  buildReportsQuery,
+  hasActiveFilters,
+  type DashboardSearchParams,
+  type ReportRow,
+  type SummaryMetrics,
+} from "@/components/reports/types";
+
+type Props = {
+  searchParams: Promise<DashboardSearchParams>;
 };
 
-type FetchResult<T> = { data: T; error: string | null };
+type FetchBundle = {
+  rows: ReportRow[];
+  nextCursor: string | null;
+  metrics: SummaryMetrics | null;
+  error: string | null;
+};
 
-async function getRecentReports(): Promise<FetchResult<Report[]>> {
+async function loadDashboard(params: DashboardSearchParams): Promise<FetchBundle> {
+  const listQs = buildReportsQuery(params, { includeCursor: true });
+  const summaryQs = buildReportsQuery(
+    { ...params, cursor: undefined },
+    { includeCursor: false },
+  );
+
   try {
-    const res = await officerFetch("/api/v1/reports/recent?limit=5", {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      return { data: [], error: `Could not load reports (HTTP ${res.status}).` };
+    const [listRes, summaryRes] = await Promise.all([
+      officerFetch(`/api/v1/reports/recent?${listQs}`, { cache: "no-store" }),
+      officerFetch(`/api/v1/reports/summary?${summaryQs}`, { cache: "no-store" }),
+    ]);
+
+    if (!listRes.ok) {
+      return {
+        rows: [],
+        nextCursor: null,
+        metrics: null,
+        error: "load",
+      };
     }
-    const body = await res.json();
-    return { data: body.items ?? [], error: null };
+
+    const listBody = await listRes.json();
+    let metrics: SummaryMetrics | null = null;
+    if (summaryRes.ok) {
+      metrics = (await summaryRes.json()) as SummaryMetrics;
+    }
+
+    return {
+      rows: (listBody.items ?? []) as ReportRow[],
+      nextCursor: (listBody.next_cursor as string | null) ?? null,
+      metrics,
+      error: null,
+    };
   } catch {
-    return { data: [], error: "Could not connect to the CityMind API." };
+    return {
+      rows: [],
+      nextCursor: null,
+      metrics: null,
+      error: "api",
+    };
   }
 }
 
-export default async function DashboardPage() {
-  const result = await getRecentReports();
-  const reports = result.data;
+export default async function DashboardPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const normalized: DashboardSearchParams = {
+    ...params,
+    limit: params.limit ?? "25",
+    sort: params.sort ?? "created_at",
+    order: params.order ?? "desc",
+  };
+  const t = await getTranslations("dashboard");
+  const terror = await getTranslations("error");
+  const result = await loadDashboard(normalized);
+  const filtersActive = hasActiveFilters(normalized);
 
   return (
-    <div className="space-y-6">
+    <div className="w-full max-w-none space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Officer dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
-          Recent community reports for review.
-        </p>
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          {t("pageTitle")}
+        </h1>
+        <p className="mt-2 text-base text-muted-foreground">{t("pageSubtitle")}</p>
       </div>
+
+      <ReportsFilters params={normalized} />
+      <ReportsMetrics metrics={result.metrics} />
 
       {result.error && (
         <Alert variant="destructive">
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>{t("errorTitle")}</AlertTitle>
           <AlertDescription>
-            Could not load reports. Check your connection and try again.
+            {result.error === "api" ? terror("apiConnection") : terror("loadFailed")}
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-4">
-        {reports.map((report) => (
-          <ReportCard key={report.report_id} report={report} />
-        ))}
-
-        {!result.error && reports.length === 0 && (
-          <div className="rounded-lg border border-dashed border-border p-12 text-center text-muted-foreground">
-            <p className="text-lg font-medium">No reports yet</p>
-            <p className="mt-1 text-sm">
-              Citizen reports will show up here after submission.
-            </p>
-          </div>
-        )}
-      </div>
+      {!result.error && (
+        <ReportsTable
+          rows={result.rows}
+          nextCursor={result.nextCursor}
+          params={normalized}
+          filtersActive={filtersActive}
+        />
+      )}
     </div>
   );
 }
