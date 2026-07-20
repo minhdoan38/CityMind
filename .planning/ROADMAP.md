@@ -115,11 +115,11 @@ Plans:
 2. Invalid token does not reveal whether report exists
 3. Officer can copy shareable status link from detail page
 
-**Plans**: 3 plans
+**Plans**: 1/3 plans executed
 
 Plans:
 
-- [ ] 04-01-PLAN.md — **Track A** — POST status API + hash verify + uniform 401 + separate rate limiter + tests
+- [x] 04-01-PLAN.md — **Track A** — POST status API + hash verify + uniform 401 + separate rate limiter + tests
 - [ ] 04-02-PLAN.md — **Track B** — Next BFF + `/[locale]/status` page (form, auto-fetch, EN/VI) + success locale URL fix
 - [ ] 04-03-PLAN.md — **Track C** — Officer Copy status link (reportId-only) + recovery hint on detail
 
@@ -182,7 +182,7 @@ Plans:
 | 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
 | 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
-| 4. Citizen Status | v2.0 | 0/3 | Not started | - |
+| 4. Citizen Status | v2.0 | 1/3 | In Progress|  |
 | 5. Analytics Pipeline | v2.0 | 0/3 | Not started | - |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Self-help vs government AI triage | v2.0 | 0/0 | Not started | - |

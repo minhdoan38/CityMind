@@ -5,15 +5,15 @@ milestone_name: Platform
 current_phase: 3
 current_phase_name: dashboard-polish
 status: executing
-stopped_at: Phase 4 plans ready (04-01..04-03)
-last_updated: "2026-07-20T14:04:26.283Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-07-20T14:10:32.263Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 3 execution resumed (wave continue)
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 18
-  completed_plans: 11
+  completed_plans: 12
   percent: 29
 ---
 
@@ -29,8 +29,8 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 3 (dashboard-polish) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 3
+Plan: 2 of 4
+Status: Ready to execute
 Last activity: 2026-07-20 — Phase 3 execution resumed (wave continue)
 
 Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap checkbox cleared until UAT)
@@ -53,6 +53,7 @@ Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap c
 | Phase 02-public-experience P03 | 4min | 2 tasks | 7 files |
 | Phase 02-public-experience P04 | 8min | 2 tasks | 11 files |
 | Phase 02 P05 | 4 min | 2 tasks | 4 files |
+| Phase 04 P01 | 3min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Text Priority:/Status: badges on ReportCard — Meets D-16 badge text (not color-only) without depending on parallel badge.tsx
 - [Phase 02]: Legacy /reports/[reportId] redirects into /dashboard/reports — Keeps AUTH-04 proxy matcher coverage for old links
 - Phase 4 plans: 04-01 Track A (API) → 04-02 Track B (status UI/BFF) → 04-03 Track C (officer copy); D-01..D-18 covered; RESEARCH Q1–Q3 RESOLVED
+- [Phase 04]: Uniform 401 detail for citizen status verify failures — CIT-03 anti-enumeration; never 404
+- [Phase 04]: Separate status_limiter with status:{ip} keys — CIT-04; must not share analyze report_limiter
+- [Phase 04]: Citizen history strips actor_id; notes as plain text — CIT-02 / D-05 / D-06
 
 ### Pending Todos
 
@@ -105,7 +109,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:04:26.275Z
-Stopped at: Phase 4 plans ready (04-01..04-03)
-Resume file: .planning/phases/04-citizen-status/04-01-PLAN.md
+Last session: 2026-07-20T14:10:32.253Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)
