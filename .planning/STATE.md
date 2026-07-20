@@ -86,9 +86,12 @@ Recent decisions affecting current work:
 - [Phase 04]: Uniform 401 detail for citizen status verify failures — CIT-03 anti-enumeration; never 404
 - [Phase 04]: Separate status_limiter with status:{ip} keys — CIT-04; must not share analyze report_limiter
 - [Phase 04]: Citizen history strips actor_id; notes as plain text — CIT-02 / D-05 / D-06
+- Phase 5 context: daily incremental ETL; 3 officer charts + hotspot list; 30d default; thin public Home stats with k≥3; no maps; strict BQ privacy exclusions
 
 ### Pending Todos
 
+- Phase 5 context ready — next `$gsd-plan-phase 5` (depends on Phase 4 for execute)
+- Phase 3 schema push still blocking 03-01 SUMMARY if not yet applied
 - Phase 2 human UAT (Home visual/locale, citizen submit→flash, login→returnUrl→dashboard) — see `02-VERIFICATION.md` human_verification
 - Phase 1 human UAT still open (`human_needed`) — see `01-VERIFICATION.md`
 
