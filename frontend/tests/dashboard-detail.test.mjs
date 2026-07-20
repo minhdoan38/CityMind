@@ -99,3 +99,59 @@ test('EN/VI catalogs include detail section and empty/error copy', () => {
   assert.equal(d.detailBack, 'Back to reports');
   assert.equal(v.detailBack, 'Quay lại danh sách báo cáo');
 });
+
+test('StatusActions uses Dialog note gate for resolve/reject', () => {
+  assert.ok(
+    fs.existsSync(path.resolve(root, 'src/components/ui/dialog.tsx')),
+    'shadcn dialog.tsx must exist',
+  );
+  const src = read('src/components/StatusActions.tsx');
+  assert.ok(
+    /from ["']@\/components\/ui\/dialog["']/.test(src),
+    'StatusActions must import Dialog components',
+  );
+  assert.ok(
+    /searchParams\.set\(["']note["']/.test(src),
+    'resolved/rejected path must set note on the PATCH URL',
+  );
+  assert.ok(
+    /reviewing/.test(src) && /Dialog|pendingStatus|openDialog|setDialog/.test(src),
+    'StatusActions must distinguish reviewing from dialog-gated statuses',
+  );
+  // reviewing must be callable without requiring dialog open first
+  assert.ok(
+    /updateStatus\(\s*["']reviewing["']|status === ["']reviewing["']|status !== ["']reviewing["']|status === "reviewing"|=== 'reviewing'/.test(
+      src,
+    ) ||
+      (/reviewing/.test(src) &&
+        /immediate|without.?dialog|no.?dialog|!.*dialog|openConfirm|setPending/i.test(src)),
+    'reviewing path must not require Dialog open for PATCH',
+  );
+  assert.ok(
+    /trim\(\)/.test(src),
+    'note must be trimmed before send',
+  );
+  assert.ok(
+    !/actor_id|actorId|actor=/.test(src) || !/searchParams\.set\(["']actor/.test(src),
+    'actor must never be collected in StatusActions UI',
+  );
+});
+
+test('EN/VI catalogs include Confirm resolve / reject Dialog copy', () => {
+  const en = JSON.parse(read('messages/en.json'));
+  const vi = JSON.parse(read('messages/vi.json'));
+  assert.equal(en.dashboard.confirmResolve, 'Confirm resolve');
+  assert.equal(vi.dashboard.confirmResolve, 'Xác nhận đã xử lý');
+  assert.equal(en.dashboard.confirmReject, 'Confirm reject');
+  assert.equal(vi.dashboard.confirmReject, 'Xác nhận từ chối');
+  assert.equal(en.dashboard.dialogDismiss, 'Keep editing');
+  assert.equal(vi.dashboard.dialogDismiss, 'Giữ nguyên');
+  assert.equal(en.dashboard.noteRequired, 'A note is required to resolve or reject.');
+  assert.equal(vi.dashboard.noteRequired, 'Cần ghi chú để xác nhận đã xử lý hoặc từ chối.');
+  assert.equal(en.dashboard.markReviewing, 'Mark as reviewing');
+  assert.equal(vi.dashboard.markReviewing, 'Đánh dấu đang xem xét');
+  assert.equal(en.dashboard.markResolved, 'Mark as resolved');
+  assert.equal(vi.dashboard.markResolved, 'Đánh dấu đã xử lý');
+  assert.equal(en.dashboard.markRejected, 'Mark as rejected');
+  assert.equal(vi.dashboard.markRejected, 'Đánh dấu từ chối');
+});
