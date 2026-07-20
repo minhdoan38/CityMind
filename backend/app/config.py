@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     enable_image_storage: bool = False
     gcs_bucket_name: str = ""
 
+    # Supabase configuration
+    supabase_url: str = ""
+    supabase_publishable_key: str = ""
+    supabase_secret_key: str = ""
+    supabase_jwt_audience: str = "authenticated"
+    supabase_jwt_issuer: str = ""
+    supabase_jwks_url: str = ""
+    supabase_bucket_name: str = "evidence"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [

@@ -16,7 +16,7 @@ from fastapi import (
 from app.config import get_settings
 from app.schemas import AnalyzeResponse, Category, Priority
 from app.security import enforce_report_rate_limit, require_officer
-from app.services.bigquery import BigQueryReportSink
+from app.services.supabase import SupabaseReportSink
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
@@ -35,8 +35,8 @@ def get_analyzer() -> GeminiAnalyzer:
 
 
 @lru_cache
-def get_sink() -> BigQueryReportSink:
-    return BigQueryReportSink(get_settings())
+def get_sink() -> SupabaseReportSink:
+    return SupabaseReportSink(get_settings())
 
 
 @lru_cache
@@ -121,7 +121,7 @@ async def recent_reports(
     priority: str | None = None,
     min_severity: int | None = Query(default=None, ge=1, le=5),
     max_severity: int | None = Query(default=None, ge=1, le=5),
-    _officer: None = Depends(require_officer),
+    _officer: str = Depends(require_officer),
 ):
     if limit < 1 or limit > 100:
         raise HTTPException(422, "limit must be between 1 and 100")
@@ -146,18 +146,19 @@ async def recent_reports(
             priority=priority,
             min_severity=min_severity,
             max_severity=max_severity,
+            caller_token=_officer,
         )
         return {"items": items, "count": len(items)}
     except Exception as exc:
-        raise HTTPException(502, f"BigQuery query failed: {exc}") from exc
+        raise HTTPException(502, f"Database query failed: {exc}") from exc
 
 
 @router.get("/summary")
-async def reports_summary(_officer: None = Depends(require_officer)):
+async def reports_summary(_officer: str = Depends(require_officer)):
     try:
-        return get_sink().summary()
+        return get_sink().summary(caller_token=_officer)
     except Exception as exc:
-        raise HTTPException(502, f"BigQuery summary failed: {exc}") from exc
+        raise HTTPException(502, f"Database summary failed: {exc}") from exc
 
 
 @router.patch("/{report_id}/status")
@@ -165,16 +166,16 @@ async def update_report_status(
     report_id: str,
     status: str,
     note: str | None = None,
-    _officer: None = Depends(require_officer),
+    _officer: str = Depends(require_officer),
 ):
     if status not in VALID_STATUSES:
         raise HTTPException(422, "Invalid status")
 
     try:
         sink = get_sink()
-        if not sink.get_report(report_id):
+        if not sink.get_report(report_id, caller_token=_officer):
             raise HTTPException(404, "Report not found")
-        updated = sink.update_status(report_id, status, note)
+        updated = sink.update_status(report_id, status, note, caller_token=_officer)
         return {"report_id": report_id, "status": status, "updated": updated}
     except HTTPException:
         raise
@@ -184,10 +185,10 @@ async def update_report_status(
 
 @router.get("/{report_id}/image")
 async def get_report_image(
-    report_id: str, _officer: None = Depends(require_officer)
+    report_id: str, _officer: str = Depends(require_officer)
 ):
     try:
-        gcs_uri = get_sink().get_image_gcs_uri(report_id)
+        gcs_uri = get_sink().get_image_gcs_uri(report_id, caller_token=_officer)
         if not gcs_uri:
             raise HTTPException(404, "No image found for this report")
 
@@ -201,13 +202,13 @@ async def get_report_image(
 
 @router.get("/{report_id}/status-history")
 async def report_status_history(
-    report_id: str, _officer: None = Depends(require_officer)
+    report_id: str, _officer: str = Depends(require_officer)
 ):
     try:
         sink = get_sink()
-        if not sink.get_report(report_id):
+        if not sink.get_report(report_id, caller_token=_officer):
             raise HTTPException(404, "Report not found")
-        items = sink.status_history(report_id)
+        items = sink.status_history(report_id, caller_token=_officer)
         return {"items": items, "count": len(items)}
     except HTTPException:
         raise
@@ -217,10 +218,10 @@ async def report_status_history(
 
 @router.get("/{report_id}")
 async def report_detail(
-    report_id: str, _officer: None = Depends(require_officer)
+    report_id: str, _officer: str = Depends(require_officer)
 ):
     try:
-        report = get_sink().get_report(report_id)
+        report = get_sink().get_report(report_id, caller_token=_officer)
         if not report:
             raise HTTPException(404, "Report not found")
         return report

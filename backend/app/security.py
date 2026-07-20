@@ -2,7 +2,8 @@ import secrets
 import threading
 import time
 from collections import defaultdict, deque
-
+import jwt
+from jwt import PyJWKClient
 from fastapi import Header, HTTPException, Request
 
 from app.config import get_settings
@@ -36,18 +37,54 @@ report_limiter = SlidingWindowLimiter()
 
 
 def require_officer(
-    x_citymind_officer_key: str | None = Header(default=None),
-) -> None:
-    settings = get_settings()
-    expected = settings.officer_api_key
-    if not expected:
-        if settings.app_env.lower() == "production":
-            raise HTTPException(503, "Officer authentication is not configured")
-        return
-    if not x_citymind_officer_key or not secrets.compare_digest(
-        x_citymind_officer_key, expected
-    ):
+    authorization: str | None = Header(default=None),
+) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Officer authentication required")
+
+    token = authorization.split(" ", 1)[1]
+    settings = get_settings()
+
+    if not settings.supabase_url:
+        raise HTTPException(503, "Supabase service is not configured")
+
+    try:
+        # Determine JWKS URL
+        jwks_url = settings.supabase_jwks_url
+        if not jwks_url:
+            jwks_url = f"{settings.supabase_url.rstrip('/')}/auth/v1/keys"
+
+        # Determine expected issuer
+        issuer = settings.supabase_jwt_issuer
+        if not issuer:
+            issuer = f"{settings.supabase_url.rstrip('/')}/auth/v1"
+
+        # Fetch keys and decode/validate JWT
+        jwks_client = PyJWKClient(jwks_url)
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
+        
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            audience=settings.supabase_jwt_audience,
+            issuer=issuer,
+        )
+
+        role = payload.get("app_metadata", {}).get("role")
+        if role not in ("officer", "admin"):
+            raise HTTPException(403, "Access forbidden: insufficient role")
+
+        return token
+
+    except HTTPException:
+        raise
+    except jwt.ExpiredSignatureError as exc:
+        raise HTTPException(401, f"Token expired: {exc}") from exc
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(401, f"Invalid token signature or claims: {exc}") from exc
+    except Exception as exc:
+        raise HTTPException(401, f"Authentication failed: {exc}") from exc
 
 
 def enforce_report_rate_limit(request: Request) -> None:

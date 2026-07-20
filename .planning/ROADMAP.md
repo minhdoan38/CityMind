@@ -33,12 +33,15 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 3. shadcn/ui installed; landing and dashboard shells render with placeholder data
 4. Demo data migrated from BigQuery to Supabase
 
-**Plans**: 3 plans (one per track)
+**Plans**: 6 plans (three vertical tracks split at executable scope boundaries)
 
 Plans:
-- [ ] 01-01: **Track A** — Supabase schema, RLS, FastAPI SupabaseReportSink, migration script, tests
-- [ ] 01-02: **Track B** — shadcn/ui setup, i18n scaffold, public layout (header/footer/locale)
-- [ ] 01-03: **Track C** — Dashboard app shell, sidebar nav, Supabase Auth login page
+- [x] 01-01: **Track A1** — Supabase schema/RLS, FastAPI cutover, JWT boundary, storage, blocking schema push
+- [x] 01-02: **Track A2** — BigQuery demo-data migration, Supabase seed adaptation, reconciliation
+- [ ] 01-03: **Track B1** — Audited shadcn dependency install, generated core primitives, civic theme
+- [ ] 01-04: **Track B2** — Public Home shell, next-intl EN/VI scaffold, locale interaction
+- [ ] 01-05: **Track C1** — Supabase SSR auth, login/logout, bearer-token BFF bridge
+- [ ] 01-06: **Track C2** — Protected responsive dashboard shell, sidebar navigation, detail routing
 
 ---
 
@@ -155,7 +158,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Supabase Foundation | v2.0 | 0/3 | Not started | - |
+| 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
 | 2. Public Experience | v2.0 | 0/3 | Not started | - |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
 | 4. Citizen Status | v2.0 | 0/3 | Not started | - |

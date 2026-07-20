@@ -4,10 +4,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-
 from dotenv import load_dotenv
-from google.cloud import bigquery
-
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
@@ -24,69 +21,30 @@ from app.demo_data import (  # noqa: E402
     demo_summary,
 )
 from app.services.storage import EvidenceStorage  # noqa: E402
+from supabase import create_client
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Seed deterministic CityMind demo data.")
+    parser = argparse.ArgumentParser(description="Seed deterministic CityMind demo data to Supabase.")
     parser.add_argument(
         "--apply",
         action="store_true",
-        help="Write missing demo rows to BigQuery and one image to private GCS.",
+        help="Write missing demo rows to Supabase and one image to private Storage.",
     )
     return parser.parse_args()
 
 
-def existing_report_ids(client, table_id, report_ids):
-    query = f"""
-    SELECT report_id
-    FROM `{table_id}`
-    WHERE report_id IN UNNEST(@report_ids)
-    """
-    config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ArrayQueryParameter("report_ids", "STRING", report_ids)
-        ]
-    )
-    return {
-        row["report_id"]
-        for row in client.query(query, job_config=config).result()
-    }
-
-
-def existing_status_keys(client, table_id, report_ids):
-    query = f"""
-    SELECT report_id, status, note
-    FROM `{table_id}`
-    WHERE report_id IN UNNEST(@report_ids)
-    """
-    config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ArrayQueryParameter("report_ids", "STRING", report_ids)
-        ]
-    )
-    return {
-        (row["report_id"], row["status"], row.get("note"))
-        for row in client.query(query, job_config=config).result()
-    }
-
-
 def apply_seed(settings):
-    if not settings.enable_bigquery:
-        raise RuntimeError("ENABLE_BIGQUERY must be true")
-    if not settings.enable_image_storage or not settings.gcs_bucket_name:
+    if not settings.supabase_url or not settings.supabase_secret_key:
+        raise RuntimeError("Supabase credentials must be configured")
+    if not settings.enable_image_storage:
         raise RuntimeError("Private image storage must be enabled and configured")
 
-    client = bigquery.Client(project=settings.google_cloud_project)
-    reports_table = (
-        f"{settings.google_cloud_project}.{settings.bigquery_dataset}."
-        f"{settings.bigquery_reports_table}"
-    )
-    status_table = (
-        f"{settings.google_cloud_project}.{settings.bigquery_dataset}."
-        "report_status_events"
-    )
-    report_ids = [report.report_id for report in REPORTS]
-    existing_reports = existing_report_ids(client, reports_table, report_ids)
+    client = create_client(settings.supabase_url, settings.supabase_secret_key)
+    
+    # Check existing reports
+    response = client.table("reports").select("report_id").execute()
+    existing_reports = {row["report_id"] for row in response.data}
     missing_reports = [r for r in REPORTS if r.report_id not in existing_reports]
 
     image_report = next(report for report in REPORTS if report.has_image)
@@ -99,36 +57,73 @@ def apply_seed(settings):
         )
 
     now = datetime.now(timezone.utc)
-    report_rows = [
-        row
-        for row in build_report_rows(now, image_uri=image_uri)
-        if row["report_id"] not in existing_reports
-    ]
-    if report_rows:
-        errors = client.insert_rows_json(
-            reports_table,
-            report_rows,
-            row_ids=[row["report_id"] for row in report_rows],
-        )
-        if errors:
-            raise RuntimeError(f"Demo report insert failed: {errors}")
+    report_rows = []
+    
+    # Build report rows using the demo data generator
+    raw_rows = build_report_rows(now, image_uri=image_uri)
+    for row in raw_rows:
+        if row["report_id"] in existing_reports:
+            continue
+            
+        # Parse serialized string fields if they were built as strings
+        urban_context = row["urban_context"]
+        if isinstance(urban_context, str):
+            try:
+                urban_context = json.loads(urban_context)
+            except Exception:
+                urban_context = {"raw": urban_context}
 
-    existing_statuses = existing_status_keys(client, status_table, report_ids)
+        evidence = row.get("evidence", [])
+        if isinstance(evidence, str):
+            try:
+                evidence = json.loads(evidence)
+            except Exception:
+                evidence = [evidence]
+
+        uncertainty = row.get("uncertainty", [])
+        if isinstance(uncertainty, str):
+            try:
+                uncertainty = json.loads(uncertainty)
+            except Exception:
+                uncertainty = [uncertainty]
+
+        mapped = {
+            "report_id": row["report_id"],
+            "created_at": row["created_at"],
+            "description": row["description"],
+            "latitude": row["latitude"],
+            "longitude": row["longitude"],
+            "urban_context": urban_context,
+            "image_gcs_uri": row["image_gcs_uri"],
+            "category": row.get("category"),
+            "severity": row.get("severity"),
+            "confidence": row.get("confidence"),
+            "summary": row.get("summary"),
+            "recommendation": row.get("recommendation"),
+            "priority": row.get("priority"),
+            "estimated_impact": row.get("estimated_impact"),
+            "evidence": evidence,
+            "uncertainty": uncertainty,
+        }
+        report_rows.append(mapped)
+
+    if report_rows:
+        client.table("reports").insert(report_rows).execute()
+
+    # Fetch existing status events
+    response = client.table("status_events").select("report_id, status, note").execute()
+    existing_statuses = {
+        (row["report_id"], row["status"], row.get("note"))
+        for row in response.data
+    }
+
     status_rows = [
         row
         for row in build_status_rows(now)
-        if (row["report_id"], row["status"], row["note"]) not in existing_statuses
+        if (row["report_id"], row["status"], row.get("note")) not in existing_statuses
     ]
     if status_rows:
-        errors = client.insert_rows_json(
-            status_table,
-            status_rows,
-            row_ids=[
-                f"{row['report_id']}-{row['status']}" for row in status_rows
-            ],
-        )
-        if errors:
-            raise RuntimeError(f"Demo status insert failed: {errors}")
+        client.table("status_events").insert(status_rows).execute()
 
     return {
         "reports_inserted": len(report_rows),

@@ -6,14 +6,22 @@ from fastapi.testclient import TestClient
 from app.api import reports as reports_api
 from app.config import Settings
 from app.main import app
-from app.services.bigquery import BigQueryReportSink
-
+from app import security
 
 client = TestClient(app)
 
 
-def test_bigquery_sink_read_methods_are_safe_when_disabled() -> None:
-    sink = BigQueryReportSink(Settings(enable_bigquery=False))
+@pytest.fixture(autouse=True)
+def mock_require_officer():
+    from app.security import require_officer
+    app.dependency_overrides[require_officer] = lambda: "mock_token"
+    yield
+    app.dependency_overrides.clear()
+
+
+def test_supabase_sink_read_methods_are_safe_when_disabled() -> None:
+    from app.services.supabase import SupabaseReportSink
+    sink = SupabaseReportSink(Settings(supabase_url="", supabase_secret_key=""))
 
     assert sink.get_report("report-1") is None
     assert sink.status_history("report-1") == []
@@ -22,7 +30,7 @@ def test_bigquery_sink_read_methods_are_safe_when_disabled() -> None:
 
 def test_report_detail_returns_report(monkeypatch) -> None:
     sink = SimpleNamespace(
-        get_report=lambda report_id: {
+        get_report=lambda report_id, *args, **kwargs: {
             "report_id": report_id,
             "status": "reviewing",
             "urban_context": "{}",
@@ -37,7 +45,7 @@ def test_report_detail_returns_report(monkeypatch) -> None:
 
 
 def test_report_detail_returns_404_when_missing(monkeypatch) -> None:
-    sink = SimpleNamespace(get_report=lambda _report_id: None)
+    sink = SimpleNamespace(get_report=lambda _report_id, *args, **kwargs: None)
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
 
     response = client.get("/api/v1/reports/missing")
@@ -55,8 +63,8 @@ def test_status_history_returns_items_and_count(monkeypatch) -> None:
         }
     ]
     sink = SimpleNamespace(
-        get_report=lambda report_id: {"report_id": report_id},
-        status_history=lambda _report_id: events,
+        get_report=lambda report_id, *args, **kwargs: {"report_id": report_id},
+        status_history=lambda _report_id, *args, **kwargs: events,
     )
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
 
@@ -68,8 +76,8 @@ def test_status_history_returns_items_and_count(monkeypatch) -> None:
 
 def test_status_history_does_not_return_orphan_events(monkeypatch) -> None:
     sink = SimpleNamespace(
-        get_report=lambda _report_id: None,
-        status_history=lambda _report_id: [],
+        get_report=lambda _report_id, *args, **kwargs: None,
+        status_history=lambda _report_id, *args, **kwargs: [],
     )
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
 
@@ -80,8 +88,8 @@ def test_status_history_does_not_return_orphan_events(monkeypatch) -> None:
 
 def test_status_update_requires_existing_report(monkeypatch) -> None:
     sink = SimpleNamespace(
-        get_report=lambda _report_id: None,
-        update_status=lambda *_args: True,
+        get_report=lambda _report_id, *args, **kwargs: None,
+        update_status=lambda *_args, **_kwargs: True,
     )
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
 
@@ -95,8 +103,8 @@ def test_status_update_requires_existing_report(monkeypatch) -> None:
 def test_status_update_appends_event(monkeypatch) -> None:
     calls = []
     sink = SimpleNamespace(
-        get_report=lambda report_id: {"report_id": report_id},
-        update_status=lambda report_id, status, note: calls.append(
+        get_report=lambda report_id, *args, **kwargs: {"report_id": report_id},
+        update_status=lambda report_id, status, note, *args, **kwargs: calls.append(
             (report_id, status, note)
         )
         or True,
@@ -138,7 +146,7 @@ def test_recent_limit_must_be_bounded(limit) -> None:
 
 
 def test_recent_query_failure_returns_502(monkeypatch) -> None:
-    def fail(_limit):
+    def fail(_limit, **kwargs):
         raise RuntimeError("warehouse unavailable")
 
     monkeypatch.setattr(
@@ -150,14 +158,14 @@ def test_recent_query_failure_returns_502(monkeypatch) -> None:
     response = client.get("/api/v1/reports/recent")
 
     assert response.status_code == 502
-    assert "BigQuery query failed" in response.json()["detail"]
+    assert "Database query failed" in response.json()["detail"]
 
 
 def test_recent_filters_are_forwarded_to_sink(monkeypatch) -> None:
     calls = {}
 
     class Sink:
-        def list_recent(self, limit, **filters):
+        def list_recent(self, limit, caller_token=None, **filters):
             calls["limit"] = limit
             calls["filters"] = filters
             return [{"report_id": "report-1"}]
@@ -216,7 +224,7 @@ def test_recent_rejects_inverted_severity_range() -> None:
 
 
 def test_summary_query_failure_returns_502(monkeypatch) -> None:
-    def fail():
+    def fail(**kwargs):
         raise RuntimeError("warehouse unavailable")
 
     monkeypatch.setattr(
@@ -228,7 +236,7 @@ def test_summary_query_failure_returns_502(monkeypatch) -> None:
     response = client.get("/api/v1/reports/summary")
 
     assert response.status_code == 502
-    assert "BigQuery summary failed" in response.json()["detail"]
+    assert "Database summary failed" in response.json()["detail"]
 
 
 def test_invalid_status_returns_422() -> None:
@@ -278,7 +286,7 @@ def test_status_history_failure_returns_502(monkeypatch) -> None:
 
 def test_image_proxy_returns_private_image(monkeypatch) -> None:
     sink = SimpleNamespace(
-        get_image_gcs_uri=lambda _report_id: "gs://private-bucket/report.jpg"
+        get_image_gcs_uri=lambda _report_id, *args, **kwargs: "gs://private-bucket/report.jpg"
     )
     storage = SimpleNamespace(
         download_by_gcs_uri=lambda _uri: (b"private-image", "image/jpeg")
@@ -294,7 +302,7 @@ def test_image_proxy_returns_private_image(monkeypatch) -> None:
 
 
 def test_image_proxy_returns_404_when_report_has_no_image(monkeypatch) -> None:
-    sink = SimpleNamespace(get_image_gcs_uri=lambda _report_id: None)
+    sink = SimpleNamespace(get_image_gcs_uri=lambda _report_id, *args, **kwargs: None)
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
 
     response = client.get("/api/v1/reports/report-1/image")
@@ -308,7 +316,7 @@ def test_image_proxy_returns_502_when_gcs_fails(monkeypatch) -> None:
         raise RuntimeError("GCS unavailable")
 
     sink = SimpleNamespace(
-        get_image_gcs_uri=lambda _report_id: "gs://private-bucket/report.jpg"
+        get_image_gcs_uri=lambda _report_id, *args, **kwargs: "gs://private-bucket/report.jpg"
     )
     storage = SimpleNamespace(download_by_gcs_uri=fail)
     monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
