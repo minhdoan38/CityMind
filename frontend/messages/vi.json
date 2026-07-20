@@ -179,7 +179,20 @@
     "detailLocation": "Vị trí báo cáo",
     "detailEvidenceImage": "Ảnh bằng chứng",
     "detailNoneRecorded": "Không có ghi nhận.",
-    "detailNotAvailable": "Không có"
+    "detailNotAvailable": "Không có",
+    "markReviewing": "Đánh dấu đang xem xét",
+    "markResolved": "Đánh dấu đã xử lý",
+    "markRejected": "Đánh dấu từ chối",
+    "dialogResolveTitle": "Xác nhận đã xử lý",
+    "dialogRejectTitle": "Xác nhận từ chối",
+    "noteLabel": "Ghi chú quyết định (bắt buộc)",
+    "notePlaceholder": "Giải thích quyết định để lưu hồ sơ…",
+    "noteRequired": "Cần ghi chú để xác nhận đã xử lý hoặc từ chối.",
+    "confirmResolve": "Xác nhận đã xử lý",
+    "confirmReject": "Xác nhận từ chối",
+    "dialogDismiss": "Giữ nguyên",
+    "statusUpdating": "Đang cập nhật…",
+    "statusUpdateFailed": "Cập nhật trạng thái thất bại. Thử lại."
   },
   "navigation": {
     "home": "Trang chủ",

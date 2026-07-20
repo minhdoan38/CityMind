@@ -179,7 +179,20 @@
     "detailLocation": "Reported location",
     "detailEvidenceImage": "Evidence image",
     "detailNoneRecorded": "None recorded.",
-    "detailNotAvailable": "Not available"
+    "detailNotAvailable": "Not available",
+    "markReviewing": "Mark as reviewing",
+    "markResolved": "Mark as resolved",
+    "markRejected": "Mark as rejected",
+    "dialogResolveTitle": "Resolve report",
+    "dialogRejectTitle": "Reject report",
+    "noteLabel": "Decision note (required)",
+    "notePlaceholder": "Explain the decision for the audit trail…",
+    "noteRequired": "A note is required to resolve or reject.",
+    "confirmResolve": "Confirm resolve",
+    "confirmReject": "Confirm reject",
+    "dialogDismiss": "Keep editing",
+    "statusUpdating": "Updating…",
+    "statusUpdateFailed": "Status update failed. Try again."
   },
   "navigation": {
     "home": "Home",
