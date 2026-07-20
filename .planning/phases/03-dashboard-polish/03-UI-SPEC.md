@@ -1,7 +1,7 @@
 ---
 phase: 3
 slug: dashboard-polish
-status: draft
+status: approved
 shadcn_initialized: true
 preset: radix-nova + neutral + CSS variables; primary Clinic Blue #2563EB (inherits Phase 1/2 tokens in globals.css)
 created: 2026-07-20
