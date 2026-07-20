@@ -50,7 +50,7 @@
 - [ ] **DASH-05**: Resolve workflow: reviewing → resolved/rejected with required note
 - [ ] **DASH-06**: Excel export button applies current filters
 - [ ] **DASH-07**: Loading, empty, and error states on all dashboard views
-- [ ] **DASH-08**: Officer can copy citizen status link from detail page
+- [x] **DASH-08**: Officer can copy citizen status link from detail page
 
 ### Analytics (ANLY)
 
@@ -130,7 +130,7 @@ Deferred beyond Milestone v2.
 | CIT-02 | Phase 4 | Complete |
 | CIT-03 | Phase 4 | Complete |
 | CIT-04 | Phase 4 | Complete |
-| DASH-08 | Phase 4 | Pending |
+| DASH-08 | Phase 4 | Complete |
 | ANLY-01 | Phase 5 | Pending |
 | ANLY-02 | Phase 5 | Pending |
 | ANLY-03 | Phase 5 | Pending |

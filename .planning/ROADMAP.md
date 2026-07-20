@@ -14,7 +14,7 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 - [ ] **Phase 1: Supabase Foundation** — Postgres schema, RLS, API migration, UI scaffolds
 - [ ] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (verification human_needed 2026-07-20 — D-03 closed; live UAT pending)
 - [ ] **Phase 3: Dashboard Polish** — Table, filters, pagination, export, resolve workflow
-- [ ] **Phase 4: Citizen Status** — Token-based public status lookup
+- [x] **Phase 4: Citizen Status** — Token-based public status lookup (completed 2026-07-20)
 - [ ] **Phase 5: Analytics Pipeline** — Supabase → BigQuery ETL and dashboard analytics
 - [ ] **Phase 6: Maps & Geospatial** — PostGIS, MapLibre incident map, geo filters
 
@@ -115,13 +115,13 @@ Plans:
 2. Invalid token does not reveal whether report exists
 3. Officer can copy shareable status link from detail page
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 
 - [x] 04-01-PLAN.md — **Track A** — POST status API + hash verify + uniform 401 + separate rate limiter + tests
 - [x] 04-02-PLAN.md — **Track B** — Next BFF + `/[locale]/status` page (form, auto-fetch, EN/VI) + success locale URL fix
-- [ ] 04-03-PLAN.md — **Track C** — Officer Copy status link (reportId-only) + recovery hint on detail
+- [x] 04-03-PLAN.md — **Track C** — Officer Copy status link (reportId-only) + recovery hint on detail
 
 ---
 
@@ -182,7 +182,7 @@ Plans:
 | 1. Supabase Foundation | v2.0 | 0/6 | Not started | - |
 | 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
-| 4. Citizen Status | v2.0 | 2/3 | In Progress|  |
+| 4. Citizen Status | v2.0 | 3/3 | Complete   | 2026-07-20 |
 | 5. Analytics Pipeline | v2.0 | 0/3 | Not started | - |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Self-help vs government AI triage | v2.0 | 0/0 | Not started | - |

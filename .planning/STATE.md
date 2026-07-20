@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
-current_phase: 3
-current_phase_name: dashboard-polish
-status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-07-20T14:16:49.709Z"
+current_phase: 4
+current_phase_name: citizen-status
+status: phase_complete
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-07-20T14:20:26.021Z"
 last_activity: 2026-07-20
-last_activity_desc: Phase 3 execution resumed (wave continue)
+last_activity_desc: Completed 04-03 officer Copy status link (DASH-08)
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 18
-  completed_plans: 13
-  percent: 29
+  completed_plans: 14
+  percent: 78
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 3 — dashboard-polish
+**Current focus:** Phase 4 — citizen-status (complete); next Phase 5 plan
 
 ## Current Position
 
-Phase: 3 (dashboard-polish) — EXECUTING
-Plan: 3 of 4
-Status: Ready to execute
-Last activity: 2026-07-20 — Phase 3 execution resumed (wave continue)
+Phase: 4 (citizen-status) — COMPLETE (3/3 plans)
+Plan: —
+Status: Ready for `$gsd-plan-phase 5` / `$gsd-verify-work 4`
+Last activity: 2026-07-20 — Completed 04-03-PLAN.md (DASH-08 Copy status link)
 
-Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap checkbox cleared until UAT)
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -55,6 +55,7 @@ Progress: [██░░░░░░░░] 14% (Phase 2 not closed — roadmap c
 | Phase 02 P05 | 4 min | 2 tasks | 4 files |
 | Phase 04 P01 | 3min | 3 tasks | 9 files |
 | Phase 04 P02 | 5min | 3 tasks | 7 files |
+| Phase 04 P03 | 15 min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,9 @@ Recent decisions affecting current work:
 - Phase 5 context: daily incremental ETL; 3 officer charts + hotspot list; 30d default; thin public Home stats with k≥3; no maps; strict BQ privacy exclusions
 - [Phase 04]: Client-side status lookup with Suspense/useSearchParams for deep-link auto-fetch — Keeps access token out of RSC data fetches (RESEARCH A1 / T-04-09)
 - [Phase 04]: Map only 401/429/network to catalog strings; ignore API detail text — CIT-03 / D-16 anti-enumeration on the public UI surface
+- [Phase 04]: Share URL locale hard-coded to en while dashboard unlocalized (RESEARCH A5) — Avoid inventing locale-prefixed dashboard routes in Phase 4
+- [Phase 04]: Dashboard layout provides NextIntlClientProvider for dashboard.* catalogs — Required for CopyStatusLink EN/VI and existing sidebar translations
+- [Phase 04]: No token re-issue UI — recovery hint only (D-14c) — Plaintext tokens are hash-at-rest only; re-issue deferred
 
 ### Pending Todos
 
@@ -115,7 +119,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:16:49.703Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-07-20T14:20:18.594Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)
