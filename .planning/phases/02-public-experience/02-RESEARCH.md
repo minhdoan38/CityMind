@@ -498,22 +498,19 @@ return NextResponse.redirect(login);
 
 **If wrong:** Prefer staging verification for A1; product confirm A3/A4.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact XFF hop index behind current deploy topology**
+1. **Exact XFF hop index behind current deploy topology** — **RESOLVED**
    - What we know: Direct Cloud Run vs Firebase Hosting / extra LB changes which hop is trusted. `[CITED: StackOverflow Cloud Run XFF discussion]`
-   - What's unclear: CityMind’s production path (script suggests Cloud Run).
-   - Recommendation: Implement rightmost-by-default; add env `TRUSTED_PROXY_COUNT=1`; verify with one staging request logging hashed IP.
+   - **Decision:** Key rate limits on the **rightmost** non-empty `X-Forwarded-For` hop by default (Cloud Run–appended client). Optionally honor `TRUSTED_PROXY_COUNT` (default `1`) to peel N rightmost hops when topology adds an extra LB — if unset, rightmost-only. Verify once in staging with a known client IP (hashed log).
 
-2. **Dashboard under locale prefix?**
+2. **Dashboard under locale prefix?** — **RESOLVED**
    - What we know: D-15 paths are `/dashboard` and `/login` without locale.
-   - What's unclear: Whether officers need VI UI in Phase 2.
-   - Recommendation: Keep unprefixed dashboard/login; public only under `[locale]`.
+   - **Decision:** `/login` and `/dashboard` (including `/dashboard/reports/*`) stay **outside** `[locale]`. Public Home/Report/success only under `/en` and `/vi`. Bilingual officer UI deferred.
 
-3. **Phase 1 completion state on this machine**
-   - What we know: Backend JWT + Supabase sink exist; frontend `package.json` still lacks next-intl/shadcn; HMAC `auth.ts` still present. `[VERIFIED: package.json, auth.ts, security.py]`
-   - What's unclear: Whether Track B/C finished on another branch.
-   - Recommendation: Planner Wave 0 verifies Phase 1 frontend artifacts before Track B polish.
+3. **Phase 1 completion state on this machine** — **RESOLVED**
+   - **Verified 2026-07-20 against live `frontend/package.json` + tree:** `next-intl@4.13.2`, `@supabase/ssr@0.12.3`, `@supabase/supabase-js`, `components.json`, `frontend/src/components/ui/*`, and `frontend/src/lib/supabase/{client,server}.ts` are present. HMAC `auth.ts` still present (Track C replaces). Backend JWT + Supabase sink exist.
+   - **Still missing for Track B form:** `react-hook-form`, `zod`, `@hookform/resolvers` — install in Plan 02-04 after package checkpoint.
 
 ## Environment Availability
 
@@ -523,16 +520,19 @@ return NextResponse.redirect(login);
 | npm | Frontend installs | ✓ | 11.9.0 | — |
 | Python | Backend | ✓ | 3.14.5 (local) / 3.12 (Docker) | Pin Docker 3.12 for prod parity |
 | pytest | Backend tests | ✓ | 8.4.1 | — |
-| `filetype` package | DATA-09 | ✗ not installed | — | Add `filetype==1.2.0` in Wave 0 |
+| `filetype` package | DATA-09 | ✗ not installed | — | Add `filetype==1.2.0` in Plan 02-01 after SUS checkpoint |
 | Supabase Cloud project | Auth + tokens | env-dependent | — | Block Track A/C without keys |
-| next-intl / RHF / zod | Track B | ✗ not in package.json yet | — | Install per Standard Stack |
-| shadcn components.json | Track B | ✗ missing | — | Phase 1 Track B / init first |
+| `next-intl` | Track B i18n | ✓ | 4.13.2 | Phase 1 pin — no reinstall required |
+| `@supabase/ssr` | Track C auth | ✓ | 0.12.3 | Phase 1 pin — no reinstall required |
+| shadcn `components.json` + `ui/*` | Track B/C | ✓ | present | Add form/textarea/badge pieces if missing |
+| `react-hook-form` / `zod` / `@hookform/resolvers` | Track B form | ✗ not in package.json | pins 7.82.0 / 4.4.3 / 5.4.0 | Install in Plan 02-04 after checkpoint |
 
 **Missing dependencies with no fallback:**
 - Supabase project credentials (if not configured) block AUTH + token persistence.
 
 **Missing dependencies with fallback:**
-- `filetype` — install in Wave 0; temporary signature helper only if install blocked.
+- `filetype` — install in Plan 02-01 after human approval; temporary signature helper only if install blocked.
+- RHF/zod/resolvers — install in Plan 02-04 after human approval.
 
 ## Validation Architecture
 
@@ -612,7 +612,7 @@ return NextResponse.redirect(login);
 - Community Cloud Run XFF discussions — hop index topology-dependent
 
 ### Tertiary (LOW confidence)
-- Exact production proxy count for CityMind deploy — validate in staging (Open Question 1)
+- Exact production proxy count for CityMind deploy — validate in staging (Open Question 1 RESOLVED: rightmost + optional TRUSTED_PROXY_COUNT)
 
 ## Metadata
 
