@@ -44,12 +44,12 @@
 ### Dashboard (DASH)
 
 - [ ] **DASH-01**: App shell with sidebar navigation (Reports, Export, Settings, Logout)
-- [ ] **DASH-02**: Reports data table with sort, pagination, column visibility
-- [ ] **DASH-03**: Advanced filters: status, category, priority, severity range, date range
+- [x] **DASH-02**: Reports data table with sort, pagination, column visibility
+- [x] **DASH-03**: Advanced filters: status, category, priority, severity range, date range
 - [ ] **DASH-04**: Report detail page shows evidence, AI analysis, urban context, history
 - [ ] **DASH-05**: Resolve workflow: reviewing → resolved/rejected with required note
 - [ ] **DASH-06**: Excel export button applies current filters
-- [ ] **DASH-07**: Loading, empty, and error states on all dashboard views
+- [x] **DASH-07**: Loading, empty, and error states on all dashboard views
 - [x] **DASH-08**: Officer can copy citizen status link from detail page
 
 ### Analytics (ANLY)
@@ -120,12 +120,12 @@ Deferred beyond Milestone v2.
 | DATA-05 | Phase 3 | Pending |
 | DATA-06 | Phase 3 | Pending |
 | DATA-07 | Phase 3 | Pending |
-| DASH-02 | Phase 3 | Pending |
-| DASH-03 | Phase 3 | Pending |
+| DASH-02 | Phase 3 | Complete |
+| DASH-03 | Phase 3 | Complete |
 | DASH-04 | Phase 3 | Pending |
 | DASH-05 | Phase 3 | Pending |
 | DASH-06 | Phase 3 | Pending |
-| DASH-07 | Phase 3 | Pending |
+| DASH-07 | Phase 3 | Complete |
 | CIT-01 | Phase 4 | Complete |
 | CIT-02 | Phase 4 | Complete |
 | CIT-03 | Phase 4 | Complete |

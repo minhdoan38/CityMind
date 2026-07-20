@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-07-20T15:53:47.008Z"
-last_activity: 2026-07-20 -- Phase 03 execution started
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-07-20T16:01:18.550Z"
+last_activity: 2026-07-20
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 22
-  completed_plans: 14
+  completed_plans: 16
   percent: 43
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 03 (dashboard-polish) — EXECUTING
-Plan: 1 of 4
-Status: Executing Phase 03
-Last activity: 2026-07-20 -- Phase 03 execution started
+Plan: 3 of 4
+Status: Ready to execute
+Last activity: 2026-07-20
 
-Progress: [████████░░] ~64% (plans complete; phase completions lag UAT)
+Progress: [███████░░░] 73%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [████████░░] ~64% (plans complete; phase completio
 | Phase 04 P01 | 3min | 3 tasks | 9 files |
 | Phase 04 P02 | 5min | 3 tasks | 7 files |
 | Phase 04 P03 | 15 min | 2 tasks | 6 files |
+| Phase 03 P02 | 5min | 1 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Share URL locale hard-coded to en while dashboard unlocalized (RESEARCH A5) — Avoid inventing locale-prefixed dashboard routes in Phase 4
 - [Phase 04]: Dashboard layout provides NextIntlClientProvider for dashboard.* catalogs — Required for CopyStatusLink EN/VI and existing sidebar translations
 - [Phase 04]: No token re-issue UI — recovery hint only (D-14c) — Plaintext tokens are hash-at-rest only; re-issue deferred
+- [Phase 03]: Previous pagination clears cursor (next_cursor-only API) — Backend exposes opaque next_cursor only
+- [Phase 03]: Column visibility localStorage citymind.dashboard.columnVisibility; severity hidden by default — D-01/D-05 client preference only
+- [Phase 03]: No ExportButton in 03-02 — owned by 03-04 — Plan scope boundary
 
 ### Pending Todos
 
@@ -118,7 +122,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T14:20:18.594Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-07-20T16:01:17.993Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
 Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)
