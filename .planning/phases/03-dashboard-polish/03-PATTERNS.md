@@ -1,8 +1,8 @@
 # Phase 3: Dashboard Polish - Pattern Map
 
 **Mapped:** 2026-07-20
-**Files analyzed:** 18
-**Analogs found:** 16 / 18
+**Files analyzed:** 19
+**Analogs found:** 17 / 19
 
 ## File Classification
 
@@ -26,6 +26,7 @@
 | `backend/tests/test_reports.py` | test | request-response | same file (monkeypatch sink + TestClient) | exact |
 | `backend/tests/test_export.py` | test | streaming | `backend/tests/test_reports.py` | role-match |
 | `frontend/tests/dashboard-table.test.mjs` | test | transform | `frontend/tests/dashboard-shell.test.mjs` | exact |
+| `frontend/tests/dashboard-detail.test.mjs` | test | transform | `frontend/tests/dashboard-shell.test.mjs` | exact |
 
 ## Pattern Assignments
 
@@ -484,7 +485,7 @@ def test_status_update_requires_existing_report(monkeypatch) -> None:
 
 Add: cursor pagination, filtered summary, resolve-requires-note → 422, actor_id recorded, export auth + content-type.
 
-**Frontend smoke analog** — `frontend/tests/dashboard-shell.test.mjs` (fs.existsSync + string assertions). New `dashboard-table.test.mjs` should assert table/filter/export wiring strings and Export URL `?focus=export`.
+**Frontend smoke analog** — `frontend/tests/dashboard-shell.test.mjs` (fs.existsSync + string assertions). New `dashboard-table.test.mjs` should assert table/filter/metrics wiring. New `dashboard-export.test.mjs` (Plan 03-04) asserts ExportButton + BFF + Export URL `?focus=export`. New `dashboard-detail.test.mjs` (Plan 03-03) asserts D-19 section order + Dialog note-gate markers — same shell-test style as `dashboard-shell.test.mjs`.
 
 ---
 

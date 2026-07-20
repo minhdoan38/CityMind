@@ -81,7 +81,7 @@ Plans:
 **Mode:** mvp
 **Depends on**: Phase 2
 **Requirements**: DATA-04, DATA-05, DATA-06, DATA-07, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07
-**Parallel tracks**: A → B → C (B/C consume A API; C after B for shared Reports chrome)
+**Parallel tracks**: A → B → (C ∥ export); B/C/export consume A API; C and export after B table chrome; export does not block C
 
 **Success Criteria**:
 
@@ -90,13 +90,14 @@ Plans:
 3. Officer resolves/rejects reports with required note; actor recorded in status history
 4. Detail page shows full AI analysis, evidence, and status timeline
 
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 
 - [ ] 03-01-PLAN.md — **Track A** — Schema push, cursor list, filtered summary, streaming export, actor_id + note gate
-- [ ] 03-02-PLAN.md — **Track B** — TanStack table, filters, metrics, URL sync, export button + sidebar focus (not Home polish)
+- [ ] 03-02-PLAN.md — **Track B** — TanStack table, filters, metrics, URL sync (not Home polish)
 - [ ] 03-03-PLAN.md — **Track C** — Detail section order, advisory AI, Dialog resolve/reject with required note
+- [ ] 03-04-PLAN.md — **Track B export** — Export button, BFF stream proxy, sidebar `?focus=export` (depends on 03-01 + 03-02; ∥ 03-03)
 
 ---
 

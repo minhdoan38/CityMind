@@ -526,22 +526,25 @@ if status in {"resolved", "rejected"} and not (note or "").strip():
 | A4 | Display actor as truncated `sub` UUID is enough for Phase 3 (no email join) | Detail timeline | UX may want email later |
 | A5 | Track B “Home polish” in ROADMAP stays thin / non-blocking vs A/C | Scope | Planner over-scopes Phase 3 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact summary metric set under filters**
    - What we know: Existing summary returns `total_reports`, `critical_reports`, `avg_severity`, `top_category`.
    - What's unclear: Whether filtered summary should also break down by status counts.
    - Recommendation: Keep the four existing fields, computed on the filtered set (DATA-05); do not add charts (Phase 5).
+   - **RESOLVED:** Plans keep the four filtered metrics only (`total_reports`, `critical_reports`, `avg_severity`, `top_category`) — no status-count breakdown or charts in Phase 3.
 
 2. **Export hard row/time limits**
    - What we know: Streaming reduces memory but not CPU/time.
    - What's unclear: Product max for filtered export.
    - Recommendation: Implement streaming first; add a documented max (e.g. 10k) if Cloud Run timeouts appear — A3.
+   - **RESOLVED:** Soft ~10k export row cap (documented in export handler / Plan 03-01); streaming first, no hard product max beyond that soft cap.
 
 3. **Actor display label**
    - What we know: JWT has `sub`; email may be in `user_metadata` but not guaranteed in access token.
    - What's unclear: Whether officers need human-readable names in timeline.
    - Recommendation: Show `actor_id` (short) in Phase 3; enrich later if needed.
+   - **RESOLVED:** Timeline shows truncated `actor_id` (or Officer label); no email/name join in Phase 3.
 
 ## Sources
 
