@@ -39,7 +39,7 @@ from app.security import (
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
-from app.services.supabase import EXPORT_SOFT_ROW_CAP, SORT_COLUMNS, SupabaseReportSink
+from app.services.supabase import EXPORT_SOFT_ROW_CAP, SORT_COLUMNS, SupabaseReportSink, parse_bbox
 from app.services.tokens import hash_access_token, issue_access_token, token_binds_report
 
 VALID_STATUSES = {"new", "reviewing", "resolved", "rejected"}
@@ -277,6 +277,7 @@ async def reports_summary(
     max_severity: int | None = Query(default=None, ge=1, le=5),
     created_after: str | None = None,
     created_before: str | None = None,
+    bbox: str | None = None,
     officer: OfficerPrincipal = Depends(require_officer),
 ):
     _validate_report_filters(
@@ -286,6 +287,11 @@ async def reports_summary(
         min_severity=min_severity,
         max_severity=max_severity,
     )
+    if bbox:
+        try:
+            parse_bbox(bbox)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
     try:
         return get_sink().summary(
             caller_token=officer.token,
@@ -296,9 +302,70 @@ async def reports_summary(
             max_severity=max_severity,
             created_after=created_after,
             created_before=created_before,
+            bbox=bbox,
         )
     except Exception as exc:
         raise HTTPException(502, f"Database summary failed: {exc}") from exc
+
+
+@router.get("/geo/pins")
+async def geo_pins(
+    west: float = Query(..., ge=-180, le=180),
+    south: float = Query(..., ge=-90, le=90),
+    east: float = Query(..., ge=-180, le=180),
+    north: float = Query(..., ge=-90, le=90),
+    filter_bbox: str | None = Query(default=None),
+    status: str | None = None,
+    category: str | None = None,
+    priority: str | None = None,
+    min_severity: int | None = Query(default=None, ge=1, le=5),
+    max_severity: int | None = Query(default=None, ge=1, le=5),
+    created_after: str | None = None,
+    created_before: str | None = None,
+    officer: OfficerPrincipal = Depends(require_officer),
+):
+    if west >= east or south >= north:
+        raise HTTPException(
+            422,
+            "Enter a valid bounding box (west < east; latitude between -90 and 90).",
+        )
+    _validate_report_filters(
+        status=status,
+        category=category,
+        priority=priority,
+        min_severity=min_severity,
+        max_severity=max_severity,
+    )
+    filter_west = filter_south = filter_east = filter_north = None
+    if filter_bbox:
+        try:
+            filter_west, filter_south, filter_east, filter_north = parse_bbox(filter_bbox)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+    try:
+        pins, unlocated_count = get_sink().list_geo_pins(
+            west=west,
+            south=south,
+            east=east,
+            north=north,
+            filter_west=filter_west,
+            filter_south=filter_south,
+            filter_east=filter_east,
+            filter_north=filter_north,
+            status=status,
+            category=category,
+            priority=priority,
+            min_severity=min_severity,
+            max_severity=max_severity,
+            created_after=created_after,
+            created_before=created_before,
+            caller_token=officer.token,
+        )
+        return {"pins": pins, "unlocated_count": unlocated_count}
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(502, f"Geo pins query failed: {exc}") from exc
 
 
 def _csv_iter(rows: Iterator[dict]) -> Iterator[str]:
@@ -341,6 +408,7 @@ async def export_reports(
     max_severity: int | None = Query(default=None, ge=1, le=5),
     created_after: str | None = None,
     created_before: str | None = None,
+    bbox: str | None = None,
     officer: OfficerPrincipal = Depends(require_officer),
 ):
     """Stream filtered CSV/XLSX. Soft row cap ~10k (EXPORT_SOFT_ROW_CAP)."""
@@ -351,6 +419,11 @@ async def export_reports(
         min_severity=min_severity,
         max_severity=max_severity,
     )
+    if bbox:
+        try:
+            parse_bbox(bbox)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
     filter_kwargs = {
         "status": status,
         "category": category,
@@ -359,6 +432,7 @@ async def export_reports(
         "max_severity": max_severity,
         "created_after": created_after,
         "created_before": created_before,
+        "bbox": bbox,
         "caller_token": officer.token,
         "soft_cap": EXPORT_SOFT_ROW_CAP,
     }

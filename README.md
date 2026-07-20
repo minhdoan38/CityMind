@@ -64,6 +64,26 @@ npm run dev
 - Backend: `http://127.0.0.1:8000`
 - Frontend: `http://localhost:3000`
 
+### Docker (app only — no Supabase in Docker)
+
+Prerequisite: localhost Supabase running on the host (`supabase start`, then `supabase migration up`).
+
+```powershell
+# From repo root, after backend/.env is configured
+docker compose up --build
+```
+
+- Backend: `http://localhost:8000`
+- Frontend: `http://localhost:3000`
+- Supabase stays on host (`http://localhost:54321` via `host.docker.internal` inside containers)
+
+Optional map tile env (frontend `.env.local`):
+
+```env
+NEXT_PUBLIC_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
+NEXT_PUBLIC_MAP_TILE_ATTRIBUTION=© OpenStreetMap contributors
+```
+
 ## Verification
 
 ```powershell

@@ -19,6 +19,43 @@ SORT_COLUMNS = {
     "category": "category",
 }
 
+GEO_PIN_FIELDS = frozenset(
+    {
+        "report_id",
+        "latitude",
+        "longitude",
+        "priority",
+        "status",
+        "category",
+        "created_at",
+    }
+)
+
+
+def parse_bbox(bbox: str) -> tuple[float, float, float, float]:
+    parts = [p.strip() for p in bbox.split(",")]
+    if len(parts) != 4:
+        raise ValueError("bbox must be west,south,east,north")
+    west, south, east, north = (float(parts[0]), float(parts[1]), float(parts[2]), float(parts[3]))
+    if west >= east or south >= north:
+        raise ValueError("Invalid bbox")
+    if south < -90 or north > 90 or west < -180 or east > 180:
+        raise ValueError("Invalid bbox coordinates")
+    return west, south, east, north
+
+
+def coords_in_bbox(
+    latitude: float | None,
+    longitude: float | None,
+    west: float,
+    south: float,
+    east: float,
+    north: float,
+) -> bool:
+    if latitude is None or longitude is None:
+        return False
+    return south <= latitude <= north and west <= longitude <= east
+
 
 def encode_cursor(sort: str, order: str, value: str, report_id: str) -> str:
     raw = f"{sort}:{order}:{value}:{report_id}"
@@ -266,6 +303,7 @@ class SupabaseReportSink:
         max_severity: int | None = None,
         created_after: str | None = None,
         created_before: str | None = None,
+        bbox: str | None = None,
     ) -> dict:
         empty = {
             "total_reports": 0,
@@ -291,6 +329,13 @@ class SupabaseReportSink:
         )
         response = query.execute()
         rows = response.data or []
+        if bbox:
+            west, south, east, north = parse_bbox(bbox)
+            rows = [
+                r
+                for r in rows
+                if coords_in_bbox(r.get("latitude"), r.get("longitude"), west, south, east, north)
+            ]
         if not rows:
             return empty
         total_reports = len(rows)
@@ -309,6 +354,74 @@ class SupabaseReportSink:
             "top_category": top_category,
         }
 
+    def list_geo_pins(
+        self,
+        *,
+        west: float,
+        south: float,
+        east: float,
+        north: float,
+        filter_west: float | None = None,
+        filter_south: float | None = None,
+        filter_east: float | None = None,
+        filter_north: float | None = None,
+        status: str | None = None,
+        category: str | None = None,
+        priority: str | None = None,
+        min_severity: int | None = None,
+        max_severity: int | None = None,
+        created_after: str | None = None,
+        created_before: str | None = None,
+        caller_token: str | None = None,
+        limit: int = 5000,
+    ) -> tuple[list[dict], int]:
+        if not self.enabled:
+            return [], 0
+        client = self.get_client(caller_token)
+        payload = {
+            "p_west": west,
+            "p_south": south,
+            "p_east": east,
+            "p_north": north,
+            "p_filter_west": filter_west,
+            "p_filter_south": filter_south,
+            "p_filter_east": filter_east,
+            "p_filter_north": filter_north,
+            "p_status": status,
+            "p_category": category,
+            "p_priority": priority,
+            "p_min_severity": min_severity,
+            "p_max_severity": max_severity,
+            "p_created_after": created_after,
+            "p_created_before": created_before,
+        }
+        response = client.rpc("get_report_geo_pins", payload).execute()
+        data = response.data
+        if isinstance(data, list) and data:
+            data = data[0]
+        if not isinstance(data, dict):
+            data = {}
+        pins = data.get("pins") or []
+        if isinstance(pins, str):
+            pins = json.loads(pins)
+        unlocated_count = int(data.get("unlocated_count") or 0)
+        normalized: list[dict] = []
+        for pin in pins[:limit]:
+            if not isinstance(pin, dict):
+                continue
+            normalized.append(
+                {
+                    "report_id": pin["report_id"],
+                    "latitude": pin["latitude"],
+                    "longitude": pin["longitude"],
+                    "priority": pin.get("priority"),
+                    "status": pin.get("status"),
+                    "category": pin.get("category"),
+                    "created_at": pin.get("created_at"),
+                }
+            )
+        return normalized, unlocated_count
+
     def iter_filtered(
         self,
         *,
@@ -319,6 +432,7 @@ class SupabaseReportSink:
         max_severity: int | None = None,
         created_after: str | None = None,
         created_before: str | None = None,
+        bbox: str | None = None,
         caller_token: str | None = None,
         page_size: int = 100,
         soft_cap: int = EXPORT_SOFT_ROW_CAP,
@@ -326,6 +440,7 @@ class SupabaseReportSink:
         """Yield filtered report rows via keyset pages (never materialize all rows)."""
         if not self.enabled:
             return
+        bbox_bounds = parse_bbox(bbox) if bbox else None
         cursor = None
         yielded = 0
         while yielded < soft_cap:
@@ -347,6 +462,17 @@ class SupabaseReportSink:
             if not items:
                 break
             for item in items:
+                if bbox_bounds:
+                    west, south, east, north = bbox_bounds
+                    if not coords_in_bbox(
+                        item.get("latitude"),
+                        item.get("longitude"),
+                        west,
+                        south,
+                        east,
+                        north,
+                    ):
+                        continue
                 yield item
                 yielded += 1
                 if yielded >= soft_cap:
