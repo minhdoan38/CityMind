@@ -132,6 +132,27 @@ def test_unsupported_image_mime_returns_415() -> None:
     assert "Only JPEG, PNG, or WebP" in response.json()["detail"]
 
 
+def test_forged_content_type_rejected_by_magic_bytes() -> None:
+    """Content-Type alone is insufficient — magic bytes must match allowlist."""
+    response = client.post(
+        "/api/v1/reports/analyze",
+        data={"description": "Evidence attached"},
+        files={
+            "image": (
+                "fake.jpg",
+                b"GIF89a-not-really-jpeg",
+                "image/jpeg",
+            )
+        },
+    )
+
+    assert response.status_code == 415
+    assert "Only JPEG, PNG, or WebP" in response.json()["detail"]
+    body = response.json()["detail"]
+    assert "GIF89a" not in body
+    assert "storage unavailable" not in body.lower()
+
+
 def test_image_over_limit_returns_413(monkeypatch) -> None:
     monkeypatch.setattr(
         reports_api,

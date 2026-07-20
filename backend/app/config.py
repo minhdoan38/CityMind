@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     officer_api_key: str = ""
     report_rate_limit_per_minute: int = 0
+    # Peel N rightmost X-Forwarded-For hops for rate-limit keying (default: rightmost).
+    trusted_proxy_count: int = 1
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     enable_image_storage: bool = False

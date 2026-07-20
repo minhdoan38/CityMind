@@ -12,7 +12,12 @@ from app.main import app
 client = TestClient(app)
 
 
-def security_settings(url="https://project.supabase.co", app_env="development", limit=0):
+def security_settings(
+    url="https://project.supabase.co",
+    app_env="development",
+    limit=0,
+    trusted_proxy_count=1,
+):
     return SimpleNamespace(
         supabase_url=url,
         supabase_publishable_key="pubkey",
@@ -22,6 +27,7 @@ def security_settings(url="https://project.supabase.co", app_env="development", 
         supabase_jwks_url="",
         app_env=app_env,
         report_rate_limit_per_minute=limit,
+        trusted_proxy_count=trusted_proxy_count,
     )
 
 
@@ -182,3 +188,66 @@ def test_cors_origins_are_trimmed_and_normalized() -> None:
         "https://one.example",
         "https://two.example",
     ]
+
+def test_xff_rate_limiter_uses_rightmost_hop(monkeypatch):
+    monkeypatch.setattr(
+        security,
+        "get_settings",
+        lambda: security_settings(limit=1),
+    )
+    security.report_limiter.clear()
+
+    class MockRequest:
+        def __init__(self, headers):
+            self.headers = headers
+            self.client = SimpleNamespace(host="127.0.0.1")
+
+    allowed_keys = []
+
+    def mock_allow(key, limit, now=None):
+        allowed_keys.append(key)
+        return True
+
+    monkeypatch.setattr(security.report_limiter, "allow", mock_allow)
+
+    # Leftmost spoof must not become the key when a platform hop is present.
+    req1 = MockRequest({"x-forwarded-for": "10.0.0.1, 192.168.1.1"})
+    security.enforce_report_rate_limit(req1)
+
+    req2 = MockRequest({"x-forwarded-for": "1.2.3.4"})
+    security.enforce_report_rate_limit(req2)
+
+    req3 = MockRequest({})
+    security.enforce_report_rate_limit(req3)
+
+    assert allowed_keys == ["192.168.1.1", "1.2.3.4", "127.0.0.1"]
+
+
+def test_xff_trusted_proxy_count_peels_rightmost(monkeypatch):
+    monkeypatch.setattr(
+        security,
+        "get_settings",
+        lambda: security_settings(limit=0, trusted_proxy_count=2),
+    )
+    security.report_limiter.clear()
+
+    class MockRequest:
+        def __init__(self, headers):
+            self.headers = headers
+            self.client = SimpleNamespace(host="127.0.0.1")
+
+    allowed_keys = []
+
+    def mock_allow(key, limit, now=None):
+        allowed_keys.append(key)
+        return True
+
+    monkeypatch.setattr(security.report_limiter, "allow", mock_allow)
+
+    # spoof, client, cloud-run, extra-lb — count=2 selects 2nd from right (cloud-run)
+    req = MockRequest({"x-forwarded-for": "9.9.9.9, 203.0.113.10, 10.0.0.1, 10.0.0.2"})
+    security.enforce_report_rate_limit(req)
+
+    assert allowed_keys == ["10.0.0.1"]
+    # Leftmost spoof is ignored when trusted hops are present
+    assert "9.9.9.9" not in allowed_keys

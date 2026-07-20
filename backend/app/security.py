@@ -87,10 +87,30 @@ def require_officer(
         raise HTTPException(401, f"Authentication failed: {exc}") from exc
 
 
+def client_ip(request: Request) -> str:
+    """Trusted client hop for rate limiting (DATA-08 / D-19).
+
+    Uses the Nth hop from the right of X-Forwarded-For where N is
+    ``trusted_proxy_count`` (default 1 = rightmost / platform-appended hop).
+    Leftmost client-supplied values alone cannot change the key when a
+    platform hop is present.
+    """
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        hops = [h.strip() for h in xff.split(",") if h.strip()]
+        if hops:
+            count = get_settings().trusted_proxy_count
+            if count < 1:
+                count = 1
+            if count >= len(hops):
+                return hops[0]
+            return hops[-count]
+    return request.client.host if request.client else "unknown"
+
+
 def enforce_report_rate_limit(request: Request) -> None:
     limit = get_settings().report_rate_limit_per_minute
-    client = request.client.host if request.client else "unknown"
-    if not report_limiter.allow(client, limit):
+    if not report_limiter.allow(client_ip(request), limit):
         raise HTTPException(
             429,
             "Report submission rate limit exceeded",
