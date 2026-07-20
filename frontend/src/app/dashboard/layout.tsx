@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 
@@ -21,7 +22,9 @@ export default async function DashboardLayout({
       <TooltipProvider>
         <SidebarProvider>
           <div className="flex min-h-screen w-full bg-background text-foreground">
-            <DashboardSidebar userEmail={session.userId} />
+            <Suspense fallback={null}>
+              <DashboardSidebar userEmail={session.userId} />
+            </Suspense>
             <div className="flex flex-col flex-grow">
               <header className="flex h-16 items-center justify-between border-b border-border px-6">
                 <div className="flex items-center gap-3">

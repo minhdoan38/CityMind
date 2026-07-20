@@ -79,8 +79,10 @@ test('dashboard page uses table chrome instead of ReportCard grid', () => {
     /searchParams|next_cursor|cursor/.test(page),
     'dashboard must sync cursor/filters via searchParams',
   );
-  assert.ok(!/ExportButton|export reports/i.test(page) || !page.includes('ExportButton'),
-    'ExportButton is Plan 03-04 — must not ship in 03-02');
+  assert.ok(
+    page.includes('ExportButton'),
+    'dashboard must include ExportButton (Plan 03-04)',
+  );
 });
 
 test('EN/VI catalogs include list filter and empty/error copy', () => {

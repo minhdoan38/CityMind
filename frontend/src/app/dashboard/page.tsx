@@ -2,6 +2,7 @@ import { getTranslations } from "next-intl/server";
 
 import { officerFetch } from "@/lib/backend";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import ExportButton from "@/components/reports/ExportButton";
 import ReportsFilters from "@/components/reports/ReportsFilters";
 import ReportsMetrics from "@/components/reports/ReportsMetrics";
 import ReportsTable from "@/components/reports/ReportsTable";
@@ -14,7 +15,7 @@ import {
 } from "@/components/reports/types";
 
 type Props = {
-  searchParams: Promise<DashboardSearchParams>;
+  searchParams: Promise<DashboardSearchParams & { focus?: string }>;
 };
 
 type FetchBundle = {
@@ -80,14 +81,18 @@ export default async function DashboardPage({ searchParams }: Props) {
   const terror = await getTranslations("error");
   const result = await loadDashboard(normalized);
   const filtersActive = hasActiveFilters(normalized);
+  const focusExport = params.focus === "export";
 
   return (
     <div className="w-full max-w-none space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {t("pageTitle")}
-        </h1>
-        <p className="mt-2 text-base text-muted-foreground">{t("pageSubtitle")}</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            {t("pageTitle")}
+          </h1>
+          <p className="mt-2 text-base text-muted-foreground">{t("pageSubtitle")}</p>
+        </div>
+        <ExportButton params={normalized} focusExport={focusExport} />
       </div>
 
       <ReportsFilters params={normalized} />

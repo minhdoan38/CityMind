@@ -192,7 +192,12 @@
     "confirmReject": "Confirm reject",
     "dialogDismiss": "Keep editing",
     "statusUpdating": "Updating…",
-    "statusUpdateFailed": "Status update failed. Try again."
+    "statusUpdateFailed": "Status update failed. Try again.",
+    "exportReports": "Export reports",
+    "exportCsv": "Download CSV",
+    "exportExcel": "Download Excel",
+    "exportPreparing": "Preparing export…",
+    "exportFailed": "Could not export reports. Check your connection and try again."
   },
   "navigation": {
     "home": "Home",

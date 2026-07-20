@@ -192,7 +192,12 @@
     "confirmReject": "Xác nhận từ chối",
     "dialogDismiss": "Giữ nguyên",
     "statusUpdating": "Đang cập nhật…",
-    "statusUpdateFailed": "Cập nhật trạng thái thất bại. Thử lại."
+    "statusUpdateFailed": "Cập nhật trạng thái thất bại. Thử lại.",
+    "exportReports": "Xuất báo cáo",
+    "exportCsv": "Tải CSV",
+    "exportExcel": "Tải Excel",
+    "exportPreparing": "Đang chuẩn bị tệp xuất…",
+    "exportFailed": "Không thể xuất báo cáo. Kiểm tra kết nối và thử lại."
   },
   "navigation": {
     "home": "Trang chủ",

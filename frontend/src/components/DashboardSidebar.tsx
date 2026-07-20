@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   Sidebar,
@@ -27,22 +27,25 @@ import { FileText, Download, Settings, LogOut } from 'lucide-react';
 
 export default function DashboardSidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const tNav = useTranslations('navigation');
   const tLogout = useTranslations('logout');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const exportFocused =
+    pathname === '/dashboard' && searchParams.get('focus') === 'export';
 
   const menuItems = [
     {
       title: tNav('dashboard'),
       url: '/dashboard',
       icon: FileText,
-      active: pathname === '/dashboard',
+      active: pathname === '/dashboard' && !exportFocused,
     },
     {
       title: 'Export',
-      url: '#',
+      url: '/dashboard?focus=export',
       icon: Download,
-      active: false,
+      active: exportFocused,
     },
     {
       title: 'Settings',
