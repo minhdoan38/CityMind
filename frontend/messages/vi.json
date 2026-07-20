@@ -113,7 +113,10 @@
     "topCategory": "Nhóm hàng đầu",
     "filters": "Bộ lọc báo cáo",
     "applyFilters": "Áp dụng bộ lọc",
-    "clearFilters": "Xóa bộ lọc"
+    "clearFilters": "Xóa bộ lọc",
+    "copyStatusLink": "Sao chép liên kết trạng thái",
+    "statusLinkCopied": "Đã sao chép liên kết",
+    "statusLinkRecoveryHint": "Người dân cần mã truy cập từ trang gửi báo cáo. Không thể khôi phục liên kết đầy đủ tại đây."
   },
   "navigation": {
     "home": "Trang chủ",

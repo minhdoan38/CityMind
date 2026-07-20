@@ -113,7 +113,10 @@
     "topCategory": "Top Category",
     "filters": "Report filters",
     "applyFilters": "Apply filters",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "copyStatusLink": "Copy status link",
+    "statusLinkCopied": "Link copied",
+    "statusLinkRecoveryHint": "Citizens need the access token from their submission page. The full link can’t be recovered here."
   },
   "navigation": {
     "home": "Home",

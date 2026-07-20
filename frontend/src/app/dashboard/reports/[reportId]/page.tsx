@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CopyStatusLink from "@/components/CopyStatusLink";
 import StatusActions from "@/components/StatusActions";
 import { requireOfficerSession } from "@/lib/auth";
 import { officerFetch } from "@/lib/backend";
@@ -147,6 +148,7 @@ export default async function ReportDetail({ params }: Props) {
           <p className="mt-1 text-xs text-muted-foreground">
             Submitted {formatDate(report.created_at)}
           </p>
+          <CopyStatusLink reportId={report.report_id} />
         </div>
         <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-sm font-semibold text-primary capitalize">
           Status: {report.status ?? "new"}
