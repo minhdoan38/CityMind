@@ -1,0 +1,1 @@
+{"content":"Prefer filetype pure-Python magic-byte sniffing (JPEG/PNG/WebP) over Content-Type; imghdr removed in Python 3.13+; python-magic needs libmagic. Use filetype.guess(bytes) and allowlist MIME.","source":"web","provider":"websearch","confidence":"HIGH","fetched_at":"2026-07-20T11:39:48.614Z","ttl":86400000,"kind":"web"}
