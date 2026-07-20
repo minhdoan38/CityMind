@@ -13,10 +13,71 @@ client = TestClient(app)
 
 @pytest.fixture(autouse=True)
 def mock_require_officer():
-    from app.security import require_officer
-    app.dependency_overrides[require_officer] = lambda: "mock_token"
+    from app.security import OfficerPrincipal, require_officer
+
+    app.dependency_overrides[require_officer] = lambda: OfficerPrincipal(
+        token="mock_token",
+        actor_id="officer-sub-001",
+        role="officer",
+    )
     yield
     app.dependency_overrides.clear()
+
+
+def test_resolve_requires_note(monkeypatch) -> None:
+    sink = SimpleNamespace(
+        get_report=lambda report_id, *args, **kwargs: {"report_id": report_id},
+        update_status=lambda *_args, **_kwargs: True,
+    )
+    monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
+
+    for status in ("resolved", "rejected"):
+        response = client.patch(
+            "/api/v1/reports/report-1/status",
+            params={"status": status},
+        )
+        assert response.status_code == 422
+        assert "Note is required" in response.json()["detail"]
+
+        blank = client.patch(
+            "/api/v1/reports/report-1/status",
+            params={"status": status, "note": "   "},
+        )
+        assert blank.status_code == 422
+
+
+def test_status_records_actor_id(monkeypatch) -> None:
+    calls = []
+
+    def update_status(report_id, status, note=None, actor_id=None, caller_token=None):
+        calls.append(
+            {
+                "report_id": report_id,
+                "status": status,
+                "note": note,
+                "actor_id": actor_id,
+                "caller_token": caller_token,
+            }
+        )
+        return True
+
+    sink = SimpleNamespace(
+        get_report=lambda report_id, *args, **kwargs: {"report_id": report_id},
+        update_status=update_status,
+    )
+    monkeypatch.setattr(reports_api, "get_sink", lambda: sink)
+
+    response = client.patch(
+        "/api/v1/reports/report-1/status",
+        params={"status": "reviewing", "note": "Looking into it"},
+    )
+
+    assert response.status_code == 200
+    assert len(calls) == 1
+    assert calls[0]["actor_id"] == "officer-sub-001"
+    assert calls[0]["caller_token"] == "mock_token"
+    # Client-supplied actor must never be accepted via query/body — only JWT sub.
+    assert "actor_id" not in response.json() or response.json().get("actor_id") is None
 
 
 def test_supabase_sink_read_methods_are_safe_when_disabled() -> None:

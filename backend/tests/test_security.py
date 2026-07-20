@@ -65,6 +65,7 @@ def test_protected_endpoint_accepts_valid_jwt(monkeypatch) -> None:
     
     def mock_decode(token, key, **kwargs):
         return {
+            "sub": "officer-jwt-sub",
             "aud": "authenticated",
             "iss": "https://project.supabase.co/auth/v1",
             "app_metadata": {"role": "officer"},
@@ -78,12 +79,52 @@ def test_protected_endpoint_accepts_valid_jwt(monkeypatch) -> None:
         lambda: SimpleNamespace(list_recent=lambda *_args, **_kwargs: []),
     )
 
+    # Bypass autouse Principal override so real require_officer runs
+    app.dependency_overrides.pop(security.require_officer, None)
+
     response = client.get(
         "/api/v1/reports/recent",
         headers={"Authorization": "Bearer valid_token"},
     )
 
     assert response.status_code == 200
+
+
+def test_require_officer_returns_principal_with_jwt_sub(monkeypatch) -> None:
+    monkeypatch.setattr(
+        security,
+        "get_settings",
+        lambda: security_settings(app_env="production"),
+    )
+
+    class MockSigningKey:
+        key = "mock_key"
+
+    class MockJWKClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def get_signing_key_from_jwt(self, *args, **kwargs):
+            return MockSigningKey()
+
+    monkeypatch.setattr(security, "PyJWKClient", MockJWKClient)
+
+    def mock_decode(token, key, **kwargs):
+        return {
+            "sub": "actor-from-jwt",
+            "aud": "authenticated",
+            "iss": "https://project.supabase.co/auth/v1",
+            "app_metadata": {"role": "admin"},
+            "exp": 9999999999,
+        }
+
+    monkeypatch.setattr(jwt, "decode", mock_decode)
+
+    principal = security.require_officer(authorization="Bearer valid_token")
+    assert isinstance(principal, security.OfficerPrincipal)
+    assert principal.token == "valid_token"
+    assert principal.actor_id == "actor-from-jwt"
+    assert principal.role == "admin"
 
 
 def test_rejects_insufficient_role(monkeypatch) -> None:
