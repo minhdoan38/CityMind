@@ -41,7 +41,7 @@ Plans:
 - [x] 01-03: **Track B1** — Audited shadcn dependency install, generated core primitives, civic theme
 - [x] 01-04: **Track B2** — Public Home shell, next-intl EN/VI scaffold, locale interaction
 - [x] 01-05: **Track C1** — Supabase SSR auth, login/logout, bearer-token BFF bridge
-- [ ] 01-06: **Track C2** — Protected responsive dashboard shell, sidebar navigation, detail routing
+- [x] 01-06: **Track C2** — Protected responsive dashboard shell, sidebar navigation, detail routing
 
 ---
 
