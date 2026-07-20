@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
-current_phase: 4
-current_phase_name: citizen-status
-status: human_verification_needed
-stopped_at: Phase 4 plans complete; awaiting UAT (04-UAT.md)
-last_updated: "2026-07-20T14:24:35Z"
+current_phase: 5
+current_phase_name: analytics-pipeline
+status: ready_to_execute
+stopped_at: Phase 5 planned (4 plans); Phase 4 UAT still pending before execute gate
+last_updated: "2026-07-20T14:45:00Z"
 last_activity: 2026-07-20
-last_activity_desc: Phase 4 verification human_needed — UAT checklist persisted
+last_activity_desc: Phase 5 plans verified — 05-01→05-04→05-03→05-02
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 18
+  total_plans: 22
   completed_plans: 14
-  percent: 78
+  percent: 64
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 4 — citizen-status (plans done; live UAT pending)
+**Current focus:** Phase 5 — analytics-pipeline (planned, ready to execute after Phase 4 UAT)
 
 ## Current Position
 
-Phase: 4 (citizen-status) — plans 3/3 complete; verification **human_needed**
-Plan: —
-Status: Run `$gsd-verify-work 4` for browser/clipboard UAT before marking phase complete
-Last activity: 2026-07-20 — 04-VERIFICATION.md + 04-UAT.md (human_needed)
+Phase: 5 (analytics-pipeline) — **4/4 plans ready** (checker passed)
+Plan: 05-01 (next to execute)
+Status: Ready for `$gsd-execute-phase 5` (ROADMAP depends on Phase 4 — clear `$gsd-verify-work 4` UAT first, or bypass explicitly)
+Last activity: 2026-07-20 — Phase 5 RESEARCH + PATTERNS + VALIDATION + 4 PLANs; PLAN CHECK PASSED
 
-Progress: [████████░░] 78%
+Progress: [████████░░] ~64% (plans complete; phase completions lag UAT)
 
 ## Performance Metrics
 
@@ -89,6 +89,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Separate status_limiter with status:{ip} keys — CIT-04; must not share analyze report_limiter
 - [Phase 04]: Citizen history strips actor_id; notes as plain text — CIT-02 / D-05 / D-06
 - Phase 5 context: daily incremental ETL; 3 officer charts + hotspot list; 30d default; thin public Home stats with k≥3; no maps; strict BQ privacy exclusions
+- Phase 5 plans: 05-01 (ETL/DDL) → 05-04 (officer API) → 05-03 (Analytics UI) → 05-02 (public stats); dual-watermark ETL; `*_analytics` BQ tables; recharts SUS checkpoint; D-01..D-18 covered
+- Phase 5 PLAN CHECK PASSED (2026-07-20) — execute after Phase 4 UAT or explicit bypass
 - [Phase 04]: Client-side status lookup with Suspense/useSearchParams for deep-link auto-fetch — Keeps access token out of RSC data fetches (RESEARCH A1 / T-04-09)
 - [Phase 04]: Map only 401/429/network to catalog strings; ignore API detail text — CIT-03 / D-16 anti-enumeration on the public UI surface
 - [Phase 04]: Share URL locale hard-coded to en while dashboard unlocalized (RESEARCH A5) — Avoid inventing locale-prefixed dashboard routes in Phase 4
@@ -97,7 +99,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Phase 5 context ready — next `$gsd-plan-phase 5` (depends on Phase 4 for execute)
+- Phase 5 planned — next `$gsd-execute-phase 5` (depends on Phase 4 UAT for execute gate)
 - Phase 3 schema push still blocking 03-01 SUMMARY if not yet applied
 - Phase 2 human UAT (Home visual/locale, citizen submit→flash, login→returnUrl→dashboard) — see `02-VERIFICATION.md` human_verification
 - Phase 1 human UAT still open (`human_needed`) — see `01-VERIFICATION.md`
