@@ -45,6 +45,7 @@ class SlidingWindowLimiter:
 
 
 report_limiter = SlidingWindowLimiter()
+status_limiter = SlidingWindowLimiter()
 
 
 def require_officer(
@@ -129,5 +130,17 @@ def enforce_report_rate_limit(request: Request) -> None:
         raise HTTPException(
             429,
             "Report submission rate limit exceeded",
+            headers={"Retry-After": "60"},
+        )
+
+
+def enforce_status_rate_limit(request: Request) -> None:
+    """Citizen status lookup limiter — separate keyspace from analyze (CIT-04 / D-17)."""
+    limit = get_settings().status_rate_limit_per_minute
+    key = f"status:{client_ip(request)}"
+    if not status_limiter.allow(key, limit):
+        raise HTTPException(
+            429,
+            "Status lookup rate limit exceeded",
             headers={"Retry-After": "60"},
         )

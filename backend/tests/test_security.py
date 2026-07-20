@@ -16,6 +16,7 @@ def security_settings(
     url="https://project.supabase.co",
     app_env="development",
     limit=0,
+    status_limit=0,
     trusted_proxy_count=1,
 ):
     return SimpleNamespace(
@@ -27,6 +28,7 @@ def security_settings(
         supabase_jwks_url="",
         app_env=app_env,
         report_rate_limit_per_minute=limit,
+        status_rate_limit_per_minute=status_limit,
         trusted_proxy_count=trusted_proxy_count,
     )
 
@@ -293,3 +295,56 @@ def test_xff_trusted_proxy_count_peels_rightmost(monkeypatch):
     assert allowed_keys == ["10.0.0.1"]
     # Leftmost spoof is ignored when trusted hops are present
     assert "9.9.9.9" not in allowed_keys
+
+
+def test_status_rate_limiter_uses_status_prefix_and_xff(monkeypatch):
+    monkeypatch.setattr(
+        security,
+        "get_settings",
+        lambda: security_settings(status_limit=1),
+    )
+    security.status_limiter.clear()
+    security.report_limiter.clear()
+
+    class MockRequest:
+        def __init__(self, headers):
+            self.headers = headers
+            self.client = SimpleNamespace(host="127.0.0.1")
+
+    allowed_keys = []
+
+    def mock_allow(key, limit, now=None):
+        allowed_keys.append(key)
+        return True
+
+    monkeypatch.setattr(security.status_limiter, "allow", mock_allow)
+
+    req = MockRequest({"x-forwarded-for": "10.0.0.1, 192.168.1.1"})
+    security.enforce_status_rate_limit(req)
+
+    assert allowed_keys == ["status:192.168.1.1"]
+    assert len(security.report_limiter._events) == 0
+
+
+def test_status_and_report_limiters_do_not_share_events(monkeypatch):
+    monkeypatch.setattr(
+        security,
+        "get_settings",
+        lambda: security_settings(limit=1, status_limit=1),
+    )
+    security.report_limiter.clear()
+    security.status_limiter.clear()
+
+    class MockRequest:
+        def __init__(self, headers):
+            self.headers = headers
+            self.client = SimpleNamespace(host="127.0.0.1")
+
+    req = MockRequest({"x-forwarded-for": "203.0.113.9"})
+    security.enforce_report_rate_limit(req)
+    security.enforce_status_rate_limit(req)
+
+    assert "203.0.113.9" in security.report_limiter._events
+    assert "status:203.0.113.9" in security.status_limiter._events
+    assert "status:203.0.113.9" not in security.report_limiter._events
+    assert "203.0.113.9" not in security.status_limiter._events

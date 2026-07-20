@@ -30,7 +30,12 @@ from app.schemas import (
     CitizenStatusResponse,
     Priority,
 )
-from app.security import OfficerPrincipal, enforce_report_rate_limit, require_officer
+from app.security import (
+    OfficerPrincipal,
+    enforce_report_rate_limit,
+    enforce_status_rate_limit,
+    require_officer,
+)
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
 from app.services.storage import EvidenceStorage
@@ -182,6 +187,7 @@ async def analyze_report(
 @router.post("/status", response_model=CitizenStatusResponse)
 async def citizen_report_status(
     body: CitizenStatusRequest,
+    _rate_limit: None = Depends(enforce_status_rate_limit),
 ) -> CitizenStatusResponse:
     """Public citizen status lookup — token proof only; uniform 401 on any verify miss."""
     token_hash = hash_access_token(body.token)
