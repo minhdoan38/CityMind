@@ -5,8 +5,8 @@ milestone_name: Platform
 current_phase: 3
 current_phase_name: dashboard-polish
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-07-20T13:51:30.797Z"
+stopped_at: Phase 4 UI-SPEC approved; planning next
+last_updated: "2026-07-20T14:00:02.176Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 3 execution resumed (wave continue)
 progress:
@@ -81,7 +81,7 @@ Recent decisions affecting current work:
 - [Phase 02]: Inline EN dashboard copy outside [locale] — Avoid Wave 2 catalog conflicts with parallel 02-04
 - [Phase 02]: Text Priority:/Status: badges on ReportCard — Meets D-16 badge text (not color-only) without depending on parallel badge.tsx
 - [Phase 02]: Legacy /reports/[reportId] redirects into /dashboard/reports — Keeps AUTH-04 proxy matcher coverage for old links
-- [Phase 02]: D-03 Home section order restored in `4d3093c` (How it works → Instructions → About → Contact → Footer) with public-shell order assertion — closes sole verification code gap
+- Phase 4 plans: 04-01 Track A (API) → 04-02 Track B (status UI/BFF) → 04-03 Track C (officer copy); D-01..D-18 covered; RESEARCH Q1–Q3 RESOLVED
 
 ### Pending Todos
 
@@ -93,6 +93,7 @@ Recent decisions affecting current work:
 - Phase 1 verification status **human_needed** (2026-07-20): code must-haves largely present; live Auth/RLS + BQ migrate UAT pending — see `.planning/phases/01-supabase-foundation/01-VERIFICATION.md`. ROADMAP Phase 1 checkbox not marked complete until UAT clears.
 - Phase 2 verification status **human_needed** (2026-07-20 re-verify): D-03 code gap closed; live submit/login/visual UAT pending — ROADMAP Phase 2 checkbox not marked complete until UAT clears.
 - Track B soft-consumes Track A `access_token`; prefer finishing 02-01 before Report success smoke (02-04)
+- 03-01 schema push blocked: Supabase MCP DB connection timeouts; need SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD for project eimiblmctoekrntrqsrx to run supabase db push
 
 ## Deferred Items
 
@@ -104,6 +105,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-20T13:51:30.786Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-citizen-status/04-CONTEXT.md
+Last session: 2026-07-20T14:00:00.000Z
+Stopped at: Phase 4 plans created (04-01..04-03 + VALIDATION); ready to execute after Phase 3 or when prioritized
+Resume file: .planning/phases/04-citizen-status/04-01-PLAN.md
+Notes: Phase 4 RESEARCH Open Questions Q1–Q3 marked RESOLVED; ROADMAP Track C realigned to DASH-08 copy link (no audit-log expansion)

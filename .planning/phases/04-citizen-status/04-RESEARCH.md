@@ -370,20 +370,15 @@ await navigator.clipboard.writeText(url);
 
 ## Open Questions
 
-1. **GET vs POST for FastAPI status**
-   - What we know: Deep links use query params (D-09); analyze BFF is POST.
-   - What's unclear: None blocking — discretion favors POST body via BFF.
-   - Recommendation: **POST** `/api/v1/reports/status` + POST BFF; page never GETs FastAPI with token in URL.
+1. **GET vs POST for FastAPI status** — **RESOLVED (2026-07-20 planning)**
+   - Decision: **POST** `/api/v1/reports/status` + POST BFF; page never GETs FastAPI with token in URL (deep links keep query params on the browser page only — D-09).
+   - Locked in: `04-01-PLAN.md` / `04-02-PLAN.md`.
 
-2. **ROADMAP 04-03 “audit log display” wording**
-   - What we know: Detail page already shows status history; DASH-08 is copy link only. `[CITED: ROADMAP.md]` `[CITED: 04-CONTEXT.md]`
-   - What's unclear: Whether planner should add audit UI work.
-   - Recommendation: **Out of scope** for Phase 4 — implement DASH-08 copy control only; do not expand history UI.
+2. **ROADMAP 04-03 “audit log display” wording** — **RESOLVED (2026-07-20 planning)**
+   - Decision: **Out of scope** — detail history already ships from Phase 3; Track C (`04-03-PLAN.md`) implements DASH-08 copy control + recovery hint only. ROADMAP checklist realigned to drop “audit log display.”
 
-3. **Dummy work on failed verify for timing equalization**
-   - What we know: ASVS discussion notes response-time enumeration (2.2.8-style). `[CITED: OWASP ASVS issue #1741 discussion]`
-   - What's unclear: Whether CityMind needs artificial delay.
-   - Recommendation: Best-effort only (hash + single query path); rely on token entropy + rate limit; no artificial sleep unless audit demands.
+3. **Dummy work on failed verify for timing equalization** — **RESOLVED (2026-07-20 planning)**
+   - Decision: Best-effort only (hash + single query path); rely on token entropy + rate limit; **no artificial sleep** in Phase 4 unless a later security audit demands it.
 
 ## Environment Availability
 

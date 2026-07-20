@@ -103,11 +103,11 @@ Plans:
 
 ### Phase 4: Citizen Status
 
-**Goal**: Citizens track report status without an account.
+**Goal**: As a citizen, I want to look up my report with a report ID and access token, so that I can see current status and history without creating an account.
 **Mode:** mvp
 **Depends on**: Phase 3
 **Requirements**: CIT-01, CIT-02, CIT-03, CIT-04, DASH-08
-**Parallel tracks**: A ∥ B ∥ C
+**Parallel tracks**: A → B → C (sequential waves; B depends on A API; C depends on B catalogs)
 
 **Success Criteria**:
 
@@ -119,9 +119,9 @@ Plans:
 
 Plans:
 
-- [ ] 04-01: **Track A** — Public status API with token validation and rate limiting
-- [ ] 04-02: **Track B** — `/status` page (bilingual), shareable URL format
-- [ ] 04-03: **Track C** — Copy status link action, audit log display on detail
+- [ ] 04-01-PLAN.md — **Track A** — POST status API + hash verify + uniform 401 + separate rate limiter + tests
+- [ ] 04-02-PLAN.md — **Track B** — Next BFF + `/[locale]/status` page (form, auto-fetch, EN/VI) + success locale URL fix
+- [ ] 04-03-PLAN.md — **Track C** — Officer Copy status link (reportId-only) + recovery hint on detail
 
 ---
 
