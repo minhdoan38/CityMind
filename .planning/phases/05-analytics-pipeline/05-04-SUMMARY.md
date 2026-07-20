@@ -76,7 +76,7 @@ Each task was committed atomically:
 1. **Task 1: Wave 0 failing stubs for officer analytics API** - `b082f46` (test)
 2. **Task 2: Officer GET /api/v1/analytics read API** - `5da725e` (feat)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `59641e5` (docs: complete plan)
 
 ## Files Created/Modified
 
