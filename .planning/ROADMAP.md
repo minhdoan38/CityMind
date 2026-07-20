@@ -12,7 +12,7 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 ## Phases
 
 - [ ] **Phase 1: Supabase Foundation** — Postgres schema, RLS, API migration, UI scaffolds
-- [x] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (completed 2026-07-20)
+- [ ] **Phase 2: Public Experience** — Bilingual landing, report form, access tokens, Supabase Auth login (verification gaps_found 2026-07-20 — D-03 Home section order)
 - [ ] **Phase 3: Dashboard Polish** — Table, filters, pagination, export, resolve workflow
 - [ ] **Phase 4: Citizen Status** — Token-based public status lookup
 - [ ] **Phase 5: Analytics Pipeline** — Supabase → BigQuery ETL and dashboard analytics
@@ -77,11 +77,11 @@ Plans:
 
 ### Phase 3: Dashboard Polish
 
-**Goal**: Production-grade officer dashboard with table, filters, export, and resolve workflow.
+**Goal:** As an officer, I want to filter, paginate, export, and resolve reports with audited notes, so that I can operate the queue with evidence and accountability.
 **Mode:** mvp
 **Depends on**: Phase 2
 **Requirements**: DATA-04, DATA-05, DATA-06, DATA-07, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07
-**Parallel tracks**: A ∥ B ∥ C
+**Parallel tracks**: A → B → C (B/C consume A API; C after B for shared Reports chrome)
 
 **Success Criteria**:
 
@@ -94,9 +94,9 @@ Plans:
 
 Plans:
 
-- [ ] 03-01: **Track A** — Cursor pagination, filtered summary, export endpoint, actor_id on status events
-- [ ] 03-02: **Track B** — Home polish (SEO, a11y, trust badges), link to status lookup prep
-- [ ] 03-03: **Track C** — Data table, advanced filters, detail page, resolve workflow, export button
+- [ ] 03-01-PLAN.md — **Track A** — Schema push, cursor list, filtered summary, streaming export, actor_id + note gate
+- [ ] 03-02-PLAN.md — **Track B** — TanStack table, filters, metrics, URL sync, export button + sidebar focus (not Home polish)
+- [ ] 03-03-PLAN.md — **Track C** — Detail section order, advisory AI, Dialog resolve/reject with required note
 
 ---
 
