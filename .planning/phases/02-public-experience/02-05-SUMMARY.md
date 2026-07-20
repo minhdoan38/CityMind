@@ -99,7 +99,7 @@ Each task was committed atomically:
    - `6568acd` (test) — failing detail-route relocation contracts
    - `faed916` (feat) — legacy `/reports/[reportId]` redirect into dashboard
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `dd1125e` (docs: complete dashboard report cards plan)
 
 ## Files Created/Modified
 
