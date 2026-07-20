@@ -1,52 +1,27 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import createMiddleware from 'next-intl/middleware';
+import { type NextRequest, NextResponse } from 'next/server';
+import { routing } from './i18n/routing';
 
-export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+const intlMiddleware = createMiddleware(routing);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+export function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Bypass next-intl for login, dashboard, api routes, and static assets
+  const isBypass =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/_next') ||
+    pathname.includes('.');
 
-  const isProtectedPath =
-    request.nextUrl.pathname.startsWith('/reports') ||
-    request.nextUrl.pathname.startsWith('/dashboard');
-
-  if (isProtectedPath) {
-    const role = user?.app_metadata?.role;
-    if (!user || (role !== 'officer' && role !== 'admin')) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+  if (isBypass) {
+    return NextResponse.next();
   }
 
-  return response;
+  return intlMiddleware(request);
 }
 
 export const config = {
-  matcher: ['/reports/:path*', '/dashboard/:path*'],
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
 };
