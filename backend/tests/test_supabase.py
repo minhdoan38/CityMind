@@ -13,6 +13,7 @@ class MockSupabaseTable:
         self._eq_filters = {}
         self._order_by = None
         self._limit_val = None
+        self._update_row = None
 
     def insert(self, row):
         if self.table_name not in self.data_store:
@@ -41,9 +42,24 @@ class MockSupabaseTable:
         self._limit_val = value
         return self
 
+    def update(self, row):
+        self._update_row = row
+        return self
+
     def execute(self):
         # Retrieve items for the table
         items = self.data_store.get(self.table_name, [])
+        if hasattr(self, "_update_row") and self._update_row is not None:
+            for item in items:
+                match = True
+                for col, val in self._eq_filters.items():
+                    if item.get(col) != val:
+                        match = False
+                        break
+                if match:
+                    item.update(self._update_row)
+            return SimpleNamespace(data=items)
+
         filtered_items = []
         
         for item in items:
@@ -120,13 +136,24 @@ def test_update_status_appends_event(mock_supabase) -> None:
     settings = Settings(supabase_url="https://test.supabase.co", supabase_secret_key="secret")
     sink = SupabaseReportSink(settings)
 
-    sink.update_status(report_id="rep-123", status="reviewing", note="Officer assigned")
+    mock_supabase.data_store["reports"].append(
+        {"report_id": "rep-123", "current_status": "new"}
+    )
+
+    sink.update_status(
+        report_id="rep-123",
+        status="reviewing",
+        note="Officer assigned",
+        actor_id="officer-sub-xyz",
+    )
 
     events = mock_supabase.data_store["status_events"]
     assert len(events) == 1
     assert events[0]["report_id"] == "rep-123"
     assert events[0]["status"] == "reviewing"
     assert events[0]["note"] == "Officer assigned"
+    assert events[0]["actor_id"] == "officer-sub-xyz"
+    assert mock_supabase.data_store["reports"][0]["current_status"] == "reviewing"
 
 
 def test_get_report_returns_mapped_object(mock_supabase) -> None:

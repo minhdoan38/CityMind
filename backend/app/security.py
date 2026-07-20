@@ -2,11 +2,22 @@ import secrets
 import threading
 import time
 from collections import defaultdict, deque
+from dataclasses import dataclass
+
 import jwt
 from jwt import PyJWKClient
 from fastapi import Header, HTTPException, Request
 
 from app.config import get_settings
+
+
+@dataclass(frozen=True)
+class OfficerPrincipal:
+    """Authenticated officer identity derived from a validated JWT."""
+
+    token: str
+    actor_id: str
+    role: str
 
 
 class SlidingWindowLimiter:
@@ -38,7 +49,7 @@ report_limiter = SlidingWindowLimiter()
 
 def require_officer(
     authorization: str | None = Header(default=None),
-) -> str:
+) -> OfficerPrincipal:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Officer authentication required")
 
@@ -62,7 +73,7 @@ def require_officer(
         # Fetch keys and decode/validate JWT
         jwks_client = PyJWKClient(jwks_url)
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-        
+
         payload = jwt.decode(
             token,
             signing_key.key,
@@ -71,11 +82,15 @@ def require_officer(
             issuer=issuer,
         )
 
+        actor_id = payload.get("sub")
+        if not actor_id or not isinstance(actor_id, str):
+            raise HTTPException(401, "Invalid token: missing subject")
+
         role = payload.get("app_metadata", {}).get("role")
         if role not in ("officer", "admin"):
             raise HTTPException(403, "Access forbidden: insufficient role")
 
-        return token
+        return OfficerPrincipal(token=token, actor_id=actor_id, role=role)
 
     except HTTPException:
         raise

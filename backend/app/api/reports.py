@@ -17,7 +17,7 @@ import logging
 import filetype
 from app.config import get_settings
 from app.schemas import AnalyzeResponse, Category, Priority
-from app.security import enforce_report_rate_limit, require_officer
+from app.security import OfficerPrincipal, enforce_report_rate_limit, require_officer
 from app.services.supabase import SupabaseReportSink
 from app.services.context_data import UrbanContextService
 from app.services.gemini import GeminiAnalyzer
@@ -132,7 +132,7 @@ async def recent_reports(
     priority: str | None = None,
     min_severity: int | None = Query(default=None, ge=1, le=5),
     max_severity: int | None = Query(default=None, ge=1, le=5),
-    _officer: str = Depends(require_officer),
+    officer: OfficerPrincipal = Depends(require_officer),
 ):
     if limit < 1 or limit > 100:
         raise HTTPException(422, "limit must be between 1 and 100")
@@ -157,7 +157,7 @@ async def recent_reports(
             priority=priority,
             min_severity=min_severity,
             max_severity=max_severity,
-            caller_token=_officer,
+            caller_token=officer.token,
         )
         return {"items": items, "count": len(items)}
     except Exception as exc:
@@ -165,9 +165,9 @@ async def recent_reports(
 
 
 @router.get("/summary")
-async def reports_summary(_officer: str = Depends(require_officer)):
+async def reports_summary(officer: OfficerPrincipal = Depends(require_officer)):
     try:
-        return get_sink().summary(caller_token=_officer)
+        return get_sink().summary(caller_token=officer.token)
     except Exception as exc:
         raise HTTPException(502, f"Database summary failed: {exc}") from exc
 
@@ -177,16 +177,24 @@ async def update_report_status(
     report_id: str,
     status: str,
     note: str | None = None,
-    _officer: str = Depends(require_officer),
+    officer: OfficerPrincipal = Depends(require_officer),
 ):
     if status not in VALID_STATUSES:
         raise HTTPException(422, "Invalid status")
+    if status in {"resolved", "rejected"} and not (note or "").strip():
+        raise HTTPException(422, "Note is required for resolved/rejected")
 
     try:
         sink = get_sink()
-        if not sink.get_report(report_id, caller_token=_officer):
+        if not sink.get_report(report_id, caller_token=officer.token):
             raise HTTPException(404, "Report not found")
-        updated = sink.update_status(report_id, status, note, caller_token=_officer)
+        updated = sink.update_status(
+            report_id,
+            status,
+            note,
+            actor_id=officer.actor_id,
+            caller_token=officer.token,
+        )
         return {"report_id": report_id, "status": status, "updated": updated}
     except HTTPException:
         raise
@@ -196,10 +204,10 @@ async def update_report_status(
 
 @router.get("/{report_id}/image")
 async def get_report_image(
-    report_id: str, _officer: str = Depends(require_officer)
+    report_id: str, officer: OfficerPrincipal = Depends(require_officer)
 ):
     try:
-        gcs_uri = get_sink().get_image_gcs_uri(report_id, caller_token=_officer)
+        gcs_uri = get_sink().get_image_gcs_uri(report_id, caller_token=officer.token)
         if not gcs_uri:
             raise HTTPException(404, "No image found for this report")
 
@@ -213,13 +221,13 @@ async def get_report_image(
 
 @router.get("/{report_id}/status-history")
 async def report_status_history(
-    report_id: str, _officer: str = Depends(require_officer)
+    report_id: str, officer: OfficerPrincipal = Depends(require_officer)
 ):
     try:
         sink = get_sink()
-        if not sink.get_report(report_id, caller_token=_officer):
+        if not sink.get_report(report_id, caller_token=officer.token):
             raise HTTPException(404, "Report not found")
-        items = sink.status_history(report_id, caller_token=_officer)
+        items = sink.status_history(report_id, caller_token=officer.token)
         return {"items": items, "count": len(items)}
     except HTTPException:
         raise
@@ -229,10 +237,10 @@ async def report_status_history(
 
 @router.get("/{report_id}")
 async def report_detail(
-    report_id: str, _officer: str = Depends(require_officer)
+    report_id: str, officer: OfficerPrincipal = Depends(require_officer)
 ):
     try:
-        report = get_sink().get_report(report_id, caller_token=_officer)
+        report = get_sink().get_report(report_id, caller_token=officer.token)
         if not report:
             raise HTTPException(404, "Report not found")
         return report

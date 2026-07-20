@@ -147,6 +147,7 @@ def test_rejects_insufficient_role(monkeypatch) -> None:
     
     def mock_decode(token, key, **kwargs):
         return {
+            "sub": "citizen-sub",
             "aud": "authenticated",
             "app_metadata": {"role": "citizen"}, # wrong role
         }

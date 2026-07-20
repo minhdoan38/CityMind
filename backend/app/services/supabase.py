@@ -71,6 +71,7 @@ class SupabaseReportSink:
             "estimated_impact": analysis_dict.get("estimated_impact"),
             "evidence": analysis_dict.get("evidence", []),
             "uncertainty": analysis_dict.get("uncertainty", []),
+            "current_status": "new",
         }
 
         client = self.get_client()
@@ -113,8 +114,12 @@ class SupabaseReportSink:
                 sorted_events = sorted(events, key=lambda x: x.get("created_at", ""), reverse=True)
                 latest_event = sorted_events[0]
                 
-            current_status = latest_event.get("status", "new") if latest_event else "new"
-            
+            current_status = row.get("current_status")
+            if not current_status:
+                current_status = (
+                    latest_event.get("status", "new") if latest_event else "new"
+                )
+
             if status is not None and current_status != status:
                 continue
                 
@@ -176,7 +181,12 @@ class SupabaseReportSink:
         }
 
     def update_status(
-        self, report_id: str, status: str, note: str | None = None, caller_token: str | None = None
+        self,
+        report_id: str,
+        status: str,
+        note: str | None = None,
+        actor_id: str | None = None,
+        caller_token: str | None = None,
     ) -> bool:
         if not self.enabled:
             return False
@@ -185,9 +195,14 @@ class SupabaseReportSink:
             "report_id": report_id,
             "status": status,
             "note": note,
+            "actor_id": actor_id,
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         client.table("status_events").insert(row).execute()
+        # Keep denormalized current_status in sync for SQL filter/sort (DATA-04/05).
+        client.table("reports").update({"current_status": status}).eq(
+            "report_id", report_id
+        ).execute()
         return True
 
     def get_image_gcs_uri(self, report_id: str, caller_token: str | None = None) -> str | None:
@@ -212,7 +227,13 @@ class SupabaseReportSink:
         if events:
             sorted_events = sorted(events, key=lambda x: x.get("created_at", ""), reverse=True)
             latest_event = sorted_events[0]
-            
+
+        current_status = row.get("current_status")
+        if not current_status:
+            current_status = (
+                latest_event.get("status", "new") if latest_event else "new"
+            )
+
         return {
             "report_id": row["report_id"],
             "created_at": row["created_at"],
@@ -230,7 +251,7 @@ class SupabaseReportSink:
             "uncertainty": row["uncertainty"] or [],
             "urban_context": row["urban_context"],
             "image_gcs_uri": row["image_gcs_uri"],
-            "status": latest_event.get("status", "new") if latest_event else "new",
+            "status": current_status,
             "status_note": latest_event.get("note") if latest_event else None,
             "status_updated_at": latest_event.get("created_at") if latest_event else None,
         }
@@ -239,7 +260,13 @@ class SupabaseReportSink:
         if not self.enabled:
             return []
         client = self.get_client(caller_token)
-        response = client.table("status_events").select("status, note, created_at").eq("report_id", report_id).order("created_at", desc=True).execute()
+        response = (
+            client.table("status_events")
+            .select("status, note, actor_id, created_at")
+            .eq("report_id", report_id)
+            .order("created_at", desc=True)
+            .execute()
+        )
         return response.data
 
     def insert_access_token(self, report_id: str, token_hash: str, expires_at: datetime) -> bool:
