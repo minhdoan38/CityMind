@@ -152,7 +152,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-03-PLAN.md — **Track C** — recharts SUS checkpoint, Analytics tab charts + URL date selector
+- [x] 05-03-PLAN.md — **Track C** — recharts SUS checkpoint, Analytics tab charts + URL date selector
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
