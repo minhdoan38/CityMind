@@ -23,7 +23,7 @@
 - [ ] **AUTH-01**: Officers authenticate via Supabase Auth (replace shared-password MVP)
 - [ ] **AUTH-02**: RLS policies enforce officer/admin read and update on reports
 - [ ] **AUTH-03**: Public analyze endpoint remains unauthenticated; officer endpoints require auth
-- [ ] **AUTH-04**: Next.js middleware protects dashboard routes (`/` and `/reports/*`)
+- [ ] **AUTH-04**: Next.js `proxy.ts` protects dashboard routes (`/dashboard` and `/dashboard/reports/*`); unauthenticated users redirect to `/login` with `returnUrl` (public `/` is not gated)
 
 ### Public / Landing (PUB)
 

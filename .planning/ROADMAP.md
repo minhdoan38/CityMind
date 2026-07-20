@@ -55,15 +55,15 @@ Plans:
 **Success Criteria**:
 1. Citizen submits report on bilingual Report page and receives report_id + access token
 2. Home page shows hero, sections, and footer in EN and VI
-3. Officer logs in via Supabase Auth; dashboard routes protected by middleware
+3. Officer logs in via Supabase Auth; dashboard routes protected by proxy.ts (`getClaims`, returnUrl)
 4. API returns generic errors; rate limit and image validation work behind proxy
 
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: **Track A** — Token generation/storage, rate limit fix, image magic-byte validation, error sanitization
-- [ ] 02-02: **Track B** — Home page, Report form (RHF + Zod), success screen, bilingual copy
-- [ ] 02-03: **Track C** — Supabase Auth flow, middleware.ts, basic reports list (card view)
+- [ ] 02-01-PLAN.md — **Track A** — Access tokens (hash-at-rest), XFF rate limit + BFF forward, magic bytes, generic errors
+- [ ] 02-02-PLAN.md — **Track B** — Always-prefix EN/VI Home, Report (RHF+Zod), success flash, bilingual copy
+- [ ] 02-03-PLAN.md — **Track C** — Supabase Auth, proxy.ts `/dashboard` gate + returnUrl, simple report cards
 
 ---
 
