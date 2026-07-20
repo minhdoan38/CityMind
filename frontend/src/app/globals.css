@@ -68,6 +68,7 @@
   --sidebar-accent-foreground: #0F766E;
   --sidebar-border: #D5DEDB;
   --sidebar-ring: #0F766E;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
@@ -123,5 +124,53 @@
       transition-duration: 0s !important;
       transition-delay: 0s !important;
     }
+
+    .hero-rise {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
+}
+
+/* Public home hero — one entrance moment */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.hero-rise {
+  animation: hero-rise 700ms var(--ease-out-expo) both;
+}
+
+.hero-rise-delay-1 {
+  animation-delay: 80ms;
+}
+
+.hero-rise-delay-2 {
+  animation-delay: 140ms;
+}
+
+.hero-rise-delay-3 {
+  animation-delay: 200ms;
+}
+
+.hero-cta {
+  transition:
+    transform 150ms var(--ease-out-expo),
+    background-color 150ms var(--ease-out-expo);
+}
+
+.hero-cta:hover {
+  transform: translateY(-1px);
+}
+
+.hero-cta:active {
+  transform: translateY(0);
 }

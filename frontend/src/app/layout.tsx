@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { Source_Sans_3 } from "next/font/google";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
+
+const sourceSans = Source_Sans_3({
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "600"],
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "CityMind AI",
@@ -14,14 +21,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
-  const messages = await getMessages();
 
   return (
-    <html lang={locale} className="h-full antialiased">
-      <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider messages={messages} locale={locale}>
-          {children}
-        </NextIntlClientProvider>
+    <html lang={locale} className={`${sourceSans.variable} h-full antialiased`}>
+      <body className={`${sourceSans.className} min-h-full flex flex-col`}>
+        {children}
       </body>
     </html>
   );
