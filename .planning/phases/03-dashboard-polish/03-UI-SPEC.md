@@ -3,22 +3,22 @@ phase: 3
 slug: dashboard-polish
 status: draft
 shadcn_initialized: true
-preset: radix-nova + neutral + CSS variables; primary Civic Teal #0F766E (inherits Phase 1/2 tokens in globals.css)
+preset: radix-nova + neutral + CSS variables; primary Clinic Blue #2563EB (inherits Phase 1/2 tokens in globals.css)
 created: 2026-07-20
 inherits: .planning/phases/02-public-experience/02-UI-SPEC.md
 sources:
   - 03-CONTEXT.md (D-01–D-22 locked)
   - 03-RESEARCH.md (TanStack Table, Dialog confirm, streaming export, limit 25)
   - PRODUCT.md (register: product; officers decide; AI advisory)
-  - DESIGN.md (Civic Teal, Source Sans 3, light-only, flat-by-default)
+  - DESIGN.md (Clinic Blue, Source Sans 3, light-only, flat-by-default)
   - impeccable product register (fixed rem, 150–250ms, no decorative motion)
   - REQUIREMENTS DATA-04..07, DASH-02..07
-  - frontend/src/app/globals.css (live tokens)
+  - frontend/src/app/globals.css (live tokens — --primary: #2563EB)
 ---
 
 # Phase 3 — UI Design Contract
 
-> Visual and interaction contract for **Dashboard Polish** (officer product UI). Inherits Phase 1/2 Civic Teal tokens; applies **product register** density — not public marketing hero aesthetic.
+> Visual and interaction contract for **Dashboard Polish** (officer product UI). Inherits Phase 1/2 Clinic Blue tokens; applies **product register** density — not public marketing hero aesthetic.
 > Scope: Reports data table, filter chrome, filtered metrics, export controls, detail section order + advisory AI, resolve/reject confirm with note, loading/empty/error states.
 > Out of scope: DASH-08 status-link copy (Phase 4), analytics charts (Phase 5), maps (Phase 6), Phase 7 triage UX.
 
@@ -29,7 +29,7 @@ sources:
 | Property | Value |
 |----------|-------|
 | Tool | shadcn (already initialized — `frontend/components.json`) |
-| Preset | `style: radix-nova`, `baseColor: neutral`, CSS variables; `--primary` = Civic Teal `#0F766E` |
+| Preset | `style: radix-nova`, `baseColor: neutral`, CSS variables; `--primary` = Clinic Blue `#2563EB` |
 | Component library | Radix (via shadcn) |
 | Icon library | lucide-react |
 | Font | Source Sans 3 only (400 / 600) — same as Phase 1/2 |
@@ -93,25 +93,26 @@ Product UI: **fixed rem**, not fluid clamps in tables/chrome. Exactly 4 sizes, 2
 
 ## Color
 
-60 / 30 / 10 restrained civic (light-only) — live tokens in `globals.css`:
+60 / 30 / 10 restrained civic (light-only) — live tokens in `globals.css` / `DESIGN.md`:
 
 | Role | Value | Usage |
 |------|-------|-------|
 | Dominant (60%) | `#FFFFFF` | Main canvas, table surface, dialog |
-| Secondary (30%) | `#F0F4F3` | Sidebar, header bar, metrics strip wells, filter panel bg when expanded, zebra optional off |
-| Accent (10%) | `#0F766E` | Reserved list below |
-| Soft accent | `#E2ECE9` | Selected row wash / advisory AI panel tint (not primary CTA) |
-| Destructive | `#B42318` | Reject confirm primary, validation errors, error Alert |
-| Ink | `#14201D` | Body, headings, table data |
-| Muted text | `#5C6B66` | Helpers, timestamps, column headers at rest |
-| Quiet line | `#D5DEDB` | Table borders, filter strokes, separators |
+| Secondary (30%) | `#F1F5F9` | Sidebar, header bar, metrics strip wells, filter panel bg when expanded, zebra optional off |
+| Accent (10%) | `#2563EB` | Reserved list below (Clinic Blue) |
+| Accent deep | `#1D4ED8` | Hover / pressed primary |
+| Soft accent | `#EFF6FF` | Selected row wash / advisory AI panel tint (not primary CTA) |
+| Destructive | `#DC2626` | Reject confirm primary, validation errors, error Alert |
+| Ink | `#1A2B3C` | Body, headings, table data |
+| Muted text | `#64748B` | Helpers, timestamps, column headers at rest |
+| Quiet line | `#E2E8F0` | Table borders, filter strokes, separators |
 
 Accent reserved for (only):
 1. Primary actions: **Export** (menu/button), **Mark as reviewing**, dialog **Confirm** (resolved path), active sidebar item
 2. Focus-visible rings on interactive controls
 3. Sortable column header active indicator (chevron / underline)
-4. Selected / hover row: soft accent wash `#E2ECE9` or `secondary` — **not** full teal fills on every row
-5. Status “resolved” success cue may use teal **text + icon**, never teal flood backgrounds
+4. Selected / hover row: soft accent wash `#EFF6FF` or `secondary` — **not** full Clinic Blue fills on every row
+5. Status “resolved” success cue may use Clinic Blue **text + icon**, never Clinic Blue flood backgrounds
 
 **Not accent:** default table grid lines, inactive filter chrome, icons at rest, skeleton pulses, metric numbers (ink).
 
@@ -120,12 +121,12 @@ Accent reserved for (only):
 |--------|--------|------|
 | new | Badge secondary + muted | “New” / “Mới” |
 | reviewing | Badge soft-accent + ink | “Reviewing” / “Đang xem xét” |
-| resolved | Badge with teal text + check icon | “Resolved” / “Đã xử lý” |
+| resolved | Badge with Clinic Blue text + check icon | “Resolved” / “Đã xử lý” |
 | rejected | Badge with destructive text + x icon | “Rejected” / “Từ chối” |
 
 Priority/severity: text label + optional muted badge; do not encode priority as color-only dots.
 
-**Forbidden:** purple SaaS gradients, dark cyber neon shells, cream/sand body, ghost-cards (border + huge shadow), radius > 16px on panels.
+**Forbidden:** purple SaaS gradients, dark cyber neon shells, cream/sand body, ghost-cards (border + huge shadow), radius > 16px on panels. No Civic Teal (`#0F766E` / `#E2ECE9`) — brand is Clinic Blue only.
 
 ---
 
@@ -174,6 +175,7 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 | Export CSV | Download CSV | Tải CSV |
 | Export Excel | Download Excel | Tải Excel |
 | Export in progress | Preparing export… | Đang chuẩn bị tệp xuất… |
+| Export failed | Could not export reports. Check your connection and try again. | Không thể xuất báo cáo. Kiểm tra kết nối và thử lại. |
 | Columns | Columns | Cột |
 | Filters (toggle) | Filters | Bộ lọc |
 | Clear filters | Clear filters | Xóa bộ lọc |
@@ -224,11 +226,11 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 | Note validation | A note is required to resolve or reject. | Cần ghi chú để xác nhận đã xử lý hoặc từ chối. |
 | Confirm resolve | Confirm resolve | Xác nhận đã xử lý |
 | Confirm reject | Confirm reject | Xác nhận từ chối |
-| Cancel | Cancel | Hủy |
+| Dialog dismiss | Keep editing | Giữ nguyên |
 | Updating | Updating… | Đang cập nhật… |
 | Status error | Status update failed. Try again. | Cập nhật trạng thái thất bại. Thử lại. |
 
-**Destructive confirmation (Reject):** Dialog title “Reject report” + required note + destructive Confirm button. Cancel dismisses with no change (D-12).
+**Destructive confirmation (Reject):** Dialog title “Reject report” + required note + destructive Confirm button. “Keep editing” / “Giữ nguyên” dismisses with no change (D-12).
 
 ---
 
@@ -243,7 +245,7 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 | Status badges | Text + icon/color; capitalize status labels from catalog |
 | `StatusActions` | Extend existing: `reviewing` immediate; `resolved`/`rejected` open Dialog with required note (D-10–D-14); no table-row resolve |
 | Detail layout | Section order **strict** per D-19 (see Interaction) |
-| AI block | Soft-accent / secondary panel + “advisory” heading + disclaimer Alert — never primary teal authority chrome (D-20) |
+| AI block | Soft-accent / secondary panel + “advisory” heading + disclaimer Alert — never primary Clinic Blue authority chrome (D-20) |
 | Timeline | Newest-first; status, note, actor (truncated `actor_id` or “Officer”), timestamp (D-21) |
 | Skeleton | Table: header + 8–10 row skeletons; Detail: header + section blocks; Export: button loading state |
 | Empty | Dashed quiet-line region, centered Label/Body copy from contract |
@@ -266,8 +268,16 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 1. Click Export → choose CSV or Excel.
 2. BFF proxies streaming download with current filter query string.
 3. While preparing: disable control, show “Preparing export…”.
-4. On failure: Alert with EN/VI error; control re-enabled.
+4. On failure: Alert with EN/VI “Could not export reports…” / “Không thể xuất báo cáo…”; control re-enabled.
 5. `?focus=export` on mount: focus Export control (scroll into view if needed).
+
+**Export columns (D-16 / RESEARCH) — locked order:**
+1. Lean ops defaults: `report_id`, `created_at`, category, priority, status, truncated summary
+2. Plus: `severity`
+3. Plus: `recommendation` (AI advisory field)
+4. Plus: latest status note when available
+
+Streaming/chunked response for large sets — do not load entire result into browser memory.
 
 ### Detail section order (D-19) — locked
 1. **Header meta** — id, status badge, timestamps, category / priority / severity  
@@ -280,7 +290,7 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 
 ### Resolve / reject (D-11–D-14)
 1. **Mark as reviewing** — immediate PATCH, no dialog, note optional.
-2. **Mark as resolved / rejected** — open Dialog; note textarea required (trim nonempty); Cancel closes without PATCH.
+2. **Mark as resolved / rejected** — open Dialog; note textarea required (trim nonempty); “Keep editing” closes without PATCH.
 3. Confirm → PATCH with note; server 422 if missing; client shows validation; on success `router.refresh()`.
 4. Actor from JWT `sub` only — never collect actor in UI.
 
@@ -296,7 +306,7 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 | Requirement | Contract |
 |-------------|----------|
 | Standard | WCAG 2.2 AA |
-| Focus | Visible teal ring (`outline` / `--ring`) on all interactive controls |
+| Focus | Visible Clinic Blue ring (`outline` / `--ring`) on all interactive controls |
 | Touch | ≥44px targets for primary actions |
 | Table | `<table>` semantics via shadcn Table; sortable headers are `<button>` with `aria-sort` |
 | Row nav | Rows focusable or include clear “Open” link per row for SR users if whole-row click is mouse-only |
@@ -333,6 +343,7 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 | Fluid display clamps / second font in table chrome | Product register + Source Sans 3 only |
 | Ghost-card table (border + large shadow) / radius > 16px | DESIGN + product flat-by-default |
 | Purple SaaS / dark neon / cream body | Brand + PRODUCT anti-references |
+| Civic Teal accents (`#0F766E` / `#E2ECE9`) | Stale brand — live primary is Clinic Blue `#2563EB` |
 | Decorative motion / page-load sequences | Product register |
 | OFFSET pagination UI | DATA-04 cursor contract |
 | Inventing actor email in UI from client | Actor from JWT `sub` only |
