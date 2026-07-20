@@ -121,7 +121,7 @@ Each task was committed atomically:
 2. **Task 2: Public BFF + bilingual status page form, auto-fetch, and result panel** - `104ddde` (feat)
 3. **Task 3: Unprefixed /status redirect + success locale URL fix** - `c9a77e6` (feat)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `802802e` (docs: complete plan)
 
 ## Files Created/Modified
 
