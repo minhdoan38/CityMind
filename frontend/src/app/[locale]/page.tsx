@@ -3,10 +3,13 @@ import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import ReportStarterBar from "@/components/ReportStarterBar";
 import { Link } from "@/i18n/navigation";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1582898882571-b84d7c95dc72?auto=format&fit=crop&w=2000&q=80";
+const ABOUT_IMAGE =
+  "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200&q=80";
 
 export default async function LocalizedHomePage() {
   const t = await getTranslations("public");
@@ -21,147 +24,238 @@ export default async function LocalizedHomePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="absolute inset-x-0 top-0 z-20 border-b border-white/15 bg-black/20 text-white backdrop-blur-[2px]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      {/* Dentlabs-style solid header — logo + nav + primary CTA */}
+      <header className="sticky top-0 z-40 border-b border-border bg-white">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center text-[1.25rem] font-semibold tracking-[-0.02em] text-white"
+            className="inline-flex min-h-11 shrink-0 items-center text-[1.25rem] font-semibold tracking-[-0.02em] text-foreground"
           >
+            <span
+              aria-hidden
+              className="mr-2 inline-flex size-8 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+            >
+              C
+            </span>
             {t("title")}
           </Link>
-          <nav className="flex items-center gap-4 sm:gap-6">
+
+          <nav className="hidden items-center gap-6 md:flex">
+            <a
+              href="#how-it-works"
+              className="inline-flex min-h-11 items-center text-sm font-normal text-muted-foreground hover:text-foreground"
+            >
+              {t("navHowItWorks")}
+            </a>
+            <a
+              href="#instructions"
+              className="inline-flex min-h-11 items-center text-sm font-normal text-muted-foreground hover:text-foreground"
+            >
+              {t("instructionsTitle")}
+            </a>
+            <a
+              href="#about"
+              className="inline-flex min-h-11 items-center text-sm font-normal text-muted-foreground hover:text-foreground"
+            >
+              {t("navAbout")}
+            </a>
+            <a
+              href="#contact"
+              className="inline-flex min-h-11 items-center text-sm font-normal text-muted-foreground hover:text-foreground"
+            >
+              {t("navContact")}
+            </a>
+          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-3">
             <NextLink
               href="/login"
-              className="inline-flex min-h-11 items-center px-2 text-sm font-normal text-white/70 hover:text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="hidden min-h-11 items-center px-2 text-sm font-normal text-muted-foreground hover:text-foreground sm:inline-flex"
             >
               {t("officerSignIn")}
             </NextLink>
-            <LocaleSwitcher tone="on-dark" />
-          </nav>
+            <LocaleSwitcher />
+            <Link
+              href="/report"
+              className="hero-cta inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {t("reportCTA")}
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="flex flex-grow flex-col">
-        {/* D-08: full-bleed hero — brand + headline + advisory + one CTA */}
-        <section className="relative isolate min-h-[min(92vh,52rem)] w-full overflow-hidden">
-          <Image
-            src={HERO_IMAGE}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-gradient-to-t from-[#14201D]/88 via-[#14201D]/40 to-[#14201D]/20"
-          />
+        {/* Hero + overlapping report starter (reference structure) */}
+        <section className="relative isolate">
+          <div className="relative min-h-[min(78vh,42rem)] w-full overflow-hidden">
+            <Image
+              src={HERO_IMAGE}
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[center_30%]"
+            />
+            <div
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-r from-[#1A2B3C]/80 via-[#1A2B3C]/50 to-[#1A2B3C]/25"
+            />
 
-          <div className="relative z-10 mx-auto flex min-h-[min(92vh,52rem)] max-w-6xl flex-col justify-end px-6 pb-16 pt-28 sm:pb-20 md:pb-24 md:pt-32">
-            <div className="max-w-[36rem]">
-              <h1 className="hero-rise text-balance text-[clamp(1.75rem,5vw,2.5rem)] font-semibold leading-[1.15] tracking-[-0.04em] text-white">
-                {t("title")}
-              </h1>
-              <p className="hero-rise hero-rise-delay-1 mt-3 max-w-[32rem] text-pretty text-base font-normal leading-relaxed text-white/90 sm:text-[1.125rem]">
-                {t("subtitle")}
-              </p>
-              <p className="hero-rise hero-rise-delay-2 mt-3 max-w-[28rem] text-pretty text-sm leading-relaxed text-white/70">
-                {t("heroAdvisory")}
-              </p>
-              <div className="hero-rise hero-rise-delay-3 mt-8">
-                <Link
-                  href="/report"
-                  className="hero-cta inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-8 text-base font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-                >
-                  {t("reportCTA")}
-                </Link>
+            <div className="relative z-10 mx-auto flex min-h-[min(78vh,42rem)] max-w-6xl flex-col justify-center px-6 pb-28 pt-16 sm:pb-32">
+              <div className="max-w-[34rem]">
+                <p className="hero-rise text-sm font-semibold tracking-wide text-white/80">
+                  {t("title")}
+                </p>
+                <h1 className="hero-rise hero-rise-delay-1 mt-3 text-balance text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.12] tracking-[-0.03em] text-white">
+                  {t("heroHeadline")}
+                </h1>
+                <p className="hero-rise hero-rise-delay-2 mt-4 max-w-[30rem] text-pretty text-base leading-relaxed text-white/90 sm:text-[1.125rem]">
+                  {t("subtitle")}
+                </p>
+                <p className="hero-rise hero-rise-delay-2 mt-2 max-w-[28rem] text-pretty text-sm leading-relaxed text-white/70">
+                  {t("heroAdvisory")}
+                </p>
+                <div className="hero-rise hero-rise-delay-3 mt-8 flex flex-wrap gap-3">
+                  <Link
+                    href="/report"
+                    className="hero-cta inline-flex min-h-11 items-center justify-center rounded-full bg-white px-7 text-base font-semibold text-primary hover:bg-white/95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    {t("reportCTA")}
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/50 bg-transparent px-6 text-base font-semibold text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  >
+                    {t("heroSecondaryCta")}
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </section>
 
-        {/* D-03: How it works */}
-        <section className="w-full border-b border-border bg-background px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-2xl space-y-4">
-            <h2 className="text-balance text-[1.25rem] font-semibold tracking-[-0.02em] text-foreground">
-              {t("howItWorksTitle")}
-            </h2>
-            <p className="text-pretty text-base leading-relaxed text-muted-foreground">
-              {t("howItWorksDesc")}
-            </p>
+          <div className="relative z-20 mx-auto -mt-16 max-w-6xl px-6 pb-4 sm:-mt-20">
+            <ReportStarterBar />
           </div>
         </section>
 
-        {/* D-03 / D-06: Instructions (3–5 steps) */}
-        <section className="w-full border-b border-border bg-secondary px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-6xl space-y-10">
+        {/* D-03 order: How it works → Instructions → About → Contact → Footer */}
+        <section
+          id="how-it-works"
+          className="w-full scroll-mt-24 border-y border-border bg-secondary px-6 py-16 md:py-24"
+        >
+          <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl space-y-3">
-              <h2 className="text-balance text-[1.25rem] font-semibold tracking-[-0.02em] text-foreground">
-                {t("instructionsTitle")}
+              <h2 className="text-balance text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.02em] text-foreground">
+                {t("howItWorksTitle")}
               </h2>
               <p className="text-pretty text-base leading-relaxed text-muted-foreground">
-                {t("instructionsDesc")}
+                {t("howItWorksDesc")}
               </p>
             </div>
+          </div>
+        </section>
 
-            <ol className="space-y-0 divide-y divide-border border-t border-border">
+        <section
+          id="instructions"
+          className="w-full scroll-mt-24 bg-background px-6 py-16 md:py-24"
+        >
+          <div className="mx-auto max-w-6xl space-y-6">
+            <h2 className="text-balance text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.02em] text-foreground">
+              {t("instructionsTitle")}
+            </h2>
+            <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {steps.map((step, idx) => (
                 <li
                   key={step.title}
-                  className="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4 py-5 sm:gap-6"
+                  className="rounded-2xl border border-border bg-white p-5"
                 >
-                  <span
-                    aria-hidden
-                    className="pt-0.5 font-semibold tabular-nums text-primary"
-                  >
+                  <span className="text-sm font-semibold tabular-nums text-primary">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
-                  <div className="space-y-1">
-                    <h3 className="text-base font-semibold text-foreground">
-                      {step.title}
-                    </h3>
-                    <p className="max-w-[42rem] text-pretty text-sm leading-relaxed text-muted-foreground">
-                      {step.desc}
-                    </p>
-                  </div>
+                  <h4 className="mt-3 text-base font-semibold text-foreground">
+                    {step.title}
+                  </h4>
+                  <p className="mt-2 text-pretty text-sm leading-relaxed text-muted-foreground">
+                    {step.desc}
+                  </p>
                 </li>
               ))}
             </ol>
           </div>
         </section>
 
-        {/* About */}
-        <section className="w-full border-b border-border bg-background px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-2xl space-y-4">
-            <h2 className="text-balance text-[1.25rem] font-semibold tracking-[-0.02em] text-foreground">
-              {t("aboutTitle")}
-            </h2>
-            <p className="text-pretty text-base leading-relaxed text-muted-foreground">
-              {t("aboutDesc")}
-            </p>
+        {/* About — image + mission/vision (reference two-column) */}
+        <section id="about" className="w-full scroll-mt-24 bg-secondary px-6 py-16 md:py-24">
+          <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl sm:aspect-[5/4] lg:aspect-[4/5]">
+              <Image
+                src={ABOUT_IMAGE}
+                alt=""
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+              />
+            </div>
+
+            <div className="space-y-6">
+              <p className="inline-flex rounded-full bg-background px-3 py-1 text-sm font-semibold text-primary">
+                {t("aboutTitle")}
+              </p>
+              <h2 className="text-balance text-[clamp(1.5rem,3vw,2rem)] font-semibold leading-tight tracking-[-0.02em] text-foreground">
+                {t("aboutHeadline")}
+              </h2>
+              <p className="max-w-[40rem] text-pretty text-base leading-relaxed text-muted-foreground">
+                {t("aboutDesc")}
+              </p>
+
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <h3 className="text-base font-semibold text-foreground">
+                    {t("missionTitle")}
+                  </h3>
+                  <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+                    {t("missionDesc")}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-base font-semibold text-foreground">
+                    {t("visionTitle")}
+                  </h3>
+                  <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+                    {t("visionDesc")}
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                href="/report"
+                className="hero-cta inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              >
+                {t("aboutCta")}
+              </Link>
+            </div>
           </div>
         </section>
 
-        {/* D-05: Contact static */}
-        <section className="w-full bg-secondary px-6 py-16 md:py-20">
-          <div className="mx-auto max-w-md space-y-4">
-            <h2 className="text-balance text-[1.25rem] font-semibold tracking-[-0.02em] text-foreground">
+        {/* Contact */}
+        <section id="contact" className="w-full scroll-mt-24 bg-background px-6 py-16 md:py-24">
+          <div className="mx-auto max-w-xl space-y-4">
+            <h2 className="text-balance text-[clamp(1.5rem,3vw,2rem)] font-semibold tracking-[-0.02em] text-foreground">
               {t("contactTitle")}
             </h2>
-            <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+            <p className="text-pretty text-base leading-relaxed text-muted-foreground">
               {t("contactDesc", { email: t("contactEmail") })}
             </p>
             <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
               {t("contactFormSoon")}
             </p>
-            <div className="pt-1">
-              <a
-                href={`mailto:${t("contactEmail")}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-5 text-base font-semibold text-primary transition-colors hover:bg-background/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              >
-                {t("contactEmail")}
-              </a>
-            </div>
+            <a
+              href={`mailto:${t("contactEmail")}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-border bg-white px-6 text-base font-semibold text-primary transition-colors hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {t("contactEmail")}
+            </a>
           </div>
         </section>
       </main>

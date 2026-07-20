@@ -117,6 +117,21 @@ test('localized Home implements D-01–D-08 content contract', () => {
   // Officer sign-in must not use locale-prefixed Link (login is outside [locale])
   assert.match(page, /from ["']next\/link["']/);
   assert.match(page, /href=["']\/login["']/);
+
+  // D-03: How it works → Instructions → About → Contact → Footer
+  const howIdx = page.indexOf('id="how-it-works"');
+  const instructionsIdx = page.indexOf('id="instructions"');
+  const aboutIdx = page.indexOf('id="about"');
+  const contactIdx = page.indexOf('id="contact"');
+  const footerIdx = page.indexOf('<footer');
+  assert.ok(howIdx > -1 && instructionsIdx > -1 && aboutIdx > -1 && contactIdx > -1 && footerIdx > -1);
+  assert.ok(
+    howIdx < instructionsIdx &&
+      instructionsIdx < aboutIdx &&
+      aboutIdx < contactIdx &&
+      contactIdx < footerIdx,
+    'Home section order must be how-it-works → instructions → about → contact → footer'
+  );
 });
 
 test('unprefixed public pages redirect into locale prefixes', () => {
