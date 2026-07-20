@@ -131,7 +131,7 @@ Plans:
 **Mode:** mvp
 **Depends on**: Phase 4
 **Requirements**: ANLY-01, ANLY-02, ANLY-03
-**Parallel tracks**: A → C → B (A APIs first; C officer UI; B optional public strip after message-file wave)
+**Parallel tracks**: A1 → A2 → C → B (warehouse ETL first; officer API seam; C officer UI; B optional public strip after message-file wave)
 
 **Success Criteria**:
 
@@ -139,11 +139,12 @@ Plans:
 2. Analytics views compute category trends and time-to-resolution
 3. Dashboard analytics tab shows charts with date range filter
 
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 
-- [ ] 05-01-PLAN.md — **Track A** — Wave 0 stubs, ETL job, BigQuery views, officer analytics read API
+- [ ] 05-01-PLAN.md — **Track A1** — Wave 0 stubs, analytics DDL/views, daily ETL job (ANLY-01/02)
+- [ ] 05-04-PLAN.md — **Track A2** — Officer GET /api/v1/analytics API seam (ANLY-03)
 - [ ] 05-03-PLAN.md — **Track C** — recharts SUS checkpoint, Analytics tab charts + URL date selector
 - [ ] 05-02-PLAN.md — **Track B** — Optional public Home stats strip (k≥3, rate-limited)
 
@@ -183,7 +184,7 @@ Plans:
 | 2. Public Experience | v2.0 | 5/5 | Complete   | 2026-07-20 |
 | 3. Dashboard Polish | v2.0 | 0/3 | Not started | - |
 | 4. Citizen Status | v2.0 | 3/3 | UAT pending | - |
-| 5. Analytics Pipeline | v2.0 | 0/3 | Not started | - |
+| 5. Analytics Pipeline | v2.0 | 0/4 | Not started | - |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Self-help vs government AI triage | v2.0 | 0/0 | Not started | - |
 

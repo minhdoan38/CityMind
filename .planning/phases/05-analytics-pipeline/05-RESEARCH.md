@@ -495,23 +495,23 @@ top = [c for c in categories if c["count"] >= K][:2]
 | A5 | SSR + short cache is better than client fetch for Home stats | Track B | Client fetch also OK if degrade-hide still holds |
 | A6 | Dual-watermark without adding `updated_at` is enough for MVP | ETL | If report fields other than status change often, add `updated_at` |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 ### Resolved in research
 
-1. **Chart library?** → recharts via shadcn `chart` (UI-SPEC + registry).  
-2. **Job vs Function?** → Cloud Run Job + Scheduler.  
-3. **Watermark store?** → BQ `etl_watermarks`.  
-4. **SLA open time?** → report `created_at`.  
-5. **k threshold?** → keep **3** (D-17); literature supports 3 as minimum frequency; higher is policy preference not required for MVP. `[CITED: https://sdctools.github.io/HandbookSDC/04-magnitude-tabular-data.html]`  
+1. **Chart library?** → recharts via shadcn `chart` (UI-SPEC + registry).
+2. **Job vs Function?** → Cloud Run Job + Scheduler.
+3. **Watermark store?** → BQ `etl_watermarks`.
+4. **SLA open time?** → report `created_at`.
+5. **k threshold?** → keep **3** (D-17); literature supports 3 as minimum frequency; higher is policy preference not required for MVP. `[CITED: https://sdctools.github.io/HandbookSDC/04-magnitude-tabular-data.html]`
 6. **Public delivery?** → SSR/BFF with graceful hide.
 
-### Remaining (planner / ops)
+### Resolved in planning (ops / gates)
 
-1. **GCP project/region/SA names** for Job + Scheduler — not in repo as code; need deploy checklist.  
-2. **Whether to rename BQ tables** (`reports` → `reports_analytics`) vs in-place column drop — recommend **new analytics tables** to avoid breaking any leftover readers of old schema.  
-3. **Cloud Logging alert policy** vs README-only for D-03 — recommend README + optional log-based alert; not PagerDuty.  
-4. **Phase 4 dependency:** ROADMAP says Phase 5 depends on Phase 4 — plan can proceed; execute after Phase 4 complete. `[CITED: ROADMAP.md]`
+1. **GCP project/region/SA names** for Job + Scheduler → **ops-owned via `user_setup`** on 05-01 (`gcp-cloud-run-job` checklist + `scripts/deploy_etl_job.md` placeholders). Planner must not invent project/region/SA identifiers; execute fills them from the live GCP environment.
+2. **BQ table strategy** → **new `*_analytics` tables** (`reports_analytics`, `status_events_analytics`) — not in-place DROP/ALTER of legacy ops columns. Avoids breaking leftover readers of old `schema.sql` shapes (locked in 05-01 Task 2).
+3. **ETL failure observability (D-03)** → **Cloud Logging + README/ops note** in `scripts/deploy_etl_job.md` (optional log-based alert). **Not PagerDuty** — do not block MVP on a third-party pager.
+4. **Phase 4 dependency** → ROADMAP: Phase 5 depends on Phase 4. **Planning may proceed**; **execute gate / UAT note:** do not start `$gsd-execute-phase 5` until Phase 4 plans are complete and UAT is accepted (or explicit bypass). `[CITED: ROADMAP.md]`
 
 ## Environment Availability
 
