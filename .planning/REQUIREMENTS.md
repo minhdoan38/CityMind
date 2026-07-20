@@ -56,7 +56,7 @@
 
 - [x] **ANLY-01**: Supabase → BigQuery ETL job syncs report/status data
 - [x] **ANLY-02**: BigQuery views for category trends, SLA/time-to-resolution, hotspots
-- [ ] **ANLY-03**: Dashboard analytics tab with date range selector
+- [x] **ANLY-03**: Dashboard analytics tab with date range selector
 
 ### Maps (MAP) — Phase 6
 
@@ -133,7 +133,7 @@ Deferred beyond Milestone v2.
 | DASH-08 | Phase 4 | Complete |
 | ANLY-01 | Phase 5 | Complete |
 | ANLY-02 | Phase 5 | Complete |
-| ANLY-03 | Phase 5 | Pending |
+| ANLY-03 | Phase 5 | Complete |
 | MAP-01 | Phase 6 | Pending |
 | MAP-02 | Phase 6 | Pending |
 | MAP-03 | Phase 6 | Pending |
