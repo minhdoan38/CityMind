@@ -7,10 +7,16 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const email = String(form.get("email") ?? "");
     const password = String(form.get("password") ?? "");
-    const returnUrl = safeReturnUrl(String(form.get("returnUrl") ?? ""));
+    const returnUrl = safeReturnUrl(
+      String(form.get("returnUrl") ?? ""),
+      "/dashboard",
+    );
 
     const supabase = await createClient();
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -18,7 +24,9 @@ export async function POST(request: Request) {
     if (error || !user) {
       const login = new URL("/login", request.url);
       login.searchParams.set("error", "1");
-      if (returnUrl !== "/dashboard") login.searchParams.set("returnUrl", returnUrl);
+      if (returnUrl !== "/dashboard") {
+        login.searchParams.set("returnUrl", returnUrl);
+      }
       return new NextResponse(null, {
         status: 303,
         headers: { Location: `${login.pathname}${login.search}` },

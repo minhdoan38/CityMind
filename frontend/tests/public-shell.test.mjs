@@ -40,14 +40,18 @@ test('request config resolves locale from requestLocale segment', () => {
   assert.doesNotMatch(request, /getUserLocale/);
 });
 
-test('proxy.ts is locale-only next-intl seam (D-17 / Plan 02-03 auth later)', () => {
+test('proxy.ts composes next-intl with dashboard getClaims gate (D-17 / AUTH-04)', () => {
   const proxy = read(src('proxy.ts'));
   assert.match(proxy, /createMiddleware/);
   assert.match(proxy, /from ['"]next-intl\/middleware['"]/);
   assert.match(proxy, /intlMiddleware/);
-  assert.doesNotMatch(proxy, /getClaims|getSession|getUser/);
+  assert.match(proxy, /\.auth\.getClaims\s*\(/);
   assert.match(proxy, /startsWith\(['"]\/login['"]\)/);
   assert.match(proxy, /startsWith\(['"]\/dashboard['"]\)/);
+  assert.match(proxy, /returnUrl/);
+  // Public Home stays open — AUTH-04 path correction vs legacy root protection
+  assert.doesNotMatch(proxy, /pathname\s*===\s*['"]\/['"]/);
+  assert.doesNotMatch(proxy, /getSession\s*\(/);
 });
 
 test('login and dashboard stay outside app/[locale]', () => {

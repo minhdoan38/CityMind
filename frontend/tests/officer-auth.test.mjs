@@ -30,8 +30,11 @@ test('login route uses signInWithPassword and safe returnUrl (D-15)', () => {
   const loginRoute = read(src('app', 'api', 'session', 'login', 'route.ts'));
   assert.match(loginRoute, /signInWithPassword/);
   assert.match(loginRoute, /returnUrl/);
-  assert.match(loginRoute, /\/dashboard/);
+  assert.match(loginRoute, /safeReturnUrl/);
   assert.doesNotMatch(loginRoute, /citymind_officer_session|createHmac|createSessionToken/);
+
+  const helper = read(src('lib', 'safe-return-url.ts'));
+  assert.match(helper, /\/dashboard/);
 });
 
 test('logout route clears Supabase session', () => {
