@@ -141,3 +141,23 @@ test('dashboard stays outside [locale] while public locale Home remains ungated'
   // Public locale routes still go through next-intl, not the auth redirect path alone
   assert.match(proxy, /intlMiddleware/);
 });
+
+test('report detail lives under /dashboard/reports so proxy matcher covers it', () => {
+  const detailPath = src('app', 'dashboard', 'reports', '[reportId]', 'page.tsx');
+  assert.ok(fs.existsSync(detailPath), 'detail must live under /dashboard/reports/[reportId]');
+  const detail = read(detailPath);
+  assert.match(detail, /officerFetch/);
+  assert.match(detail, /requireOfficerSession/);
+  assert.match(detail, /\/api\/v1\/reports\//);
+
+  const reportCard = read(src('components', 'dashboard', 'ReportCard.tsx'));
+  assert.match(reportCard, /\/dashboard\/reports\/\$\{|`\/dashboard\/reports\//);
+
+  // Legacy public-ish officer detail must redirect into the gated path
+  const legacyPath = src('app', 'reports', '[reportId]', 'page.tsx');
+  assert.ok(fs.existsSync(legacyPath), 'legacy /reports/[reportId] redirect page must exist');
+  const legacy = read(legacyPath);
+  assert.match(legacy, /redirect\s*\(/);
+  assert.match(legacy, /\/dashboard\/reports\//);
+  assert.doesNotMatch(legacy, /officerFetch|StatusActions|DataTable/);
+});
