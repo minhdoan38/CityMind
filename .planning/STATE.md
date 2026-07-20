@@ -29,9 +29,9 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 ## Current Position
 
 Phase: 2 of 6 (Public Experience)
-Plan: 02-01 … 02-05 revised — awaiting re-check / execute
-Status: Ready to execute (after Phase 1 + plan re-check)
-Last activity: 2026-07-20 — Phase 2 plans revised by gsd-planner (revision mode)
+Plan: 02-01 … 02-05 — plan-check passed
+Status: Ready to execute (Phase 1 is still the preferred prerequisite)
+Last activity: 2026-07-20 — Phase 2 plan-check PASSED
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -66,8 +66,8 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan-checker re-check of 02-01…02-05 + 02-VALIDATION.md
-- Execute Phase 2 after Phase 1 foundation is complete
+- Execute Phase 2 (`$gsd-execute-phase 2`) — prefer Phase 1 green first
+- Note: working tree may already contain partial Phase 2 implementation; reconcile during execute
 
 ### Blockers/Concerns
 
