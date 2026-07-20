@@ -129,7 +129,7 @@ Each task was committed atomically:
 2. **Task 2: Issue hashed access tokens on successful analyze** - `67d073c` (feat)
 3. **Task 3: Harden analyze with XFF rate limit, magic bytes, and generic errors** - `98b1c4e` (feat)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `9276673` (docs: complete plan)
 
 ## Files Created/Modified
 
