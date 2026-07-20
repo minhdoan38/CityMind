@@ -135,7 +135,7 @@ Each task was committed atomically:
    - `762c012` test(02-02): extend public-shell Home and catalog contract tests
    - `25089fc` feat(02-02): ship bilingual Home and EN/VI catalogs
 
-**Plan metadata:** see docs commit after SUMMARY self-check
+**Plan metadata:** `4b15d42` (docs: complete Track B i18n Home plan)
 
 ## Files Created/Modified
 
