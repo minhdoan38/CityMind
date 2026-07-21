@@ -64,6 +64,17 @@
 - [ ] **MAP-02**: MapLibre GL incident map on dashboard with clustering
 - [ ] **MAP-03**: Radius/bbox geo filter API and map-integrated filter UI
 
+### Async Triage (TRIAGE) — Phases 7 & 9
+
+- [ ] **TRIAGE-01**: `POST /reports` persists report before triage; returns `report_id` + `access_token` immediately (`ReportSubmissionResponse`)
+- [ ] **TRIAGE-02**: `triage_status` lifecycle (`pending` → `processing` → `completed` \| `failed` \| `manual_review`); AI failure never blocks intake
+- [ ] **TRIAGE-03**: Citizen status shows service-progress wording; hides AI fields until `completed`; calm message on `failed` (no provider errors)
+- [ ] **TRIAGE-04**: Officers see all reports in default queue immediately; `failed`/`manual_review` elevated; filter by `triage_status`; NULL AI fields never backfilled
+- [ ] **TRIAGE-05**: Deployed env uses Cloud Tasks → authenticated internal triage handler; local dev may use BackgroundTasks; deployed config rejects BackgroundTasks-only
+- [ ] **TRIAGE-06**: `triage_runs` and `triage_attempts` audit tables (model, prompt/config version, raw output, latency, validation, disposition)
+- [ ] **TRIAGE-07**: Semantic policy validation (severity/priority/evidence rules); invalid output → `manual_review`
+- [ ] **TRIAGE-08**: Eval suite + shadow rollout gate before production model/config swap (under-triage, grounding, EN/VI parity, failure rate)
+
 ## v2 Requirements
 
 Deferred beyond Milestone v2.
@@ -137,13 +148,22 @@ Deferred beyond Milestone v2.
 | MAP-01 | Phase 6 | Pending |
 | MAP-02 | Phase 6 | Pending |
 | MAP-03 | Phase 6 | Pending |
+| TRIAGE-01 | Phase 7 | Pending |
+| TRIAGE-02 | Phase 7 | Pending |
+| TRIAGE-03 | Phase 7 | Pending |
+| TRIAGE-04 | Phase 7 | Pending |
+| TRIAGE-05 | Phase 7 | Pending |
+| TRIAGE-06 | Phase 7 | Pending |
+| TRIAGE-07 | Phase 7 | Pending |
+| TRIAGE-08 | Phase 9 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 35 total
 - Mapped to phases: 35
+- TRIAGE requirements: 8 (phases 7–9)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-20 after milestone v2 roadmap creation*
+*Last updated: 2026-07-21 — TRIAGE-01..08 from async triage explore*
