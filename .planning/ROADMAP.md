@@ -23,7 +23,7 @@ Upgrade the shipped CityMind MVP into a production-ready, self-hosted platform a
 - [ ] **Phase 7: Next.js-Only Google-Free Platform** — Consolidate CityMind into Next.js/Node.js using a third-party API key and self-hosted Supabase; remove FastAPI, Python, Docker, and Google Cloud while retaining Google Fonts
 - [x] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts (completed 2026-07-22)
 - [x] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue (completed 2026-07-22)
-- [ ] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover
+- [x] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover (completed 2026-07-22)
 
 ## Phase Details
 
@@ -314,7 +314,7 @@ Plans:
 
 **Wave 2** *(depends on 10-01)*
 
-- [ ] 10-02-PLAN.md — **Shadow rollout** — `TRIAGE_SHADOW_MODE` dual-run, `triage_shadow_comparisons` storage, officer disagreement UX, eval-gated cutover
+- [x] 10-02-PLAN.md — **Shadow rollout** — `TRIAGE_SHADOW_MODE` dual-run, `triage_shadow_comparisons` storage, officer disagreement UX, eval-gated cutover
 
 **Context**: Do not migrate models blindly; every permitted model/provider route must beat the baseline on agreed metrics and remain auditable.
 
@@ -335,7 +335,7 @@ Plans:
 | 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
 | 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
 | 9. Self-help vs Government Routing | v2.0 | 4/4 | Complete   | 2026-07-22 |
-| 10. Shadow Rollout & Production Evaluation | v2.0 | 1/2 | In Progress|  |
+| 10. Shadow Rollout & Production Evaluation | v2.0 | 2/2 | Complete   | 2026-07-22 |
 
 ---
 *Roadmap created: 2026-07-20*
