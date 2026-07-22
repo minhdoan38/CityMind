@@ -97,6 +97,7 @@ test('public routing self-help workflow and escalate catalog keys exist (Phase 9
   const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
   assert.equal(en.public.statusWorkflow.stepGuidanceAvailable, 'Guidance available');
   assert.equal(vi.public.statusWorkflow.stepGuidanceAvailable, 'Hướng dẫn đã sẵn sàng');
+  assert.equal(en.public.routing.escalateTitle, 'Still need city help?');
   assert.equal(en.public.routing.escalateCta, 'Send to city officers');
   assert.equal(vi.public.routing.escalateCta, 'Gửi cho cán bộ thành phố');
   const statusPage = read(src('app', '[locale]', 'status', 'page.tsx'));

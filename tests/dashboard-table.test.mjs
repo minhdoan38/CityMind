@@ -96,7 +96,14 @@ test('ReportsTable includes routing destination badge column', () => {
   const tablePath = 'src/components/reports/ReportsTable.tsx';
   const src = read(tablePath);
   assert.ok(src.includes('RoutingDestinationBadge'), 'ReportsTable must render RoutingDestinationBadge');
+  assert.ok(
+    src.includes('routing_destination'),
+    'ReportsTable must include routing_destination column',
+  );
   assert.ok(src.includes('dashboard.routing'), 'ReportsTable must use dashboard.routing column header');
+  const en = JSON.parse(read('messages/en.json'));
+  assert.equal(typeof en.dashboard.routing.badgeSelfHelp, 'string');
+  assert.equal(typeof en.dashboard.routing.badgeGovernment, 'string');
 });
 
 test('EN/VI catalogs include list filter and empty/error copy', () => {
@@ -122,17 +129,4 @@ test('EN/VI catalogs include list filter and empty/error copy', () => {
       (vi.error.loadFailed || vi.dashboard.errorLoad),
     'error load copy required in both locales',
   );
-});
-
-test('ReportsTable includes routing destination badge column (ROUT-05)', () => {
-  const tablePath = 'src/components/reports/ReportsTable.tsx';
-  const src = read(tablePath);
-  assert.ok(src.includes('RoutingDestinationBadge'), 'ReportsTable must render RoutingDestinationBadge');
-  assert.ok(
-    src.includes('routing_destination'),
-    'ReportsTable must include routing_destination column',
-  );
-  const en = JSON.parse(read('messages/en.json'));
-  assert.equal(typeof en.dashboard.routing.badgeSelfHelp, 'string');
-  assert.equal(typeof en.dashboard.routing.badgeGovernment, 'string');
 });

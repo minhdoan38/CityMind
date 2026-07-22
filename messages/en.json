@@ -122,7 +122,7 @@
       "playbookPanelTitle": "What you can do now",
       "playbookFallbackBody": "Step-by-step guidance is being prepared. You can still ask the city for help below.",
       "escalateTitle": "Still need city help?",
-      "escalateCta": "Still need city help?",
+      "escalateCta": "Send to city officers",
       "escalateHelper": "An officer can review your report and follow up.",
       "escalateConfirmTitle": "Send to the city?",
       "escalateConfirmBody": "Your report will join the officer review queue. You can keep using the same report ID and access token.",
