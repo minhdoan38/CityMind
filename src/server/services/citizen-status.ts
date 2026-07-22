@@ -19,6 +19,7 @@ import {
   enforceStatusRateLimit,
   type RateLimitRequest,
 } from "@/server/security/rate-limit";
+import { resolvePlaybookId } from "@/server/routing/playbooks";
 
 const CitizenStatusRequestSchema = z.object({
   report_id: z.string().min(1).max(64),
@@ -30,6 +31,7 @@ export type CitizenStatusRequest = z.infer<typeof CitizenStatusRequestSchema>;
 export type CitizenServiceStep =
   | "received"
   | "ai_review_pending"
+  | "self_help_guidance"
   | "officer_review"
   | "resolved"
   | "rejected"
@@ -47,6 +49,8 @@ export type CitizenStatusResponse = {
   summary: string | null;
   recommendation: string | null;
   history: CitizenStatusHistoryItem[];
+  playbook_id?: string | null;
+  can_escalate?: boolean;
 };
 
 export function projectCitizenTriageView(
@@ -87,6 +91,24 @@ export function projectCitizenTriageView(
       priority: null,
       summary: null,
       recommendation: null,
+    };
+  }
+
+  if (
+    row.routing_destination === "self_help" &&
+    row.status !== "resolved" &&
+    row.status !== "rejected"
+  ) {
+    return {
+      ...base,
+      service_step: "self_help_guidance",
+      category: null,
+      severity: null,
+      priority: null,
+      summary: null,
+      recommendation: null,
+      playbook_id: resolvePlaybookId(row.category),
+      can_escalate: true,
     };
   }
 

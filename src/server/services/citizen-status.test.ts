@@ -56,6 +56,7 @@ describe("projectCitizenTriageView", () => {
     summary: "Pothole near the market.",
     recommendation: "Dispatch crew.",
     history: [],
+    routing_destination: null as string | null,
   };
 
   it("returns summary null and service_step ai_review_pending when triage is pending", () => {
@@ -84,10 +85,39 @@ describe("projectCitizenTriageView", () => {
       ...base,
       triage_status: "completed",
       status: "reviewing",
+      routing_destination: "government",
     });
     expect(payload.summary).toBe("Pothole near the market.");
     expect(payload.category).toBe("pothole");
     expect(payload.service_step).toBe("officer_review");
+  });
+
+  it("returns self_help_guidance with null AI fields when routing_destination is self_help", () => {
+    const payload = projectCitizenTriageView({
+      ...base,
+      triage_status: "completed",
+      status: "new",
+      routing_destination: "self_help",
+      category: "pothole",
+    });
+    expect(payload.service_step).toBe("self_help_guidance");
+    expect(payload.summary).toBeNull();
+    expect(payload.category).toBeNull();
+    expect(payload.playbook_id).toBe("pothole");
+    expect(payload.can_escalate).toBe(true);
+    expect(payload).not.toHaveProperty("routing_reason");
+    expect(payload).not.toHaveProperty("routing_policy_version");
+  });
+
+  it("sets can_escalate only on active self_help path", () => {
+    const resolved = projectCitizenTriageView({
+      ...base,
+      triage_status: "completed",
+      status: "resolved",
+      routing_destination: "self_help",
+    });
+    expect(resolved.service_step).toBe("resolved");
+    expect(resolved.can_escalate).toBeUndefined();
   });
 });
 

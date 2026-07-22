@@ -27,6 +27,7 @@ export type CitizenStatusRawPayload = {
   priority: string | null;
   summary: string | null;
   recommendation: string | null;
+  routing_destination: string | null;
   history: CitizenStatusHistoryItem[];
 };
 
@@ -63,7 +64,7 @@ export async function getCitizenStatus(
   const { data: reportRow, error: reportError } = await client
     .from("reports")
     .select(
-      "report_id, created_at, triage_status, current_status, category, severity, priority, summary, recommendation",
+      "report_id, created_at, triage_status, current_status, category, severity, priority, summary, recommendation, routing_destination",
     )
     .eq("report_id", reportId)
     .limit(1)
@@ -97,6 +98,8 @@ export async function getCitizenStatus(
     priority: (reportRow.priority as string | null | undefined) ?? null,
     summary: (reportRow.summary as string | null | undefined) ?? null,
     recommendation: (reportRow.recommendation as string | null | undefined) ?? null,
+    routing_destination:
+      (reportRow.routing_destination as string | null | undefined) ?? null,
     history,
   };
 }
@@ -224,6 +227,7 @@ export type OfficerReport = {
   evidence_path?: string | null;
   triage_status: string;
   status: string;
+  routing_destination?: string | null;
   status_note?: string | null;
   status_updated_at?: string | null;
 };
@@ -295,6 +299,8 @@ export function mapOfficerReportRow(row: Record<string, unknown>): OfficerReport
     evidence_path: (row.evidence_path as string | null | undefined) ?? null,
     triage_status: String(row.triage_status ?? "pending"),
     status: currentStatus,
+    routing_destination:
+      (row.routing_destination as string | null | undefined) ?? null,
     status_note: latest?.note ?? null,
   };
 }
@@ -328,6 +334,12 @@ function applyReportFilters(query: any, filters: ReportFilters) {
   if (filters.max_severity != null) query = query.lte("severity", filters.max_severity);
   if (filters.created_after != null) query = query.gte("created_at", filters.created_after);
   if (filters.created_before != null) query = query.lte("created_at", filters.created_before);
+  const routingFilter = filters.routing_destination ?? "government_default";
+  if (routingFilter === "government_default") {
+    query = query.or("routing_destination.is.null,routing_destination.eq.government");
+  } else if (routingFilter === "self_help") {
+    query = query.eq("routing_destination", "self_help");
+  }
   return query;
 }
 
@@ -691,4 +703,62 @@ export async function updateReportStatus(
     status: String(payload.status ?? params.status),
     updated: Boolean(payload.updated ?? true),
   };
+}
+
+export async function escalateReportToGovernment(
+  client: SupabaseClient,
+  params: { reportId: string; tokenHash: string; reason?: string },
+): Promise<{ routing_destination: "government"; updated: boolean }> {
+  const { data, error } = await client.rpc("escalate_report_to_government", {
+    p_report_id: params.reportId,
+    p_token_hash: params.tokenHash,
+    p_reason: params.reason ?? "citizen_escalated",
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const payload = (data ?? {}) as Record<string, unknown>;
+  return {
+    routing_destination: "government",
+    updated: Boolean(payload.updated ?? true),
+  };
+}
+
+export async function updateOfficerReportRouting(
+  client: SupabaseClient,
+  params: {
+    reportId: string;
+    routingDestination: "government";
+    routingReason: string;
+    note?: string | null;
+    actorId?: string | null;
+    currentStatus?: string | null;
+  },
+): Promise<void> {
+  const { error: updateError } = await client
+    .from("reports")
+    .update({
+      routing_destination: params.routingDestination,
+      routing_reason: params.routingReason,
+      routed_at: new Date().toISOString(),
+    })
+    .eq("report_id", params.reportId);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  if (params.note?.trim()) {
+    const { error: eventError } = await client.from("status_events").insert({
+      report_id: params.reportId,
+      status: params.currentStatus ?? "new",
+      note: params.note.trim(),
+      actor_id: params.actorId ?? null,
+    });
+    if (eventError) {
+      throw eventError;
+    }
+  }
 }
