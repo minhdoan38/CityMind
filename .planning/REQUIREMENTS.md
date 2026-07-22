@@ -89,17 +89,17 @@
 - [ ] **TRIAGE-09**: Runtime triage persists **11-key evaluator schema** from `prompt/citymind_ai_triage_structured_output_evaluator.json` (not legacy `summary`/`recommendation`/`estimated_impact`/`evidence`/`uncertainty` at persistence boundary)
 - [ ] **TRIAGE-10**: System prompt and Zod enums match evaluator **10 categories**; no prompt/schema drift (e.g. `graffiti`, `traffic_signal`, `utility_hazard`, `structural_damage`)
 - [ ] **TRIAGE-11**: Policy validation enforces evaluator assertions including **`critical` requires `severity == 5`** and reason-field traceability to `observed_facts`
-- [ ] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path
+- [ ] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path. **Phase 13 override (citizen):** `dispatchTriageAndWait` sync-primary on `POST /api/public/reports`; push dispatch is sync-failure fallback and officer/internal path only.
 - [ ] **TRIAGE-13**: Verified UX contracts — citizen `failed` calm copy (no provider leakage); officer default queue elevates `failed`/`manual_review`; `triage_bucket` sort covered by automated tests
 - [ ] **TRIAGE-14**: Eval suite and shadow compare operate on **11-key** snapshots; `/analyze` compatibility documented (410 permanent) or behind feature-flag shim with sunset
 
-### Guided Self-Help Coach (SHELP) — Phase 11
+### Guided Self-Help Coach (SHELP) — Phase 11 (build) + Phase 13 (verification)
 
-- [ ] **SHELP-01**: Success page branches after triage — **self_help** opens coach AI chat; **government** shows queue messaging (no coach-first for hard cases)
-- [ ] **SHELP-02**: Token-scoped **coach chat API** (`report_id` + access token); messages grounded in report + category playbook; advisory only
-- [ ] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL`
-- [ ] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path
-- [ ] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page
+- [x] **SHELP-01**: Success page branches after triage — **self_help** opens coach AI chat; **government** shows queue messaging (no coach-first for hard cases) — *immediate sync outcome on submit (Phase 13)*
+- [ ] **SHELP-02**: Token-scoped **coach chat API** (`report_id` + access token); messages grounded in report + category playbook; advisory only — *consumed on success page (Phase 13 verify)*
+- [ ] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL` — *Phase 11 impl; Phase 13 verify*
+- [ ] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path — *Phase 13 contract tests*
+- [x] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page — *sync `formAnalyzing` + poll fallback; Phase 13 UI-SPEC + i18n parity*
 
 ### Operations (OPS) — Phase 11
 
@@ -178,7 +178,7 @@ Deferred beyond Milestone v2.
 | PUB-01 | Phase 2 | Complete |
 | PUB-02 | Phase 2 | Complete |
 | PUB-03 | Phase 2 | Complete |
-| PUB-04 | Phase 2 | Complete |
+| PUB-04 | Phase 2 + 13 | Complete |
 | PUB-06 | Phase 2 | Complete |
 | AUTH-04 | Phase 2 | Complete |
 | DATA-04 | Phase 3 | Pending |
@@ -219,14 +219,14 @@ Deferred beyond Milestone v2.
 | TRIAGE-09 | Phase 11 | Pending |
 | TRIAGE-10 | Phase 11 | Pending |
 | TRIAGE-11 | Phase 11 | Pending |
-| TRIAGE-12 | Phase 11 | Pending |
-| TRIAGE-13 | Phase 11 | Pending |
+| TRIAGE-12 | Phase 11 + 13 | Pending |
+| TRIAGE-13 | Phase 11 + 13 | Pending |
 | TRIAGE-14 | Phase 11 | Pending |
-| SHELP-01 | Phase 11 | Pending |
-| SHELP-02 | Phase 11 | Pending |
-| SHELP-03 | Phase 11 | Pending |
-| SHELP-04 | Phase 11 | Pending |
-| SHELP-05 | Phase 11 | Pending |
+| SHELP-01 | Phase 13 | Complete |
+| SHELP-02 | Phase 13 | Pending |
+| SHELP-03 | Phase 13 | Pending |
+| SHELP-04 | Phase 13 | Pending |
+| SHELP-05 | Phase 13 | Complete |
 | OPS-01 | Phase 11 | Pending |
 | DASH-09 | Phase 11 | Pending |
 | DASH-10 | Phase 12 | Complete |
@@ -245,11 +245,11 @@ Deferred beyond Milestone v2.
 - Mapped to phases: 55
 - SELFHOST requirements: 6 (Phase 7)
 - TRIAGE requirements: 14 (Phases 8–11)
-- SHELP requirements: 5 (Phase 11)
+- SHELP requirements: 5 (Phase 11 build, Phase 13 verification)
 - OPS requirements: 1 (Phase 11)
 - ROUT requirements: 8 (Phase 9)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-21 — SELFHOST-01..06 added; TRIAGE requirements shifted to Phases 8 and 10*
+*Last updated: 2026-07-22 — Phase 13 planning: SHELP traceability → Phase 13; TRIAGE-12 citizen sync override*

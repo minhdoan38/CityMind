@@ -425,6 +425,25 @@ Plans:
 
 - [x] 12-03-PLAN.md — **Widget UX** — 12-UI-SPEC health/degraded/load/attach, i18n keys, legacy widget contract test, final phase gate
 
+### Phase 13: Immediate citizen triage on submit with evaluator prompt and guided success page
+
+**Goal:** Run evaluator-spec triage synchronously on every citizen submit, then show immediate self-help guidance or government-queue messaging on a redesigned success page.
+**Requirements:** SHELP-01, SHELP-02, SHELP-03, SHELP-04, SHELP-05, TRIAGE-12, TRIAGE-13, PUB-04, PUB-06, CIT-02
+**Depends on:** Phase 12
+**Plans:** 1/3 plans executed
+
+**Success criteria:**
+- `npm run phase13:gate` passes (unit + legacy contracts + SQL retry claim)
+- Success page shows immediate `CitizenTriageOutcome` on sync terminal triage; `SuccessTriagePanel` only as fallback
+- Self-help submit embeds coach; government submit shows queue messaging (no coach-first)
+- `ai-logic.md` documents sync-primary citizen intake (supersedes Phase 11 poll-primary D-02 for happy path)
+- Human UAT checklist UAT-1..4 in `13-VALIDATION.md` approved
+
+Plans:
+- [x] 13-01-PLAN.md — UI-SPEC + citizen-success-triage contracts + fix stale report-form tests
+- [ ] 13-02-PLAN.md — dispatchTriageAndWait tests + government outcome + phase13:gate + SQL contract
+- [ ] 13-03-PLAN.md — ai-logic.md + REQUIREMENTS/ROADMAP traceability + human UAT
+
 ---
 *Roadmap created: 2026-07-20*
 *Phases 7–9 added: 2026-07-21 (async triage explore)*
