@@ -92,6 +92,18 @@ test('public.status* catalog keys exist with identical EN/VI trees (UI-SPEC)', (
   assert.doesNotMatch(en.public.statusLinkPrep, /coming soon/i);
 });
 
+test('public routing self-help workflow and escalate catalog keys exist (Phase 9)', () => {
+  const en = JSON.parse(read(path.join(messagesDir, 'en.json')));
+  const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
+  assert.equal(en.public.statusWorkflow.stepGuidanceAvailable, 'Guidance available');
+  assert.equal(vi.public.statusWorkflow.stepGuidanceAvailable, 'Hướng dẫn đã sẵn sàng');
+  assert.equal(en.public.routing.escalateCta, 'Send to city officers');
+  assert.equal(vi.public.routing.escalateCta, 'Gửi cho cán bộ thành phố');
+  const statusPage = read(src('app', '[locale]', 'status', 'page.tsx'));
+  assert.match(statusPage, /self_help_guidance/);
+  assert.match(statusPage, /\/api\/public\/reports\/escalate/);
+});
+
 test('success page builds locale-prefixed status prep URL (D-03 / D-09)', () => {
   const page = read(src('app', '[locale]', 'report', 'success', 'page.tsx'));
   assert.match(page, /useLocale/);
@@ -131,6 +143,23 @@ test('dashboard detail page wires CopyStatusLink in header/meta (D-13)', () => {
   assert.match(page, /CopyStatusLink/);
 });
 
+test('public escalate route delegates to citizen escalate handler', () => {
+  const route = read(src('app', 'api', 'public', 'reports', 'escalate', 'route.ts'));
+  assert.match(route, /handleCitizenEscalateRequest/);
+});
+
+test('status page includes self-help workflow and escalate catalog keys', () => {
+  const en = JSON.parse(read(path.join(messagesDir, 'en.json')));
+  const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
+  assert.equal(typeof en.public.statusWorkflow.stepGuidanceAvailable, 'string');
+  assert.equal(typeof en.public.routing.escalateCta, 'string');
+  assert.equal(typeof en.public.routing.playbooks.pothole.title, 'string');
+  assert.equal(typeof vi.public.routing.escalateCta, 'string');
+  const page = read(src('app', '[locale]', 'status', 'page.tsx'));
+  assert.match(page, /self_help_guidance/);
+  assert.match(page, /\/api\/public\/reports\/escalate/);
+});
+
 test('dashboard.copyStatus* catalog keys exist with identical EN/VI trees (D-15 / UI-SPEC)', () => {
   const en = JSON.parse(read(path.join(messagesDir, 'en.json')));
   const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
@@ -151,4 +180,23 @@ test('dashboard.copyStatus* catalog keys exist with identical EN/VI trees (D-15 
   );
   assert.equal(vi.dashboard.copyStatusLink, 'Sao chép liên kết trạng thái');
   assert.equal(vi.dashboard.statusLinkCopied, 'Đã sao chép liên kết');
+});
+
+test('status page supports self-help workflow and escalate API (ROUT-07)', () => {
+  const page = read(src('app', '[locale]', 'status', 'page.tsx'));
+  assert.match(page, /self_help_guidance/);
+  assert.match(page, /\/api\/public\/reports\/escalate/);
+  assert.match(page, /stepGuidanceAvailable/);
+  assert.match(page, /playbookPanelTitle|public\.routing/);
+});
+
+test('public.routing escalate and playbook catalog keys exist in EN/VI (ROUT-09)', () => {
+  const en = JSON.parse(read(path.join(messagesDir, 'en.json')));
+  const vi = JSON.parse(read(path.join(messagesDir, 'vi.json')));
+  assert.equal(typeof en.public.routing.escalateCta, 'string');
+  assert.equal(typeof vi.public.routing.escalateCta, 'string');
+  assert.equal(typeof en.public.statusWorkflow.stepGuidanceAvailable, 'string');
+  assert.equal(typeof vi.public.statusWorkflow.stepGuidanceAvailable, 'string');
+  assert.ok(en.public.routing.playbooks?.pothole?.steps?.length > 0);
+  assert.ok(vi.public.routing.playbooks?.pothole?.steps?.length > 0);
 });

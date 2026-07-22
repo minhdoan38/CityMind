@@ -9,9 +9,17 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { Check, CheckCircle2 } from "lucide-react";
+import { Check, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +37,7 @@ type HistoryItem = {
 type ServiceStep =
   | "received"
   | "ai_review_pending"
+  | "self_help_guidance"
   | "officer_review"
   | "resolved"
   | "rejected"
@@ -46,6 +55,8 @@ type StatusResult = {
   summary: string | null;
   recommendation: string | null;
   history: HistoryItem[];
+  playbook_id?: string | null;
+  can_escalate?: boolean;
 };
 
 type LookupErrorKind = "verify" | "rate" | "network";
@@ -75,6 +86,8 @@ function stepIndexForServiceStep(serviceStep: ServiceStep): number {
       return 0;
     case "ai_review_pending":
       return 1;
+    case "self_help_guidance":
+      return 1;
     case "automated_review_unavailable":
     case "officer_review":
       return 2;
@@ -89,14 +102,28 @@ function stepIndexForServiceStep(serviceStep: ServiceStep): number {
 function CitizenWorkflowStepper({
   serviceStep,
   steps,
+  isSelfHelp = false,
 }: {
   serviceStep: ServiceStep;
   steps: WorkflowStep[];
+  isSelfHelp?: boolean;
 }) {
-  const currentIndex = stepIndexForServiceStep(serviceStep);
+  const currentIndex = isSelfHelp
+    ? serviceStep === "resolved" || serviceStep === "rejected"
+      ? 2
+      : serviceStep === "self_help_guidance"
+        ? 1
+        : 0
+    : stepIndexForServiceStep(serviceStep);
 
   return (
-    <ol className="grid gap-6 sm:grid-cols-4 sm:gap-6">
+    <ol
+      className={cn(
+        "grid gap-6",
+        steps.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4",
+        "sm:gap-6",
+      )}
+    >
       {steps.map((step, index) => {
         const complete = index < currentIndex;
         const current = index === currentIndex;
@@ -140,6 +167,7 @@ function StatusLookupForm() {
   const t = useTranslations("public");
   const tw = useTranslations("public.statusWorkflow");
   const tt = useTranslations("public.triage");
+  const tr = useTranslations("public.routing");
   const locale = useLocale();
   const searchParams = useSearchParams();
   const autoFetched = useRef(false);
@@ -154,6 +182,10 @@ function StatusLookupForm() {
   const [result, setResult] = useState<StatusResult | null>(null);
   const [rateLimited, setRateLimited] = useState(false);
   const [liveMessage, setLiveMessage] = useState("");
+  const [escalateOpen, setEscalateOpen] = useState(false);
+  const [escalateLoading, setEscalateLoading] = useState(false);
+  const [escalateError, setEscalateError] = useState<string | null>(null);
+  const [escalatedNotice, setEscalatedNotice] = useState(false);
 
   async function lookupStatus(id: string, accessToken: string) {
     setLoading(true);
@@ -208,6 +240,44 @@ function StatusLookupForm() {
     }
   }
 
+  async function escalateToGovernment() {
+    const id = reportId.trim();
+    const accessToken = token.trim();
+    if (!id || !accessToken) return;
+
+    setEscalateLoading(true);
+    setEscalateError(null);
+
+    try {
+      const res = await fetch("/api/public/reports/escalate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ report_id: id, token: accessToken }),
+      });
+
+      if (res.status === 401) {
+        setEscalateError(t("statusVerifyFailed"));
+        return;
+      }
+      if (res.status === 429) {
+        setEscalateError(t("statusRateLimited"));
+        return;
+      }
+      if (!res.ok) {
+        setEscalateError(tr("escalateError"));
+        return;
+      }
+
+      setEscalateOpen(false);
+      setEscalatedNotice(true);
+      await lookupStatus(id, accessToken);
+    } catch {
+      setEscalateError(tr("escalateError"));
+    } finally {
+      setEscalateLoading(false);
+    }
+  }
+
   useEffect(() => {
     const qReportId = (searchParams.get("reportId") ?? "").trim();
     const qToken = (searchParams.get("token") ?? "").trim();
@@ -239,21 +309,49 @@ function StatusLookupForm() {
     return status;
   }
 
-  const workflowSteps: WorkflowStep[] = [
-    { id: "received", label: tw("stepReceived") },
-    { id: "ai", label: tw("stepAiPending") },
-    { id: "officer", label: tw("stepOfficerReview") },
-    {
-      id: "terminal",
-      label:
-        result?.service_step === "rejected" || result?.status === "rejected"
-          ? tw("stepRejected")
-          : tw("stepResolved"),
-    },
-  ];
+  const isSelfHelp = result?.service_step === "self_help_guidance";
+
+  const workflowSteps: WorkflowStep[] = isSelfHelp
+    ? [
+        { id: "received", label: tw("stepReceived") },
+        { id: "guidance", label: tw("stepGuidanceAvailable") },
+        {
+          id: "terminal",
+          label:
+            result?.service_step === "rejected" || result?.status === "rejected"
+              ? tw("stepRejected")
+              : tw("stepResolved"),
+        },
+      ]
+    : [
+        { id: "received", label: tw("stepReceived") },
+        { id: "ai", label: tw("stepAiPending") },
+        { id: "officer", label: tw("stepOfficerReview") },
+        {
+          id: "terminal",
+          label:
+            result?.service_step === "rejected" || result?.status === "rejected"
+              ? tw("stepRejected")
+              : tw("stepResolved"),
+        },
+      ];
 
   const showCalmNotice = result?.service_step === "automated_review_unavailable";
-  const showAiBlock = result?.triage_status === "completed";
+  const showAiBlock =
+    result?.triage_status === "completed" && !isSelfHelp && !result?.playbook_id;
+
+  const playbookId = result?.playbook_id ?? null;
+  const playbookSteps = playbookId
+    ? (tr.raw(`playbooks.${playbookId}.steps`) as string[] | undefined)
+    : undefined;
+  const playbookTitle = playbookId
+    ? tr(`playbooks.${playbookId}.title`)
+    : null;
+  const playbookLinks = playbookId
+    ? (tr.raw(`playbooks.${playbookId}.links`) as
+        | Array<{ label: string; url: string }>
+        | undefined)
+    : undefined;
 
   return (
     <>
@@ -345,10 +443,14 @@ function StatusLookupForm() {
 
             <section>
               <h2 className="text-xl font-semibold text-foreground">{tw("title")}</h2>
+              {escalatedNotice ? (
+                <p className="mt-2 text-sm text-muted-foreground">{tr("escalatedNotice")}</p>
+              ) : null}
               <div className="mt-4">
                 <CitizenWorkflowStepper
                   serviceStep={result.service_step}
                   steps={workflowSteps}
+                  isSelfHelp={isSelfHelp}
                 />
               </div>
             </section>
@@ -361,6 +463,63 @@ function StatusLookupForm() {
                 <AlertTitle>{tt("calmNoticeTitle")}</AlertTitle>
                 <AlertDescription>{tt("calmNoticeBody")}</AlertDescription>
               </Alert>
+            ) : null}
+
+            {isSelfHelp ? (
+              <section className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
+                <h2 className="text-xl font-semibold text-foreground">
+                  {playbookTitle ?? tr("playbookPanelTitle")}
+                </h2>
+                {playbookSteps?.length ? (
+                  <ol className="list-decimal space-y-3 pl-5 text-base text-foreground">
+                    {playbookSteps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                ) : (
+                  <p className="text-base text-muted-foreground">
+                    {tr("playbookFallbackBody")}
+                  </p>
+                )}
+                {playbookLinks?.length ? (
+                  <ul className="space-y-2">
+                    {playbookLinks.map((link) => (
+                      <li key={link.url}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-11 items-center gap-2 text-base text-foreground hover:underline"
+                          aria-label={`${link.label} (opens in new tab)`}
+                        >
+                          {link.label}
+                          <ExternalLink className="size-4" aria-hidden />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ) : null}
+
+            {result.can_escalate ? (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="min-h-11 w-full sm:w-auto"
+                  onClick={() => setEscalateOpen(true)}
+                  disabled={escalateLoading}
+                >
+                  {tr("escalateCta")}
+                </Button>
+                <p className="text-sm text-muted-foreground">{tr("escalateHelper")}</p>
+                {escalateError ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{escalateError}</AlertDescription>
+                  </Alert>
+                ) : null}
+              </div>
             ) : null}
 
             {showAiBlock ? (
@@ -454,6 +613,35 @@ function StatusLookupForm() {
           </div>
         ) : null}
       </div>
+
+      <Dialog open={escalateOpen} onOpenChange={setEscalateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{tr("escalateConfirmTitle")}</DialogTitle>
+            <DialogDescription>{tr("escalateConfirmBody")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setEscalateOpen(false)}>
+              {tr("escalateCancel")}
+            </Button>
+            <Button
+              type="button"
+              className="min-h-11"
+              disabled={escalateLoading}
+              onClick={() => void escalateToGovernment()}
+            >
+              {escalateLoading ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
+                  {tr("escalateLoading")}
+                </>
+              ) : (
+                tr("escalateConfirm")
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

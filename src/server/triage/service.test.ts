@@ -154,6 +154,29 @@ describe("runTriageForReport", () => {
     );
   });
 
+  it("does not call applyRoutingForReport on infra retry disposition", async () => {
+    const client = createClient({
+      report: {
+        report_id: "report-1",
+        description: "Flooding near school crossing with immediate danger.",
+        evidence_path: null,
+        triage_attempt_count: 0,
+      },
+    });
+    const analyzeStructured = vi.fn(async () => {
+      throw new AnalysisProviderError("timeout");
+    });
+    const deps = {
+      ...createDeps(client),
+      analyzeStructured,
+    };
+
+    const result = await runTriageForReport("report-1", deps);
+
+    expect(result.disposition).toBe("retry");
+    expect(deps.applyRoutingForReport).not.toHaveBeenCalled();
+  });
+
   it("routes third infra failure to manual_review", async () => {
     const client = createClient({
       report: {
