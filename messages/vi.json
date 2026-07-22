@@ -119,10 +119,19 @@
       "stepGuidanceAvailable": "Hướng dẫn đã sẵn sàng"
     },
     "routing": {
+      "playbookPanelTitle": "Việc bạn có thể làm ngay",
+      "playbookFallbackBody": "Hướng dẫn từng bước đang được chuẩn bị. Bạn vẫn có thể nhờ thành phố hỗ trợ bên dưới.",
       "escalateTitle": "Vẫn cần sự hỗ trợ của thành phố?",
-      "escalateCta": "Gửi cho cán bộ thành phố",
+      "escalateCta": "Vẫn cần sự hỗ trợ của thành phố?",
+      "escalateHelper": "Cán bộ có thể xem xét báo cáo và liên hệ lại.",
+      "escalateConfirmTitle": "Gửi cho thành phố?",
+      "escalateConfirmBody": "Báo cáo sẽ vào hàng đợi cán bộ xem xét. Bạn vẫn dùng cùng mã báo cáo và mã truy cập.",
+      "escalateConfirm": "Gửi cho thành phố",
+      "escalateCancel": "Giữ hướng dẫn tự xử lý",
+      "escalateSuccess": "Báo cáo đã được gửi để cán bộ xem xét.",
       "escalateLoading": "Đang gửi cho cán bộ…",
-      "escalateError": "Không thể gửi báo cáo cho cán bộ. Vui lòng thử lại sau.",
+      "escalateError": "Không gửi được báo cáo cho thành phố. Kiểm tra kết nối rồi thử lại.",
+      "escalatedNotice": "Thành phố đang xem xét báo cáo của bạn.",
       "playbooks": {
         "pothole": {
           "title": "Ổ gà nhỏ — bạn có thể làm gì",
@@ -308,6 +317,24 @@
       "confidenceHigh": "cao",
       "detailHelper": "Kết quả AI chỉ mang tính tham khảo — bạn quyết định.",
       "emptyAiSection": "Chưa có cho đến khi AI xem xét xong."
+    },
+    "routing": {
+      "columnHeader": "Đích đến",
+      "badgeSelfHelp": "Tự xử lý",
+      "badgeGovernment": "Chính quyền",
+      "filterGovernmentDefault": "Hàng đợi chính quyền",
+      "filterSelfHelp": "Chỉ tự xử lý",
+      "filterIncludeSelfHelp": "Tất cả đích đến",
+      "detailSelfHelpNotice": "Báo cáo được định tuyến tự xử lý. Người dân chỉ thấy hướng dẫn, không thấy phân tích AI.",
+      "overrideSectionTitle": "Thao tác tự xử lý",
+      "overrideEscalate": "Chuyển vào hàng đợi chính quyền",
+      "overrideEscalateConfirmTitle": "Chuyển vào hàng đợi chính quyền?",
+      "overrideEscalateConfirmBody": "Người dân sẽ thấy bước cán bộ xem xét. Mã truy cập không đổi.",
+      "overrideEscalateConfirm": "Xác nhận",
+      "overrideEscalateCancel": "Hủy",
+      "overrideEscalateSuccess": "Đã chuyển vào hàng đợi chính quyền.",
+      "overrideEscalateError": "Không cập nhật được định tuyến. Thử lại.",
+      "overrideResolve": "Đánh dấu đã giải quyết"
     },
     "widgets": {
       "busiestDayTitle": "Ngày báo cáo nhiều nhất",

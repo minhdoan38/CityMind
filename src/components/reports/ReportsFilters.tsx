@@ -45,6 +45,12 @@ const TRIAGE_FILTER_CHIPS = [
   { key: "complete", param: "completed" },
 ] as const;
 
+const ROUTING_FILTER_CHIPS = [
+  { key: "government", param: null },
+  { key: "selfHelp", param: "self_help" },
+  { key: "all", param: "all" },
+] as const;
+
 type Props = {
   params: DashboardSearchParams;
 };
@@ -56,6 +62,7 @@ function valueOrAll(value: string | undefined): string {
 export default function ReportsFilters({ params }: Props) {
   const t = useTranslations("dashboard");
   const tt = useTranslations("dashboard.triage");
+  const tr = useTranslations("dashboard.routing");
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -115,7 +122,18 @@ export default function ReportsFilters({ params }: Props) {
     navigate(next);
   }
 
+  function setRoutingChip(param: string | null) {
+    const next = currentParams();
+    if (!param) {
+      next.delete("routing_destination");
+    } else {
+      next.set("routing_destination", param);
+    }
+    navigate(next);
+  }
+
   const activeTriageParam = params.triage_status?.trim() || null;
+  const activeRoutingParam = params.routing_destination?.trim() || null;
 
   return (
     <div className="space-y-3">
@@ -144,6 +162,34 @@ export default function ReportsFilters({ params }: Props) {
               onClick={() => setTriageChip(chip.param)}
             >
               {tt(labelKey)}
+            </Button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {ROUTING_FILTER_CHIPS.map((chip) => {
+          const active =
+            chip.param === null
+              ? !activeRoutingParam || activeRoutingParam === "government_default"
+              : activeRoutingParam === chip.param;
+          const labelKey =
+            chip.key === "government"
+              ? "filterGovernmentDefault"
+              : chip.key === "selfHelp"
+                ? "filterSelfHelp"
+                : "filterIncludeSelfHelp";
+          return (
+            <Button
+              key={chip.key}
+              type="button"
+              variant={active ? "default" : "outline"}
+              className="min-h-11"
+              aria-pressed={active}
+              disabled={pending}
+              onClick={() => setRoutingChip(chip.param)}
+            >
+              {tr(labelKey)}
             </Button>
           );
         })}

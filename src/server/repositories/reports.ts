@@ -298,9 +298,8 @@ export function mapOfficerReportRow(row: Record<string, unknown>): OfficerReport
     urban_context: row.urban_context ?? null,
     evidence_path: (row.evidence_path as string | null | undefined) ?? null,
     triage_status: String(row.triage_status ?? "pending"),
+    routing_destination: (row.routing_destination as string | null | undefined) ?? null,
     status: currentStatus,
-    routing_destination:
-      (row.routing_destination as string | null | undefined) ?? null,
     status_note: latest?.note ?? null,
   };
 }
@@ -330,16 +329,16 @@ function applyReportFilters(query: any, filters: ReportFilters) {
   if (filters.triage_status?.length) {
     query = query.in("triage_status", filters.triage_status);
   }
-  if (filters.min_severity != null) query = query.gte("severity", filters.min_severity);
-  if (filters.max_severity != null) query = query.lte("severity", filters.max_severity);
-  if (filters.created_after != null) query = query.gte("created_at", filters.created_after);
-  if (filters.created_before != null) query = query.lte("created_at", filters.created_before);
   const routingFilter = filters.routing_destination ?? "government_default";
   if (routingFilter === "government_default") {
     query = query.or("routing_destination.is.null,routing_destination.eq.government");
   } else if (routingFilter === "self_help") {
     query = query.eq("routing_destination", "self_help");
   }
+  if (filters.min_severity != null) query = query.gte("severity", filters.min_severity);
+  if (filters.max_severity != null) query = query.lte("severity", filters.max_severity);
+  if (filters.created_after != null) query = query.gte("created_at", filters.created_after);
+  if (filters.created_before != null) query = query.lte("created_at", filters.created_before);
   return query;
 }
 

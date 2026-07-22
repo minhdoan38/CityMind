@@ -37,11 +37,24 @@ export const VALID_TRIAGE_STATUSES = new Set([
   "failed",
 ]);
 
+export const VALID_ROUTING_DESTINATIONS = new Set([
+  "government_default",
+  "self_help",
+  "all",
+] as const);
+
+export type RoutingDestinationFilter =
+  | "government_default"
+  | "self_help"
+  | "all"
+  | null;
+
 export type ReportFilters = {
   status?: string | null;
   category?: string | null;
   priority?: string | null;
   triage_status?: string[] | null;
+  routing_destination?: RoutingDestinationFilter;
   min_severity?: number | null;
   max_severity?: number | null;
   created_after?: string | null;
@@ -99,6 +112,12 @@ export function validateReportFilters(filters: ReportFilters): void {
     }
   }
   if (
+    filters.routing_destination != null &&
+    !VALID_ROUTING_DESTINATIONS.has(filters.routing_destination)
+  ) {
+    throw new HttpError(422, "Invalid routing_destination filter");
+  }
+  if (
     filters.min_severity != null &&
     filters.max_severity != null &&
     filters.min_severity > filters.max_severity
@@ -128,6 +147,15 @@ export function parseTriageStatusFilter(value: string | null): string[] | null {
   return statuses.length ? statuses : null;
 }
 
+export function parseRoutingDestinationFilter(
+  value: string | null,
+): RoutingDestinationFilter {
+  if (value == null || value.trim() === "") return "government_default";
+  if (value === "self_help" || value === "all") return value;
+  if (value === "government_default") return "government_default";
+  return "government_default";
+}
+
 export function parseReportFilters(searchParams: URLSearchParams): ReportFilters {
   const minSeverity = parseOptionalInt(searchParams.get("min_severity"), {
     min: 1,
@@ -142,6 +170,9 @@ export function parseReportFilters(searchParams: URLSearchParams): ReportFilters
     category: searchParams.get("category"),
     priority: searchParams.get("priority"),
     triage_status: parseTriageStatusFilter(searchParams.get("triage_status")),
+    routing_destination: parseRoutingDestinationFilter(
+      searchParams.get("routing_destination"),
+    ),
     min_severity: minSeverity,
     max_severity: maxSeverity,
     created_after: searchParams.get("created_after"),

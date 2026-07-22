@@ -119,10 +119,19 @@
       "stepGuidanceAvailable": "Guidance available"
     },
     "routing": {
+      "playbookPanelTitle": "What you can do now",
+      "playbookFallbackBody": "Step-by-step guidance is being prepared. You can still ask the city for help below.",
       "escalateTitle": "Still need city help?",
-      "escalateCta": "Send to city officers",
+      "escalateCta": "Still need city help?",
+      "escalateHelper": "An officer can review your report and follow up.",
+      "escalateConfirmTitle": "Send to the city?",
+      "escalateConfirmBody": "Your report will join the officer review queue. You can keep using the same report ID and access token.",
+      "escalateConfirm": "Send to city",
+      "escalateCancel": "Keep self-help guidance",
+      "escalateSuccess": "Your report was sent to the city for review.",
       "escalateLoading": "Sending to officers…",
-      "escalateError": "Could not send your report to officers. Try again shortly.",
+      "escalateError": "Could not send your report to the city. Check your connection and try again.",
+      "escalatedNotice": "The city is now reviewing your report.",
       "playbooks": {
         "pothole": {
           "title": "Small pothole — what you can do",
@@ -308,6 +317,24 @@
       "confidenceHigh": "high",
       "detailHelper": "AI output is advisory — you decide.",
       "emptyAiSection": "Not available until AI review completes."
+    },
+    "routing": {
+      "columnHeader": "Destination",
+      "badgeSelfHelp": "Self-help",
+      "badgeGovernment": "Government",
+      "filterGovernmentDefault": "Government queue",
+      "filterSelfHelp": "Self-help only",
+      "filterIncludeSelfHelp": "All destinations",
+      "detailSelfHelpNotice": "This report was routed to self-help guidance. Citizens see playbook steps, not AI analysis.",
+      "overrideSectionTitle": "Self-help actions",
+      "overrideEscalate": "Send to government queue",
+      "overrideEscalateConfirmTitle": "Move to government queue?",
+      "overrideEscalateConfirmBody": "The citizen will see officer review steps. This does not change the access token.",
+      "overrideEscalateConfirm": "Confirm",
+      "overrideEscalateCancel": "Cancel",
+      "overrideEscalateSuccess": "Report moved to government queue.",
+      "overrideEscalateError": "Could not update routing. Try again.",
+      "overrideResolve": "Mark as resolved"
     },
     "widgets": {
       "busiestDayTitle": "Busiest report day",

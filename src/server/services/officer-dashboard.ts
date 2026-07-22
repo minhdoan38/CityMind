@@ -34,6 +34,7 @@ function toReportRow(report: OfficerReport): ReportRow {
     priority: triageComplete ? (report.priority ?? "") : "",
     status: report.status,
     triage_status: report.triage_status,
+    routing_destination: report.routing_destination ?? null,
     severity: triageComplete ? (report.severity ?? null) : null,
     summary: triageComplete ? (report.summary ?? "") : "",
   };
@@ -56,6 +57,7 @@ function searchParamsFromDashboard(
     "created_after",
     "created_before",
     "triage_status",
+    "routing_destination",
   ] as const) {
     const value = params[key];
     if (typeof value === "string" && value.trim()) {

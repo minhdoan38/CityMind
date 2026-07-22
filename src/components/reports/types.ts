@@ -5,6 +5,7 @@ export type ReportRow = {
   priority: string;
   status: string;
   triage_status: string;
+  routing_destination?: string | null;
   severity?: number | null;
   summary: string;
 };
@@ -39,6 +40,7 @@ export type DashboardSearchParams = {
   created_after?: string;
   created_before?: string;
   triage_status?: string;
+  routing_destination?: string;
   view?: string;
   bbox?: string;
 };
@@ -69,6 +71,7 @@ export const FILTER_PARAM_KEYS = [
   "created_after",
   "created_before",
   "triage_status",
+  "routing_destination",
 ] as const;
 
 export function hasActiveFilters(params: DashboardSearchParams): boolean {

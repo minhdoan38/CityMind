@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import TriageStatusBadge from "./TriageStatusBadge";
+import RoutingDestinationBadge from "./RoutingDestinationBadge";
 import {
   FILTER_PARAM_KEYS,
   type DashboardSearchParams,
@@ -92,6 +93,7 @@ export default function ReportsTable({
 }: Props) {
   const t = useTranslations("dashboard");
   const tt = useTranslations("dashboard.triage");
+  const tr = useTranslations("dashboard.routing");
   const te = useTranslations("empty");
   const router = useRouter();
   const pathname = usePathname();
@@ -149,6 +151,14 @@ export default function ReportsTable({
         enableSorting: false,
         cell: ({ getValue }) => (
           <TriageStatusBadge triageStatus={String(getValue() ?? "pending")} />
+        ),
+      },
+      {
+        accessorKey: "routing_destination",
+        header: tr("columnHeader"),
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <RoutingDestinationBadge destination={(getValue() as string | null) ?? null} />
         ),
       },
       {

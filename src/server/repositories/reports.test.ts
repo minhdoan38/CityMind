@@ -47,6 +47,7 @@ describe("officer filter validation", () => {
       category: null,
       priority: null,
       triage_status: null,
+      routing_destination: "government_default",
       min_severity: 3,
       max_severity: 5,
       created_after: null,
@@ -63,6 +64,7 @@ describe("officer filter validation", () => {
       category: null,
       priority: null,
       triage_status: ["pending", "processing"],
+      routing_destination: "government_default",
       min_severity: null,
       max_severity: null,
       created_after: null,
@@ -138,6 +140,39 @@ describe("listRecentReports", () => {
     expect(client.from).toHaveBeenCalledWith("reports");
   });
 
+  it("applies default government routing filter including NULL destinations", async () => {
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      lte: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      or: vi.fn(),
+      limit: vi.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.gte.mockReturnValue(chain);
+    chain.lte.mockReturnValue(chain);
+    chain.in.mockReturnValue(chain);
+    chain.order.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
+    chain.limit.mockResolvedValue({ data: [], error: null });
+    const client = { from: vi.fn(() => chain) };
+
+    await listRecentReports(client as never, {
+      limit: 25,
+      sort: "created_at",
+      order: "desc",
+      filters: { routing_destination: "government_default" },
+    });
+
+    expect(chain.or).toHaveBeenCalledWith(
+      "routing_destination.is.null,routing_destination.eq.government",
+    );
+  });
+
   it("returns manual_review before pending when sort is triage_bucket", async () => {
     const chain = {
       select: vi.fn(),
@@ -146,12 +181,14 @@ describe("listRecentReports", () => {
       lte: vi.fn(),
       in: vi.fn(),
       order: vi.fn(),
+      or: vi.fn(),
     };
     chain.select.mockReturnValue(chain);
     chain.eq.mockReturnValue(chain);
     chain.gte.mockReturnValue(chain);
     chain.lte.mockReturnValue(chain);
     chain.in.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
     chain.order.mockResolvedValue({
       data: [
         {
@@ -192,6 +229,70 @@ describe("listRecentReports", () => {
       "rep-pending",
       "rep-complete",
     ]);
+  });
+
+  it("applies default government routing filter with OR clause", async () => {
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      lte: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      or: vi.fn(),
+      limit: vi.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.gte.mockReturnValue(chain);
+    chain.lte.mockReturnValue(chain);
+    chain.in.mockReturnValue(chain);
+    chain.order.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
+    chain.limit.mockResolvedValue({ data: [], error: null });
+    const client = { from: vi.fn(() => chain) };
+
+    await listRecentReports(client as never, {
+      limit: 25,
+      sort: "created_at",
+      order: "desc",
+      filters: { routing_destination: "government_default" },
+    });
+
+    expect(chain.or).toHaveBeenCalledWith(
+      "routing_destination.is.null,routing_destination.eq.government",
+    );
+  });
+
+  it("applies self_help routing filter with eq clause", async () => {
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      lte: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      or: vi.fn(),
+      limit: vi.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.gte.mockReturnValue(chain);
+    chain.lte.mockReturnValue(chain);
+    chain.in.mockReturnValue(chain);
+    chain.order.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
+    chain.limit.mockResolvedValue({ data: [], error: null });
+    const client = { from: vi.fn(() => chain) };
+
+    await listRecentReports(client as never, {
+      limit: 25,
+      sort: "created_at",
+      order: "desc",
+      filters: { routing_destination: "self_help" },
+    });
+
+    expect(chain.eq).toHaveBeenCalledWith("routing_destination", "self_help");
   });
 });
 
