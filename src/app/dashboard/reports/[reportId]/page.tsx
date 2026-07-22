@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
 import CopyStatusLink from "@/components/CopyStatusLink";
+import RoutingOverrideActions from "@/components/RoutingOverrideActions";
+import RoutingDestinationBadge from "@/components/reports/RoutingDestinationBadge";
 import TriageStatusBadge from "@/components/reports/TriageStatusBadge";
 import StatusActions from "@/components/StatusActions";
 import { requireOfficerSession } from "@/lib/auth";
@@ -29,6 +31,7 @@ type Report = {
   urban_context?: string | Record<string, unknown> | null;
   evidence_path?: string | null;
   triage_status: string;
+  routing_destination?: string | null;
   status?: string;
   status_note?: string | null;
 };
@@ -99,6 +102,7 @@ export default async function ReportDetail({ params }: Props) {
   await requireOfficerSession();
   const t = await getTranslations("dashboard");
   const tt = await getTranslations("dashboard.triage");
+  const tr = await getTranslations("dashboard.routing");
   const terror = await getTranslations("error");
   const { reportId } = await params;
   const detail = await loadOfficerReportDetail(reportId);
@@ -154,6 +158,10 @@ export default async function ReportDetail({ params }: Props) {
     high: tt("confidenceHigh"),
     unavailable: t("detailNotAvailable"),
   };
+  const isSelfHelp =
+    report.routing_destination === "self_help" &&
+    report.status !== "resolved" &&
+    report.status !== "rejected";
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -214,9 +222,21 @@ export default async function ReportDetail({ params }: Props) {
       ) : null}
 
       <section className="space-y-2 rounded-lg border border-border p-6">
-        <TriageStatusBadge triageStatus={report.triage_status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <TriageStatusBadge triageStatus={report.triage_status} />
+          <RoutingDestinationBadge
+            destination={report.routing_destination ?? null}
+          />
+        </div>
         <p className="text-sm text-muted-foreground">{tt("detailHelper")}</p>
+        {report.routing_destination === "self_help" ? (
+          <Alert role="status">
+            <AlertDescription>{tr("detailSelfHelpNotice")}</AlertDescription>
+          </Alert>
+        ) : null}
       </section>
+
+      {isSelfHelp ? <RoutingOverrideActions reportId={report.report_id} /> : null}
 
       {triageComplete && report.evidence?.length ? (
         <section className="space-y-2 rounded-lg border border-border p-6">

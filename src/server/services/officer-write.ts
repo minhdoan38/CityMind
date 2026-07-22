@@ -1,5 +1,7 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { HttpError, jsonErrorResponse } from "@/server/http/errors";
 import { VALID_STATUSES, parseBbox, parseReportFilters, validateReportFilters } from "@/server/officer/filters";
 import { requireOfficerContext } from "@/server/officer/guard";
@@ -9,8 +11,14 @@ import {
 } from "@/server/exports/reports";
 import {
   getOfficerReport,
+  updateOfficerReportRouting,
   updateReportStatus,
 } from "@/server/repositories/reports";
+
+const OfficerRoutingActionSchema = z.object({
+  action: z.enum(["escalate_to_government", "mark_resolved"]),
+  note: z.string().max(2000).optional(),
+});
 
 function queryErrorResponse(message: string): Response {
   return Response.json({ detail: message }, { status: 502 });
@@ -112,5 +120,78 @@ export async function handleReportsExportRequest(request: Request): Promise<Resp
   } catch (error) {
     if (error instanceof HttpError) return jsonErrorResponse(error);
     return queryErrorResponse("Export failed");
+  }
+}
+
+export async function handleOfficerRoutingOverrideRequest(
+  request: Request,
+  reportId: string,
+): Promise<Response> {
+  const auth = await requireOfficerContext();
+  if (!auth.ok) return auth.response;
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ detail: "Invalid request body" }, { status: 422 });
+  }
+
+  const parsed = OfficerRoutingActionSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ detail: "Invalid request body" }, { status: 422 });
+  }
+
+  try {
+    const report = await getOfficerReport(auth.context.client, reportId);
+    if (!report) {
+      return Response.json({ detail: "Report not found" }, { status: 404 });
+    }
+
+    if (parsed.data.action === "escalate_to_government") {
+      if (report.routing_destination !== "self_help") {
+        return Response.json({
+          ok: true,
+          routing_destination: report.routing_destination ?? "government",
+        });
+      }
+
+      await updateOfficerReportRouting(auth.context.client, {
+        reportId,
+        routingDestination: "government",
+        routingReason: "officer_escalated",
+        note:
+          parsed.data.note?.trim() ||
+          "Officer moved report from self-help to government queue.",
+        actorId: auth.context.session.userId,
+        currentStatus: report.status,
+      });
+
+      return Response.json({ ok: true, routing_destination: "government" });
+    }
+
+    if (report.routing_destination !== "self_help") {
+      return Response.json({ detail: "Report is not on self-help path" }, { status: 422 });
+    }
+
+    const note = parsed.data.note?.trim() ?? "";
+    if (!note) {
+      return Response.json(
+        { detail: "Note is required for resolved/rejected" },
+        { status: 422 },
+      );
+    }
+
+    const payload = await updateReportStatus(auth.context.client, {
+      reportId,
+      status: "resolved",
+      note,
+      actorId: auth.context.session.userId,
+    });
+
+    return Response.json(payload);
+  } catch (error) {
+    if (error instanceof HttpError) return jsonErrorResponse(error);
+    return queryErrorResponse("Routing update failed");
   }
 }
