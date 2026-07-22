@@ -17,7 +17,8 @@
     "eval:live": "node scripts/eval-suite.mjs --live --require-privacy-approval",
     "eval:gate": "node scripts/verify-eval-gate.mjs",
     "phase11:gate": "npm run test:unit -- src/server/domain src/server/validation/evaluator-policy.test.ts src/server/triage src/server/health src/server/services/citizen-coach.test.ts src/server/ai/coach.test.ts src/server/evals && npm run test:legacy -- tests/citizen-status-contract.test.mjs tests/dashboard-table.test.mjs && npm run eval:mock && npm run eval:gate && node scripts/run-supabase-sql.mjs -f supabase/tests/11_phase11_contract.sql",
-    "phase12:gate": "npm run test:unit -- src/server/repositories/officer-assistant-messages.test.ts src/server/services/officer-assistant.test.ts src/server/ai/officer-assistant.test.ts && npm run test:legacy -- tests/advisory-assistant-widget.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/12_phase12_contract.sql"
+    "phase12:gate": "npm run test:unit -- src/server/repositories/officer-assistant-messages.test.ts src/server/services/officer-assistant.test.ts src/server/ai/officer-assistant.test.ts && npm run test:legacy -- tests/advisory-assistant-widget.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/12_phase12_contract.sql",
+    "phase13:gate": "npm run test:unit -- src/server/services/report-service.test.ts src/server/triage/dispatch.test.ts && npm run test:legacy -- tests/citizen-success-triage.test.mjs tests/report-form.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/13_phase13_contract.sql"
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",

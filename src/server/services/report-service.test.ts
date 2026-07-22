@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetAdminClientCache } from "@/lib/supabase/admin";
 import type { ReportAnalysis } from "@/server/domain/report-analysis";
@@ -12,6 +12,23 @@ import {
   MAX_DESCRIPTION_LENGTH,
   submitReport,
 } from "./report-service";
+
+const dispatchTriageAndWait = vi.fn();
+const enqueueTriageDispatch = vi.fn();
+const getCitizenStatus = vi.fn();
+
+vi.mock("@/server/triage/dispatch", () => ({
+  dispatchTriageAndWait: (...args: unknown[]) => dispatchTriageAndWait(...args),
+  enqueueTriageDispatch: (...args: unknown[]) => enqueueTriageDispatch(...args),
+}));
+
+vi.mock("@/server/repositories/reports", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("@/server/repositories/reports")>();
+  return {
+    ...mod,
+    getCitizenStatus: (...args: unknown[]) => getCitizenStatus(...args),
+  };
+});
 
 const validAnalysis: ReportAnalysis = {
   category: "pothole",
@@ -217,6 +234,26 @@ describe("analyzeReport", () => {
 });
 
 describe("submitReport", () => {
+  beforeEach(() => {
+    dispatchTriageAndWait.mockReset();
+    dispatchTriageAndWait.mockResolvedValue(undefined);
+    enqueueTriageDispatch.mockReset();
+    getCitizenStatus.mockReset();
+    getCitizenStatus.mockResolvedValue({
+      report_id: "rep-1",
+      received_at: "2026-07-22T10:00:00+00:00",
+      triage_status: "completed",
+      status: "new",
+      category: "waste",
+      severity: 2,
+      priority: "low",
+      summary: "Overflowing bin near the park.",
+      recommendation: "Secure the lid and schedule pickup.",
+      routing_destination: "self_help",
+      history: [],
+    });
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     resetRateLimiters();
@@ -224,7 +261,41 @@ describe("submitReport", () => {
     resetServerEnvCache();
   });
 
-  it("returns intake response without calling provider.analyze", async () => {
+  it("returns government intake outcome with officer_review and no self-help coach fields", async () => {
+    getCitizenStatus.mockResolvedValue({
+      report_id: "rep-gov",
+      received_at: "2026-07-22T10:00:00+00:00",
+      triage_status: "completed",
+      status: "new",
+      category: "pothole",
+      severity: 5,
+      priority: "high",
+      summary: "Large pothole blocking traffic near school.",
+      recommendation: "Dispatch road crew for immediate repair.",
+      routing_destination: "government",
+      history: [],
+    });
+
+    const client = createClient();
+    const provider = createProvider();
+    const form = formWith({
+      description: "Major pothole on Main Street.",
+    });
+
+    const result = await submitReport(form, { client: client as never });
+
+    expect(result.service_step).toBe("officer_review");
+    expect(result.routing_destination).toBe("government");
+    expect(result.service_step).not.toBe("self_help_guidance");
+    expect(result.can_escalate).toBe(false);
+    expect(result.playbook_id).toBeNull();
+    expect(result.severity).toBe(5);
+    expect(result.category).toBe("pothole");
+    expect(dispatchTriageAndWait).toHaveBeenCalled();
+    expect(provider.analyze).not.toHaveBeenCalled();
+  });
+
+  it("returns intake response with synchronous triage outcome without calling provider.analyze", async () => {
     const client = createClient();
     const provider = createProvider();
     const form = formWith({
@@ -239,8 +310,18 @@ describe("submitReport", () => {
       ),
       access_token: expect.stringMatching(/^[A-Za-z0-9_-]+$/),
       intake_status: "received",
-      triage_status: "pending",
+      triage_status: "completed",
+      service_step: "self_help_guidance",
+      routing_destination: "self_help",
+      category: "waste",
+      severity: 2,
+      priority: "low",
+      summary: "Overflowing bin near the park.",
+      recommendation: "Secure the lid and schedule pickup.",
+      playbook_id: "waste",
+      can_escalate: true,
     });
+    expect(dispatchTriageAndWait).toHaveBeenCalled();
     expect(client.rpc).toHaveBeenCalledWith(
       "create_intake_report_with_access_token",
       expect.objectContaining({
@@ -269,14 +350,59 @@ describe("submitReport", () => {
     expect(result.report_id).toBeDefined();
     expect(result.access_token).toBeDefined();
     expect(result.intake_status).toBe("received");
-    expect(result.triage_status).toBe("pending");
-    expect(provider.analyze).not.toHaveBeenCalled();
+    expect(result.triage_status).toBe("completed");
+    expect(dispatchTriageAndWait).toHaveBeenCalled();
     expect(client.rpc).toHaveBeenCalledWith(
       "create_intake_report_with_access_token",
       expect.objectContaining({
         p_description: "Synthetic outage scenario incident report.",
       }),
     );
+  });
+
+  it("falls back to async dispatch when synchronous triage throws", async () => {
+    process.env.INTERNAL_TRIAGE_SECRET = "a".repeat(32);
+    process.env.APP_URL = "http://127.0.0.1:3000";
+    dispatchTriageAndWait.mockRejectedValueOnce(new Error("triage failed"));
+
+    const client = createClient();
+    const form = formWith({
+      description: "Synthetic incident description for intake dispatch.",
+    });
+
+    const result = await submitReport(form, { client: client as never });
+
+    expect(result.triage_status).toBe("completed");
+    expect(enqueueTriageDispatch).toHaveBeenCalledWith(result.report_id);
+  });
+
+  it("still returns intake response when synchronous triage fails", async () => {
+    process.env.INTERNAL_TRIAGE_SECRET = "a".repeat(32);
+    process.env.APP_URL = "http://127.0.0.1:3000";
+    dispatchTriageAndWait.mockRejectedValueOnce(new Error("network down"));
+    getCitizenStatus.mockResolvedValueOnce({
+      report_id: "rep-1",
+      received_at: "2026-07-22T10:00:00+00:00",
+      triage_status: "pending",
+      status: "new",
+      category: null,
+      severity: null,
+      priority: null,
+      summary: null,
+      recommendation: null,
+      routing_destination: null,
+      history: [],
+    });
+
+    const client = createClient();
+    const form = formWith({
+      description: "Synthetic incident description for intake outage.",
+    });
+
+    const result = await submitReport(form, { client: client as never });
+    expect(result.intake_status).toBe("received");
+    expect(result.triage_status).toBe("pending");
+    expect(enqueueTriageDispatch).toHaveBeenCalledWith(result.report_id);
   });
 
   it("returns 502 when intake persistence fails and compensates storage", async () => {
