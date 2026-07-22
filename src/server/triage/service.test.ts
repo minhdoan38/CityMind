@@ -18,10 +18,7 @@ const validAnalysis: ReportAnalysis = {
 
 function createClient(options: {
   report?: Record<string, unknown> | null;
-  updateError?: Error | null;
 } = {}) {
-  const updateEq = vi.fn().mockResolvedValue({ error: options.updateError ?? null });
-  const update = vi.fn(() => ({ eq: updateEq }));
   const maybeSingle = vi.fn().mockResolvedValue({
     data: options.report === undefined
       ? {
@@ -38,14 +35,18 @@ function createClient(options: {
     maybeSingle,
   }));
   const select = vi.fn(() => ({ eq }));
-  const from = vi.fn((table: string) => {
-    if (table === "reports") {
-      return { select, update, eq };
-    }
-    return { select, update, eq };
-  });
+  const from = vi.fn(() => ({ select }));
 
-  return { from, update, updateEq, eq };
+  return { from };
+}
+
+function createDeps(client: ReturnType<typeof createClient>) {
+  return {
+    client: client as never,
+    startTriageRun: vi.fn(async () => "run-1"),
+    recordTriageAttempt: vi.fn(async () => "run-1"),
+    finishTriageRun: vi.fn(async () => undefined),
+  };
 }
 
 describe("runTriageForReport", () => {
@@ -61,15 +62,17 @@ describe("runTriageForReport", () => {
       },
       rawContent: JSON.stringify(validAnalysis),
     }));
-
-    const result = await runTriageForReport("report-1", {
-      client: client as never,
+    const deps = {
+      ...createDeps(client),
       analyzeStructured,
-    });
+    };
+
+    const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("completed");
     expect(analyzeStructured).toHaveBeenCalledTimes(1);
-    expect(client.update).toHaveBeenCalled();
+    expect(deps.recordTriageAttempt).toHaveBeenCalled();
+    expect(deps.finishTriageRun).toHaveBeenCalledWith(deps.client, "run-1", "completed");
   });
 
   it("retries validation once then completes", async () => {
@@ -101,11 +104,12 @@ describe("runTriageForReport", () => {
         },
         rawContent: JSON.stringify(validAnalysis),
       });
-
-    const result = await runTriageForReport("report-1", {
-      client: client as never,
+    const deps = {
+      ...createDeps(client),
       analyzeStructured,
-    });
+    };
+
+    const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("completed");
     expect(analyzeStructured).toHaveBeenCalledTimes(2);
@@ -128,11 +132,12 @@ describe("runTriageForReport", () => {
       },
       rawContent: JSON.stringify(invalid),
     }));
-
-    const result = await runTriageForReport("report-1", {
-      client: client as never,
+    const deps = {
+      ...createDeps(client),
       analyzeStructured,
-    });
+    };
+
+    const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("manual_review");
     expect(analyzeStructured).toHaveBeenCalledTimes(2);
@@ -150,19 +155,22 @@ describe("runTriageForReport", () => {
     const analyzeStructured = vi.fn(async () => {
       throw new AnalysisProviderError("timeout");
     });
-
-    const result = await runTriageForReport("report-1", {
-      client: client as never,
+    const deps = {
+      ...createDeps(client),
       analyzeStructured,
-    });
+    };
+
+    const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("manual_review");
   });
 
   it("returns failed when report row is missing", async () => {
     const client = createClient({ report: null });
+    const deps = createDeps(client);
+
     const result = await runTriageForReport("missing-report", {
-      client: client as never,
+      ...deps,
       analyzeStructured: vi.fn(),
     });
     expect(result.disposition).toBe("failed");

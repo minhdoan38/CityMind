@@ -153,4 +153,58 @@ BEGIN
 END;
 $$;
 
+-- 6) Audit tables link attempts to runs.
+DO $$
+DECLARE
+    v_report_id text := 'test-audit-' || gen_random_uuid()::text;
+    v_token_hash text := encode(digest(v_report_id, 'sha256'), 'hex');
+    v_run_id uuid := gen_random_uuid();
+BEGIN
+    PERFORM public.create_intake_report_with_access_token(
+        p_report_id := v_report_id,
+        p_token_hash := v_token_hash,
+        p_token_expires_at := timezone('utc', now()) + interval '365 days',
+        p_description := 'Audit contract test'
+    );
+
+    INSERT INTO public.triage_runs (run_id, report_id, prompt_version)
+    VALUES (v_run_id, v_report_id, 'phase8-mvp-v1');
+
+    INSERT INTO public.triage_attempts (
+        run_id,
+        attempt_number,
+        model,
+        prompt_version,
+        raw_output,
+        latency_ms,
+        validation_errors,
+        disposition
+    ) VALUES (
+        v_run_id,
+        1,
+        'test-model',
+        'phase8-mvp-v1',
+        '{"category":"pothole"}',
+        10,
+        '[]'::jsonb,
+        'completed'
+    );
+
+    PERFORM _test_assert(
+        EXISTS (
+            SELECT 1
+            FROM public.triage_attempts ta
+            JOIN public.triage_runs tr ON tr.run_id = ta.run_id
+            WHERE tr.report_id = v_report_id
+        ),
+        'triage_attempts must link to triage_runs for report'
+    );
+
+    DELETE FROM public.triage_attempts WHERE run_id = v_run_id;
+    DELETE FROM public.triage_runs WHERE run_id = v_run_id;
+    DELETE FROM public.access_tokens WHERE report_id = v_report_id;
+    DELETE FROM public.reports WHERE report_id = v_report_id;
+END;
+$$;
+
 DROP FUNCTION IF EXISTS _test_assert(boolean, text);

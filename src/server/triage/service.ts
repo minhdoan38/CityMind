@@ -16,7 +16,8 @@ import {
 } from "@/server/services/evidence-service";
 import type { PolicyViolation } from "@/server/validation/analysis-policy";
 import { validateAnalysisPolicy } from "@/server/validation/analysis-policy";
-import { infraBackoffMs, MAX_INFRA_ATTEMPTS } from "./config";
+import { MAX_INFRA_ATTEMPTS } from "./config";
+import { finishTriageRun, recordTriageAttempt, startTriageRun } from "./audit";
 import { resolveInfraFailureDisposition } from "./disposition";
 
 export type TriageReportRow = {
@@ -43,6 +44,9 @@ export type TriageServiceDeps = {
     },
     systemInstruction?: string,
   ) => Promise<StructuredAnalysisResult>;
+  startTriageRun?: typeof startTriageRun;
+  recordTriageAttempt?: typeof recordTriageAttempt;
+  finishTriageRun?: typeof finishTriageRun;
 };
 
 function buildValidationRetryInstruction(violations: PolicyViolation[]): string {
@@ -167,22 +171,56 @@ async function callProvider(
   return analyzeStructured({ env: getServerEnv() }, input, systemInstruction);
 }
 
+async function persistAttempt(
+  deps: TriageServiceDeps,
+  input: {
+    reportId: string;
+    runId: string;
+    attemptNumber: number;
+    structured?: StructuredAnalysisResult;
+    validationErrors: PolicyViolation[];
+    disposition: string;
+    analysis?: ReportAnalysis | null;
+    finishRun?: boolean;
+  },
+): Promise<void> {
+  const record = deps.recordTriageAttempt ?? recordTriageAttempt;
+  await record(deps.client, {
+    reportId: input.reportId,
+    runId: input.runId,
+    attemptNumber: input.attemptNumber,
+    model: input.structured?.lineage.responseModel ?? null,
+    rawOutput: input.structured?.rawContent ?? "",
+    latencyMs: input.structured?.lineage.latencyMs ?? 0,
+    validationErrors: input.validationErrors,
+    disposition: input.disposition,
+    analysis: input.analysis ?? null,
+    finishRun: input.finishRun,
+  });
+}
+
 async function handleInfraFailure(
   client: SupabaseClient,
   reportId: string,
   attemptCount: number,
+  deps: TriageServiceDeps,
+  runId: string,
+  attemptNumber: number,
 ): Promise<TriageRunResult> {
   const nextAttempt = attemptCount + 1;
   const disposition = resolveInfraFailureDisposition(nextAttempt, MAX_INFRA_ATTEMPTS);
-  await updateTriageTerminalState(client, reportId, {
-    triage_status: disposition,
-    triage_attempt_count: nextAttempt,
-    triage_next_attempt_at:
-      disposition === "retry"
-        ? new Date(Date.now() + infraBackoffMs(nextAttempt - 1)).toISOString()
-        : null,
-    triaged_at: disposition === "manual_review" ? new Date().toISOString() : null,
+  await persistAttempt(deps, {
+    reportId,
+    runId,
+    attemptNumber,
+    validationErrors: [],
+    disposition,
+    finishRun: disposition !== "retry",
   });
+  if (disposition !== "retry") {
+    const finish = deps.finishTriageRun ?? finishTriageRun;
+    await finish(client, runId, disposition);
+  }
   return { reportId, disposition };
 }
 
@@ -195,13 +233,23 @@ export async function runTriageForReport(
     return { reportId, disposition: "failed" };
   }
 
+  const startRun = deps.startTriageRun ?? startTriageRun;
+  const finishRun = deps.finishTriageRun ?? finishTriageRun;
+  const runId = await startRun(deps.client, reportId);
+  let attemptNumber = 0;
+
   const description = row.description?.trim() ?? "";
   if (!description && !row.evidence_path) {
-    await updateTriageTerminalState(deps.client, reportId, {
-      triage_status: "failed",
-      triage_error: "missing_intake_payload",
-      triaged_at: new Date().toISOString(),
+    attemptNumber += 1;
+    await persistAttempt(deps, {
+      reportId,
+      runId,
+      attemptNumber,
+      validationErrors: [],
+      disposition: "failed",
+      finishRun: true,
     });
+    await finishRun(deps.client, runId, "failed");
     return { reportId, disposition: "failed" };
   }
 
@@ -209,7 +257,15 @@ export async function runTriageForReport(
   try {
     image = await loadEvidenceImage(deps.client, row.evidence_path);
   } catch {
-    return handleInfraFailure(deps.client, reportId, row.triage_attempt_count);
+    attemptNumber += 1;
+    return handleInfraFailure(
+      deps.client,
+      reportId,
+      row.triage_attempt_count,
+      deps,
+      runId,
+      attemptNumber,
+    );
   }
 
   let retryInstruction: string | undefined;
@@ -217,52 +273,76 @@ export async function runTriageForReport(
   for (let validationAttempt = 0; validationAttempt < 2; validationAttempt += 1) {
     let structured: StructuredAnalysisResult;
     try {
-      structured = await callProvider(
-        deps,
-        { description, image },
-        retryInstruction,
-      );
+      structured = await callProvider(deps, { description, image }, retryInstruction);
     } catch (error) {
       if (error instanceof AnalysisProviderError) {
-        return handleInfraFailure(deps.client, reportId, row.triage_attempt_count);
+        attemptNumber += 1;
+        return handleInfraFailure(
+          deps.client,
+          reportId,
+          row.triage_attempt_count,
+          deps,
+          runId,
+          attemptNumber,
+        );
       }
-      await updateTriageTerminalState(deps.client, reportId, {
-        triage_status: "failed",
-        triage_error: "unrecoverable_triage_error",
-        triaged_at: new Date().toISOString(),
+      attemptNumber += 1;
+      await persistAttempt(deps, {
+        reportId,
+        runId,
+        attemptNumber,
+        validationErrors: [],
+        disposition: "failed",
+        finishRun: true,
       });
+      await finishRun(deps.client, runId, "failed");
       return { reportId, disposition: "failed" };
     }
 
+    attemptNumber += 1;
     const policyResult = validateAnalysisPolicy(structured.analysis, { description });
     if (policyResult.ok) {
-      await updateTriageTerminalState(deps.client, reportId, {
-        triage_status: "completed",
+      await persistAttempt(deps, {
+        reportId,
+        runId,
+        attemptNumber,
+        structured,
+        validationErrors: [],
+        disposition: "completed",
         analysis: structured.analysis,
-        triaged_at: new Date().toISOString(),
-        triage_error: null,
-        triage_next_attempt_at: null,
+        finishRun: true,
       });
+      await finishRun(deps.client, runId, "completed");
       return { reportId, disposition: "completed" };
     }
+
+    await persistAttempt(deps, {
+      reportId,
+      runId,
+      attemptNumber,
+      structured,
+      validationErrors: policyResult.violations,
+      disposition: "retry",
+    });
 
     if (validationAttempt === 0) {
       retryInstruction = buildValidationRetryInstruction(policyResult.violations);
       continue;
     }
 
-    await updateTriageTerminalState(deps.client, reportId, {
-      triage_status: "manual_review",
-      triaged_at: new Date().toISOString(),
-      triage_error: null,
-      triage_next_attempt_at: null,
+    await persistAttempt(deps, {
+      reportId,
+      runId,
+      attemptNumber: attemptNumber + 1,
+      structured,
+      validationErrors: policyResult.violations,
+      disposition: "manual_review",
+      finishRun: true,
     });
+    await finishRun(deps.client, runId, "manual_review");
     return { reportId, disposition: "manual_review" };
   }
 
-  await updateTriageTerminalState(deps.client, reportId, {
-    triage_status: "manual_review",
-    triaged_at: new Date().toISOString(),
-  });
+  await finishRun(deps.client, runId, "manual_review");
   return { reportId, disposition: "manual_review" };
 }
