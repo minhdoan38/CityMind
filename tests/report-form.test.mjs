@@ -49,7 +49,10 @@ test('ReportForm uses RHF+Zod, analyzing state, and sessionStorage flash (PUB-03
   assert.match(form, /accessToken/);
   assert.match(form, /access_token/);
   assert.match(form, /report\/success/);
-  assert.match(form, /Submitting your report|submitting/);
+  assert.match(form, /formAnalyzing/);
+  assert.match(form, /isSubmitting \? t\("formAnalyzing"\)/);
+  assert.match(form, /outcome:\s*\{/);
+  assert.match(form, /service_step:/);
   assert.match(form, /disabled=\{.*(?:isSubmitting|loading)/);
   assert.doesNotMatch(form, /access_token=|\?token=/);
   assert.doesNotMatch(form, /slate-950/);
@@ -87,7 +90,8 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
     formErrorClient: 'Fix the highlighted fields, then try again.',
     formErrorNetwork: 'Could not send your report. Check your connection and try again.',
     successHeading: 'Report received',
-    successBody: 'Save your report ID and access token. You’ll need them to check status later.',
+    successBody:
+      'Your report is saved. Review the AI guidance below, then keep your ID and token to check status later.',
     copyReportId: 'Copy report ID',
     copyAccessToken: 'Copy access token',
     tokenWarning: 'This token is shown once. We can’t show it again.',
@@ -100,6 +104,16 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
     assert.equal(typeof vi.public[key], 'string', `missing vi public.${key}`);
     assert.ok(vi.public[key].length > 0, `empty vi public.${key}`);
   }
+
+  const successOutcomeKeys = walkKeys(en.public.successOutcome);
+  assert.deepEqual(successOutcomeKeys, walkKeys(vi.public.successOutcome));
+  for (const key of successOutcomeKeys) {
+    assert.ok(en.public.successOutcome[key].length > 0, `empty en successOutcome.${key}`);
+    assert.ok(vi.public.successOutcome[key].length > 0, `empty vi successOutcome.${key}`);
+  }
+
+  assert.equal(en.public.formAnalyzing, 'Reviewing your report…');
+  assert.equal(vi.public.formAnalyzing, 'Đang xem xét báo cáo của bạn…');
 
   // Preserve Home keys from Plan 02-02
   assert.equal(en.public.reportCTA, 'Report an issue');
