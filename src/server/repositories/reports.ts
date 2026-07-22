@@ -17,6 +17,20 @@ export type CitizenStatusHistoryItem = {
   created_at: string;
 };
 
+export type CitizenStatusRawPayload = {
+  report_id: string;
+  received_at: string;
+  triage_status: string;
+  status: string;
+  category: string | null;
+  severity: number | null;
+  priority: string | null;
+  summary: string | null;
+  recommendation: string | null;
+  history: CitizenStatusHistoryItem[];
+};
+
+/** @deprecated Use CitizenStatusRawPayload + projectCitizenTriageView */
 export type CitizenStatusPayload = {
   status: string;
   summary: string | null;
@@ -45,10 +59,12 @@ export async function getAccessTokenByHash(
 export async function getCitizenStatus(
   client: SupabaseClient,
   reportId: string,
-): Promise<CitizenStatusPayload | null> {
+): Promise<CitizenStatusRawPayload | null> {
   const { data: reportRow, error: reportError } = await client
     .from("reports")
-    .select("report_id, summary, current_status")
+    .select(
+      "report_id, created_at, triage_status, current_status, category, severity, priority, summary, recommendation",
+    )
     .eq("report_id", reportId)
     .limit(1)
     .maybeSingle();
@@ -72,8 +88,15 @@ export async function getCitizenStatus(
 
   const history = (events ?? []).map((event) => projectCitizenHistoryItem(event));
   return {
+    report_id: String(reportRow.report_id ?? reportId),
+    received_at: String(reportRow.created_at ?? ""),
+    triage_status: String(reportRow.triage_status ?? "pending"),
     status: (reportRow.current_status as string | null) ?? "new",
-    summary: (reportRow.summary as string | null) ?? null,
+    category: (reportRow.category as string | null | undefined) ?? null,
+    severity: (reportRow.severity as number | null | undefined) ?? null,
+    priority: (reportRow.priority as string | null | undefined) ?? null,
+    summary: (reportRow.summary as string | null | undefined) ?? null,
+    recommendation: (reportRow.recommendation as string | null | undefined) ?? null,
     history,
   };
 }
@@ -199,6 +222,7 @@ export type OfficerReport = {
   uncertainty?: string[];
   urban_context?: unknown;
   evidence_path?: string | null;
+  triage_status: string;
   status: string;
   status_note?: string | null;
   status_updated_at?: string | null;
@@ -269,9 +293,27 @@ export function mapOfficerReportRow(row: Record<string, unknown>): OfficerReport
     uncertainty: Array.isArray(row.uncertainty) ? (row.uncertainty as string[]) : [],
     urban_context: row.urban_context ?? null,
     evidence_path: (row.evidence_path as string | null | undefined) ?? null,
+    triage_status: String(row.triage_status ?? "pending"),
     status: currentStatus,
     status_note: latest?.note ?? null,
   };
+}
+
+export function triageBucketRank(triageStatus: string): number {
+  if (triageStatus === "manual_review" || triageStatus === "failed") return 0;
+  if (triageStatus === "pending" || triageStatus === "processing") return 1;
+  if (triageStatus === "completed") return 2;
+  return 3;
+}
+
+export function compareTriageBucket(
+  left: { triage_status: string; created_at: string },
+  right: { triage_status: string; created_at: string },
+): number {
+  const bucketDiff =
+    triageBucketRank(left.triage_status) - triageBucketRank(right.triage_status);
+  if (bucketDiff !== 0) return bucketDiff;
+  return String(left.created_at).localeCompare(String(right.created_at));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -279,6 +321,9 @@ function applyReportFilters(query: any, filters: ReportFilters) {
   if (filters.status != null) query = query.eq("current_status", filters.status);
   if (filters.category != null) query = query.eq("category", filters.category);
   if (filters.priority != null) query = query.eq("priority", filters.priority);
+  if (filters.triage_status?.length) {
+    query = query.in("triage_status", filters.triage_status);
+  }
   if (filters.min_severity != null) query = query.gte("severity", filters.min_severity);
   if (filters.max_severity != null) query = query.lte("severity", filters.max_severity);
   if (filters.created_after != null) query = query.gte("created_at", filters.created_after);
@@ -321,6 +366,32 @@ export async function listRecentReports(
     filters: ReportFilters;
   },
 ): Promise<{ items: OfficerReport[]; nextCursor: string | null }> {
+  if (options.sort === "triage_bucket") {
+    let query = client
+      .from("reports")
+      .select("*, status_events(status, note, created_at)");
+    query = applyReportFilters(query, options.filters);
+    query = query.order("created_at", { ascending: true });
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const rows = ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+      row,
+      mapped: mapOfficerReportRow(row),
+    }));
+    rows.sort((left, right) =>
+      compareTriageBucket(left.mapped, right.mapped),
+    );
+
+    const pageRows = rows.slice(0, options.limit);
+    const items = pageRows.map((entry) => entry.mapped);
+    const hasMore = rows.length > options.limit;
+    return {
+      items,
+      nextCursor: hasMore ? "triage_bucket:more" : null,
+    };
+  }
+
   let query = client
     .from("reports")
     .select("*, status_events(status, note, created_at)");

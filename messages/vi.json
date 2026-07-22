@@ -108,6 +108,24 @@
       "loading": "Đang tải bản đồ…",
       "degraded": "Không tải được bản đồ — nhập tọa độ hoặc dùng vị trí của bạn.",
       "ariaLabel": "Bản đồ vị trí tùy chọn"
+    },
+    "statusWorkflow": {
+      "title": "Tiến trình xử lý",
+      "stepReceived": "Đã nhận báo cáo",
+      "stepAiPending": "Đang chờ AI xem xét",
+      "stepOfficerReview": "Cán bộ đang xem xét",
+      "stepResolved": "Đã giải quyết",
+      "stepRejected": "Đã từ chối"
+    },
+    "triage": {
+      "calmNoticeTitle": "Không thể tự động xem xét",
+      "calmNoticeBody": "Không thể tự động xem xét. Báo cáo của bạn đã được lưu và sẽ được cán bộ xem xét.",
+      "recommendationLabel": "Gợi ý bước tiếp theo",
+      "priorityLabel": "Mức ưu tiên",
+      "categoryLabel": "Danh mục",
+      "severityLabel": "Mức độ",
+      "referenceLabel": "Mã tham chiếu",
+      "receivedLabel": "Thời gian tiếp nhận"
     }
   },
   "login": {
@@ -213,6 +231,25 @@
     "exportExcel": "Tải Excel",
     "exportPreparing": "Đang chuẩn bị tệp xuất…",
     "exportFailed": "Không thể xuất báo cáo. Kiểm tra kết nối và thử lại.",
+    "triage": {
+      "columnHeader": "AI xem xét",
+      "badgePending": "AI đang xử lý",
+      "badgeElevated": "Cần cán bộ xem xét",
+      "badgeComplete": "AI đã xong",
+      "filterAll": "Tất cả",
+      "filterPending": "AI đang xử lý",
+      "filterNeedsReview": "Cần xem xét",
+      "filterComplete": "AI đã xong",
+      "detailPendingTitle": "Báo cáo chờ xem xét",
+      "observedFacts": "Sự kiện quan sát được",
+      "unknowns": "Chưa rõ / thiếu thông tin",
+      "confidenceLabel": "Độ tin cậy mô hình — chưa hiệu chỉnh",
+      "confidenceLow": "thấp",
+      "confidenceMedium": "trung bình",
+      "confidenceHigh": "cao",
+      "detailHelper": "Kết quả AI chỉ mang tính tham khảo — bạn quyết định.",
+      "emptyAiSection": "Chưa có cho đến khi AI xem xét xong."
+    },
     "widgets": {
       "busiestDayTitle": "Ngày báo cáo nhiều nhất",
       "day_sun": "CN",

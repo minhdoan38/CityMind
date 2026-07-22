@@ -108,6 +108,24 @@
       "loading": "Loading map…",
       "degraded": "Map unavailable — enter coordinates or use your location.",
       "ariaLabel": "Optional location map"
+    },
+    "statusWorkflow": {
+      "title": "Service progress",
+      "stepReceived": "Report received",
+      "stepAiPending": "AI review pending",
+      "stepOfficerReview": "Under officer review",
+      "stepResolved": "Resolved",
+      "stepRejected": "Rejected"
+    },
+    "triage": {
+      "calmNoticeTitle": "Automated review unavailable",
+      "calmNoticeBody": "Automated review is unavailable. Your report is saved and will be reviewed by an officer.",
+      "recommendationLabel": "Recommended next steps",
+      "priorityLabel": "Priority",
+      "categoryLabel": "Category",
+      "severityLabel": "Severity",
+      "referenceLabel": "Reference ID",
+      "receivedLabel": "Received"
     }
   },
   "login": {
@@ -213,6 +231,25 @@
     "exportExcel": "Download Excel",
     "exportPreparing": "Preparing export…",
     "exportFailed": "Could not export reports. Check your connection and try again.",
+    "triage": {
+      "columnHeader": "AI triage",
+      "badgePending": "AI review pending",
+      "badgeElevated": "Needs officer review",
+      "badgeComplete": "AI review complete",
+      "filterAll": "All",
+      "filterPending": "AI pending",
+      "filterNeedsReview": "Needs review",
+      "filterComplete": "AI complete",
+      "detailPendingTitle": "Report pending review",
+      "observedFacts": "Observed facts",
+      "unknowns": "Unknowns / gaps",
+      "confidenceLabel": "Model confidence — uncalibrated",
+      "confidenceLow": "low",
+      "confidenceMedium": "medium",
+      "confidenceHigh": "high",
+      "detailHelper": "AI output is advisory — you decide.",
+      "emptyAiSection": "Not available until AI review completes."
+    },
     "widgets": {
       "busiestDayTitle": "Busiest report day",
       "day_sun": "Sun",
