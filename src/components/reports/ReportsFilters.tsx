@@ -51,6 +51,11 @@ const ROUTING_FILTER_CHIPS = [
   { key: "all", param: "all" },
 ] as const;
 
+const SHADOW_FILTER_CHIPS = [
+  { key: "all", param: null },
+  { key: "disagreement", param: "true" },
+] as const;
+
 type Props = {
   params: DashboardSearchParams;
 };
@@ -132,8 +137,19 @@ export default function ReportsFilters({ params }: Props) {
     navigate(next);
   }
 
+  function setShadowChip(param: string | null) {
+    const next = currentParams();
+    if (!param) {
+      next.delete("shadow_disagreement");
+    } else {
+      next.set("shadow_disagreement", param);
+    }
+    navigate(next);
+  }
+
   const activeTriageParam = params.triage_status?.trim() || null;
   const activeRoutingParam = params.routing_destination?.trim() || null;
+  const activeShadowParam = params.shadow_disagreement?.trim() || null;
 
   return (
     <div className="space-y-3">
@@ -190,6 +206,30 @@ export default function ReportsFilters({ params }: Props) {
               onClick={() => setRoutingChip(chip.param)}
             >
               {tr(labelKey)}
+            </Button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {SHADOW_FILTER_CHIPS.map((chip) => {
+          const active =
+            chip.param === null
+              ? !activeShadowParam
+              : activeShadowParam === chip.param;
+          const label =
+            chip.key === "all" ? "All shadow results" : "Shadow disagreement";
+          return (
+            <Button
+              key={chip.key}
+              type="button"
+              variant={active ? "default" : "outline"}
+              className="min-h-11"
+              aria-pressed={active}
+              disabled={pending}
+              onClick={() => setShadowChip(chip.param)}
+            >
+              {label}
             </Button>
           );
         })}

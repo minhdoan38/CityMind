@@ -8,8 +8,9 @@ import TriageStatusBadge from "@/components/reports/TriageStatusBadge";
 import StatusActions from "@/components/StatusActions";
 import { requireOfficerSession } from "@/lib/auth";
 import { loadOfficerReportDetail } from "@/server/services/officer-dashboard";
-import { Card } from "@/components/ui/card";
+import type { ShadowComparisonRow } from "@/server/evals/shadow-service";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
 
 type Props = { params: Promise<{ reportId: string }> };
 
@@ -95,6 +96,63 @@ function SignalList({
         <li key={item}>{item}</li>
       ))}
     </ul>
+  );
+}
+
+function shadowFieldValue(
+  snapshot: Record<string, unknown> | null | undefined,
+  field: "category" | "severity" | "priority",
+): string {
+  if (!snapshot) return "—";
+  const value = snapshot[field];
+  if (value == null) return "—";
+  return String(value);
+}
+
+function ShadowComparisonPanel({
+  comparison,
+}: {
+  comparison: ShadowComparisonRow;
+}) {
+  const baseline = comparison.baseline_snapshot as Record<string, unknown>;
+  const candidate = comparison.candidate_snapshot as Record<string, unknown> | null;
+  const fields = ["category", "severity", "priority"] as const;
+
+  return (
+    <details className="rounded-lg border border-border p-6">
+      <summary className="cursor-pointer text-xl font-semibold text-foreground">
+        Shadow comparison
+      </summary>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Baseline production triage vs candidate model ({comparison.candidate_model}).
+        Advisory only — citizen disposition stays on baseline.
+      </p>
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-muted-foreground">
+              <th className="pb-2 pr-4 font-normal">Field</th>
+              <th className="pb-2 pr-4 font-normal">Baseline</th>
+              <th className="pb-2 font-normal">Candidate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((field) => {
+              const disagrees = Boolean(
+                (comparison.disagreement as Record<string, unknown> | undefined)?.[field],
+              );
+              return (
+                <tr key={field} className={disagrees ? "bg-amber-50" : undefined}>
+                  <td className="py-2 pr-4 capitalize font-medium">{field}</td>
+                  <td className="py-2 pr-4">{shadowFieldValue(baseline, field)}</td>
+                  <td className="py-2">{shadowFieldValue(candidate, field)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
 }
 
@@ -289,6 +347,10 @@ export default async function ReportDetail({ params }: Props) {
             </div>
           ) : null}
         </section>
+      ) : null}
+
+      {detail.shadowComparison ? (
+        <ShadowComparisonPanel comparison={detail.shadowComparison} />
       ) : null}
 
       {triageComplete ? (

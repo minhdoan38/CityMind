@@ -1,12 +1,20 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminClient } from "@/lib/supabase/admin";
 import type {
   DashboardSearchParams,
   ReportRow,
   SummaryMetrics,
 } from "@/components/reports/types";
+import {
+  fetchLatestShadowComparison,
+  fetchShadowDisagreementFlags,
+  listReportIdsWithShadowDisagreement,
+  type ShadowComparisonRow,
+} from "@/server/evals/shadow-service";
 import { HttpError } from "@/server/http/errors";
+import type { ReportFilters } from "@/server/officer/filters";
 import { SORT_COLUMNS, validateReportFilters } from "@/server/officer/filters";
 import {
   getOfficerReport,
@@ -25,6 +33,40 @@ export type DashboardFetchBundle = {
   error: string | null;
 };
 
+async function resolveShadowReportFilters(
+  filters: ReportFilters,
+): Promise<ReportFilters> {
+  if (!filters.shadow_disagreement) {
+    return filters;
+  }
+
+  const admin = getAdminClient();
+  const reportIds = await listReportIdsWithShadowDisagreement(admin);
+  return {
+    ...filters,
+    restrict_report_ids: reportIds,
+  };
+}
+
+async function enrichOfficerReportsWithShadowFlags(
+  reports: OfficerReport[],
+): Promise<OfficerReport[]> {
+  if (!reports.length) {
+    return reports;
+  }
+
+  const admin = getAdminClient();
+  const flags = await fetchShadowDisagreementFlags(
+    admin,
+    reports.map((report) => report.report_id),
+  );
+
+  return reports.map((report) => ({
+    ...report,
+    has_shadow_disagreement: flags.get(report.report_id) ?? false,
+  }));
+}
+
 function toReportRow(report: OfficerReport): ReportRow {
   const triageComplete = report.triage_status === "completed";
   return {
@@ -35,6 +77,7 @@ function toReportRow(report: OfficerReport): ReportRow {
     status: report.status,
     triage_status: report.triage_status,
     routing_destination: report.routing_destination ?? null,
+    has_shadow_disagreement: report.has_shadow_disagreement ?? false,
     severity: triageComplete ? (report.severity ?? null) : null,
     summary: triageComplete ? (report.summary ?? "") : "",
   };
@@ -58,6 +101,7 @@ function searchParamsFromDashboard(
     "created_before",
     "triage_status",
     "routing_destination",
+    "shadow_disagreement",
   ] as const) {
     const value = params[key];
     if (typeof value === "string" && value.trim()) {
@@ -77,10 +121,11 @@ export async function loadDashboardBundle(
 ): Promise<DashboardFetchBundle> {
   const client = await createClient();
   const summaryParams = searchParamsFromDashboard(params, { includeCursor: false });
-  const filters = parseRecentListOptions(summaryParams).filters;
+  const baseFilters = parseRecentListOptions(summaryParams).filters;
 
   try {
-    validateReportFilters(filters);
+    validateReportFilters(baseFilters);
+    const filters = await resolveShadowReportFilters(baseFilters);
     if (isMapView) {
       const metrics = await getReportsSummary(
         client,
@@ -101,19 +146,23 @@ export async function loadDashboardBundle(
       return { rows: [], nextCursor: null, metrics: null, error: "load" };
     }
 
+    const resolvedListFilters = await resolveShadowReportFilters(listOptions.filters);
+
     const [{ items, nextCursor }, metrics] = await Promise.all([
       listRecentReports(client, {
         limit: listOptions.limit,
         sort: listOptions.sort,
         order: listOptions.order,
         cursor: listOptions.cursor,
-        filters: listOptions.filters,
+        filters: resolvedListFilters,
       }),
-      getReportsSummary(client, listOptions.filters, summaryParams.get("bbox")),
+      getReportsSummary(client, resolvedListFilters, summaryParams.get("bbox")),
     ]);
 
+    const enriched = await enrichOfficerReportsWithShadowFlags(items);
+
     return {
-      rows: items.map(toReportRow),
+      rows: enriched.map(toReportRow),
       nextCursor,
       metrics,
       error: null,
@@ -129,17 +178,34 @@ export async function loadDashboardBundle(
 export async function loadOfficerReportDetail(reportId: string): Promise<{
   report: OfficerReport | null;
   history: OfficerStatusHistoryItem[];
+  shadowComparison: ShadowComparisonRow | null;
   error: "not_found" | "load_error" | "api_error" | null;
 }> {
   const client = await createClient();
   try {
     const report = await getOfficerReport(client, reportId);
     if (!report) {
-      return { report: null, history: [], error: "not_found" };
+      return { report: null, history: [], shadowComparison: null, error: "not_found" };
     }
-    const history = await getOfficerStatusHistory(client, reportId);
-    return { report, history, error: null };
+    const [history, shadowComparison] = await Promise.all([
+      getOfficerStatusHistory(client, reportId),
+      fetchLatestShadowComparison(getAdminClient(), reportId),
+    ]);
+    return {
+      report: {
+        ...report,
+        has_shadow_disagreement: shadowComparison?.has_disagreement ?? false,
+      },
+      history,
+      shadowComparison,
+      error: null,
+    };
   } catch {
-    return { report: null, history: [], error: "api_error" };
+    return {
+      report: null,
+      history: [],
+      shadowComparison: null,
+      error: "api_error",
+    };
   }
 }

@@ -46,6 +46,18 @@ const ServerEnvSchema = z.object({
       return normalized === "true" || normalized === "1";
     }),
   AI_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(120_000).default(60_000),
+  TRIAGE_SHADOW_MODE: z.enum(["off", "compare"]).default("off"),
+  AI_MODEL_CANDIDATE: z.string().optional(),
+  AI_BASE_URL_CANDIDATE: z
+    .string()
+    .optional()
+    .transform((value) => {
+      if (!value?.trim()) {
+        return undefined;
+      }
+      return normalizeAiBaseUrl(value);
+    }),
+  EVAL_MANIFEST_PATH: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;
@@ -69,6 +81,35 @@ export function getServerEnv(): ServerEnv {
 
 export function resetServerEnvCache(): void {
   cachedEnv = null;
+}
+
+export type ShadowConfig = {
+  mode: "off" | "compare";
+  candidateModel: string | null;
+  candidateBaseUrl: string | null;
+};
+
+export function getShadowConfig(env: NodeJS.ProcessEnv = process.env): ShadowConfig {
+  const parsed = ServerEnvSchema.pick({
+    TRIAGE_SHADOW_MODE: true,
+    AI_MODEL_CANDIDATE: true,
+    AI_BASE_URL_CANDIDATE: true,
+  }).safeParse(env);
+
+  if (!parsed.success) {
+    return { mode: "off", candidateModel: null, candidateBaseUrl: null };
+  }
+
+  const candidateModel = parsed.data.AI_MODEL_CANDIDATE?.trim() || null;
+  const mode = parsed.data.TRIAGE_SHADOW_MODE;
+  const activeMode =
+    mode === "compare" && candidateModel ? "compare" : "off";
+
+  return {
+    mode: activeMode,
+    candidateModel: activeMode === "compare" ? candidateModel : null,
+    candidateBaseUrl: parsed.data.AI_BASE_URL_CANDIDATE ?? null,
+  };
 }
 
 export function buildChatCompletionsUrl(baseUrl: string): string {

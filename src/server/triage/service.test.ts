@@ -16,6 +16,11 @@ const validAnalysis: ReportAnalysis = {
   uncertainty: ["Exact depth is not verified."],
 };
 
+const candidateAnalysis: ReportAnalysis = {
+  ...validAnalysis,
+  category: "flooding",
+};
+
 function createClient(options: {
   report?: Record<string, unknown> | null;
 } = {}) {
@@ -35,9 +40,19 @@ function createClient(options: {
     maybeSingle,
   }));
   const select = vi.fn(() => ({ eq }));
-  const from = vi.fn(() => ({ select }));
+  const update = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }));
+  const insert = vi.fn().mockResolvedValue({ error: null });
+  const from = vi.fn((table: string) => {
+    if (table === "triage_shadow_comparisons") {
+      return { insert };
+    }
+    if (table === "reports") {
+      return { select, update };
+    }
+    return { select };
+  });
 
-  return { from };
+  return { from, update, insert };
 }
 
 function createDeps(client: ReturnType<typeof createClient>) {
@@ -214,5 +229,47 @@ describe("runTriageForReport", () => {
     });
     expect(result.disposition).toBe("failed");
     expect(deps.applyRoutingForReport).not.toHaveBeenCalled();
+  });
+
+  it("dual-runs shadow candidate without updating reports", async () => {
+    const client = createClient();
+    const analyzeStructured = vi
+      .fn()
+      .mockResolvedValueOnce({
+        analysis: validAnalysis,
+        lineage: {
+          providerLabel: "test",
+          responseModel: "baseline-model",
+          requestId: "req-1",
+          latencyMs: 10,
+        },
+        rawContent: JSON.stringify(validAnalysis),
+      })
+      .mockResolvedValueOnce({
+        analysis: candidateAnalysis,
+        lineage: {
+          providerLabel: "test",
+          responseModel: "candidate-model",
+          requestId: "req-2",
+          latencyMs: 11,
+        },
+        rawContent: JSON.stringify(candidateAnalysis),
+      });
+    const deps = {
+      ...createDeps(client),
+      analyzeStructured,
+      getShadowConfig: () => ({
+        mode: "compare" as const,
+        candidateModel: "candidate-model",
+        candidateBaseUrl: null,
+      }),
+    };
+
+    const result = await runTriageForReport("report-1", deps);
+
+    expect(result.disposition).toBe("completed");
+    expect(analyzeStructured).toHaveBeenCalledTimes(2);
+    expect(client.insert).toHaveBeenCalledTimes(1);
+    expect(client.update).not.toHaveBeenCalled();
   });
 });

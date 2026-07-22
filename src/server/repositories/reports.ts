@@ -228,6 +228,7 @@ export type OfficerReport = {
   triage_status: string;
   status: string;
   routing_destination?: string | null;
+  has_shadow_disagreement?: boolean;
   status_note?: string | null;
   status_updated_at?: string | null;
 };
@@ -328,6 +329,11 @@ function applyReportFilters(query: any, filters: ReportFilters) {
   if (filters.priority != null) query = query.eq("priority", filters.priority);
   if (filters.triage_status?.length) {
     query = query.in("triage_status", filters.triage_status);
+  }
+  if (filters.restrict_report_ids?.length) {
+    query = query.in("report_id", filters.restrict_report_ids);
+  } else if (filters.restrict_report_ids) {
+    query = query.eq("report_id", "__no_shadow_matches__");
   }
   const routingFilter = filters.routing_destination ?? "government_default";
   if (routingFilter === "government_default") {

@@ -55,6 +55,8 @@ export type ReportFilters = {
   priority?: string | null;
   triage_status?: string[] | null;
   routing_destination?: RoutingDestinationFilter;
+  shadow_disagreement?: boolean;
+  restrict_report_ids?: string[] | null;
   min_severity?: number | null;
   max_severity?: number | null;
   created_after?: string | null;
@@ -156,6 +158,11 @@ export function parseRoutingDestinationFilter(
   return "government_default";
 }
 
+export function parseShadowDisagreementFilter(value: string | null): boolean {
+  if (value == null || value.trim() === "") return false;
+  return value.trim().toLowerCase() === "true";
+}
+
 export function parseReportFilters(searchParams: URLSearchParams): ReportFilters {
   const minSeverity = parseOptionalInt(searchParams.get("min_severity"), {
     min: 1,
@@ -172,6 +179,9 @@ export function parseReportFilters(searchParams: URLSearchParams): ReportFilters
     triage_status: parseTriageStatusFilter(searchParams.get("triage_status")),
     routing_destination: parseRoutingDestinationFilter(
       searchParams.get("routing_destination"),
+    ),
+    shadow_disagreement: parseShadowDisagreementFilter(
+      searchParams.get("shadow_disagreement"),
     ),
     min_severity: minSeverity,
     max_severity: maxSeverity,

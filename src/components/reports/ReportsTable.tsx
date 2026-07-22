@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 
 import TriageStatusBadge from "./TriageStatusBadge";
 import RoutingDestinationBadge from "./RoutingDestinationBadge";
+import ShadowMismatchBadge from "./ShadowMismatchBadge";
 import {
   FILTER_PARAM_KEYS,
   type DashboardSearchParams,
@@ -159,6 +160,14 @@ export default function ReportsTable({
         enableSorting: false,
         cell: ({ getValue }) => (
           <RoutingDestinationBadge destination={(getValue() as string | null) ?? null} />
+        ),
+      },
+      {
+        accessorKey: "has_shadow_disagreement",
+        header: "Shadow",
+        enableSorting: false,
+        cell: ({ getValue }) => (
+          <ShadowMismatchBadge hasDisagreement={Boolean(getValue())} />
         ),
       },
       {

@@ -106,6 +106,33 @@ test('ReportsTable includes routing destination badge column', () => {
   assert.equal(typeof en.dashboard.routing.badgeGovernment, 'string');
 });
 
+test('ReportsTable renders shadow mismatch badge column', () => {
+  const tablePath = 'src/components/reports/ReportsTable.tsx';
+  const src = read(tablePath);
+  assert.ok(src.includes('ShadowMismatchBadge'), 'ReportsTable must render ShadowMismatchBadge');
+  assert.ok(
+    src.includes('has_shadow_disagreement'),
+    'ReportsTable must include has_shadow_disagreement column',
+  );
+  const badge = read('src/components/reports/ShadowMismatchBadge.tsx');
+  assert.ok(
+    badge.includes('Shadow mismatch'),
+    'ShadowMismatchBadge must expose Shadow mismatch label',
+  );
+});
+
+test('ReportsFilters includes shadow disagreement chip', () => {
+  const filters = read('src/components/reports/ReportsFilters.tsx');
+  assert.ok(
+    filters.includes('shadow_disagreement'),
+    'ReportsFilters must support shadow_disagreement param',
+  );
+  assert.ok(
+    filters.includes('Shadow disagreement'),
+    'ReportsFilters must render Shadow disagreement chip label',
+  );
+});
+
 test('EN/VI catalogs include list filter and empty/error copy', () => {
   const en = JSON.parse(read('messages/en.json'));
   const vi = JSON.parse(read('messages/vi.json'));

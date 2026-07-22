@@ -8,7 +8,8 @@ import {
   analyzeStructured,
   type StructuredAnalysisResult,
 } from "@/server/ai/openai-compatible";
-import { getServerEnv } from "@/server/config/env";
+import { getServerEnv, getShadowConfig } from "@/server/config/env";
+import { compareShadowTriage } from "@/server/evals/shadow-service";
 import type { ReportAnalysis } from "@/server/domain/report-analysis";
 import {
   downloadEvidenceLocation,
@@ -48,10 +49,13 @@ export type TriageServiceDeps = {
     },
     systemInstruction?: string,
   ) => Promise<StructuredAnalysisResult>;
+  candidateAnalyzeStructured?: TriageServiceDeps["analyzeStructured"];
   startTriageRun?: typeof startTriageRun;
   recordTriageAttempt?: typeof recordTriageAttempt;
   finishTriageRun?: typeof finishTriageRun;
   applyRoutingForReport?: typeof applyRoutingForReport;
+  compareShadowTriage?: typeof compareShadowTriage;
+  getShadowConfig?: typeof getShadowConfig;
 };
 
 function buildValidationRetryInstruction(violations: PolicyViolation[]): string {
@@ -240,6 +244,38 @@ async function applyTerminalRouting(
   await apply(deps.client, reportId, { disposition, analysis: analysis ?? null });
 }
 
+async function runShadowComparisonIfEnabled(
+  deps: TriageServiceDeps,
+  input: {
+    reportId: string;
+    runId: string;
+    baseline: ReportAnalysis;
+    description: string;
+    image?: { bytes: Uint8Array; mimeType: "image/jpeg" | "image/png" | "image/webp" };
+  },
+): Promise<void> {
+  const shadowConfig = deps.getShadowConfig?.() ?? getShadowConfig();
+  if (shadowConfig.mode !== "compare") {
+    return;
+  }
+
+  const compare = deps.compareShadowTriage ?? compareShadowTriage;
+  await compare(
+    {
+      client: deps.client,
+      getShadowConfig: () => shadowConfig,
+      analyzeStructured: deps.candidateAnalyzeStructured ?? deps.analyzeStructured,
+    },
+    {
+      reportId: input.reportId,
+      productionRunId: input.runId,
+      baseline: input.baseline,
+      description: input.description,
+      image: input.image,
+    },
+  );
+}
+
 export async function runTriageForReport(
   reportId: string,
   deps: TriageServiceDeps = { client: getAdminClient() },
@@ -332,6 +368,13 @@ export async function runTriageForReport(
       });
       await finishRun(deps.client, runId, "completed");
       await applyTerminalRouting(deps, reportId, "completed", structured.analysis);
+      await runShadowComparisonIfEnabled(deps, {
+        reportId,
+        runId,
+        baseline: structured.analysis,
+        description,
+        image,
+      });
       return { reportId, disposition: "completed" };
     }
 

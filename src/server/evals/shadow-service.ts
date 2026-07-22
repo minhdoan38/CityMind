@@ -6,7 +6,7 @@ import {
   analyzeStructured,
   type StructuredAnalysisResult,
 } from "@/server/ai/openai-compatible";
-import { getServerEnv } from "@/server/config/env";
+import { getServerEnv, getShadowConfig as loadShadowConfig } from "@/server/config/env";
 import type { ReportAnalysis } from "@/server/domain/report-analysis";
 import { ROUTING_POLICY_VERSION } from "@/server/routing/policy";
 import { compareShadowTriage as buildShadowDisagreement } from "./shadow-compare";
@@ -67,11 +67,9 @@ export type ShadowComparisonRow = {
   compared_at: string;
 };
 
-const OFF_SHADOW_CONFIG: ShadowConfig = {
-  mode: "off",
-  candidateModel: null,
-  candidateBaseUrl: null,
-};
+function resolveShadowConfig(deps: ShadowServiceDeps): ShadowConfig {
+  return deps.getShadowConfig?.() ?? loadShadowConfig();
+}
 
 export async function insertShadowComparison(
   client: SupabaseClient,
@@ -91,10 +89,6 @@ export async function insertShadowComparison(
   if (error) {
     throw error;
   }
-}
-
-function resolveShadowConfig(deps: ShadowServiceDeps): ShadowConfig {
-  return deps.getShadowConfig?.() ?? OFF_SHADOW_CONFIG;
 }
 
 function buildCandidateEnv(config: ShadowConfig) {
