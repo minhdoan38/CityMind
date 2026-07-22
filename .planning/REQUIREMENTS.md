@@ -95,11 +95,13 @@
 
 ### Guided Self-Help Coach (SHELP) — Phase 11 (build) + Phase 13 (verification)
 
-- [x] **SHELP-01**: Success page branches after triage — **self_help** opens coach AI chat; **government** shows queue messaging (no coach-first for hard cases) — *immediate sync outcome on submit (Phase 13)*
-- [ ] **SHELP-02**: Token-scoped **coach chat API** (`report_id` + access token); messages grounded in report + category playbook; advisory only — *consumed on success page (Phase 13 verify)*
-- [ ] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL` — *Phase 11 impl; Phase 13 verify*
-- [ ] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path — *Phase 13 contract tests*
-- [x] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page — *sync `formAnalyzing` + poll fallback; Phase 13 UI-SPEC + i18n parity*
+**Phase 13 verification:** Sync submit returns immediate `CitizenTriageOutcome` on success page; coach embedded for `self_help_guidance`; government path shows queue messaging; poll fallback only on non-terminal sync status.
+
+- [x] **SHELP-01**: Success page branches after triage — **self_help** opens coach AI chat; **government** shows queue messaging (no coach-first for hard cases) — *Verified Phase 13 — sync success page*
+- [x] **SHELP-02**: Token-scoped **coach chat API** (`report_id` + access token); messages grounded in report + category playbook; advisory only — *Verified Phase 13 — sync success page*
+- [x] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL` — *Verified Phase 13 — sync success page (Phase 11 impl)*
+- [x] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path — *Verified Phase 13 — sync success page*
+- [x] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page — *Verified Phase 13 — sync success page (`formAnalyzing` + poll fallback)*
 
 ### Operations (OPS) — Phase 11
 
@@ -192,7 +194,7 @@ Deferred beyond Milestone v2.
 | DASH-06 | Phase 3 | Complete |
 | DASH-07 | Phase 3 | Complete |
 | CIT-01 | Phase 4 | Complete |
-| CIT-02 | Phase 4 | Complete |
+| CIT-02 | Phase 4 + 13 | Complete |
 | CIT-03 | Phase 4 | Complete |
 | CIT-04 | Phase 4 | Complete |
 | DASH-08 | Phase 4 | Complete |
@@ -223,9 +225,9 @@ Deferred beyond Milestone v2.
 | TRIAGE-13 | Phase 11 + 13 | Complete |
 | TRIAGE-14 | Phase 11 | Pending |
 | SHELP-01 | Phase 13 | Complete |
-| SHELP-02 | Phase 13 | Pending |
-| SHELP-03 | Phase 13 | Pending |
-| SHELP-04 | Phase 13 | Pending |
+| SHELP-02 | Phase 13 | Complete |
+| SHELP-03 | Phase 13 | Complete |
+| SHELP-04 | Phase 13 | Complete |
 | SHELP-05 | Phase 13 | Complete |
 | OPS-01 | Phase 11 | Pending |
 | DASH-09 | Phase 11 | Pending |
