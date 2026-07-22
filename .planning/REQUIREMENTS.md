@@ -86,14 +86,14 @@
 
 ### Routing (ROUT) — Phase 9
 
-- [ ] **ROUT-01**: Post-triage deterministic routing — evaluate destination only on terminal triage dispositions; policy rules on triage output; no separate AI routing call
-- [ ] **ROUT-02**: Government vs self-help policy criteria — severity/priority/confidence/category gates with semver `routing_policy_version` persisted on every decision
-- [ ] **ROUT-03**: Officer default queue includes unrouted reports — `routing_destination IS NULL` (pending/processing) treated as government-visible
-- [ ] **ROUT-04**: Static bilingual self-help playbooks — in-repo catalog; hide all AI triage fields on self-help citizen path
-- [ ] **ROUT-05**: Citizen status page self-help journey — adapted workflow steps; escalate CTA on status page; same access token after escalate
-- [ ] **ROUT-06**: Officer default government queue filter — optional self-help chip; preserve Phase 8 `triage_bucket` sort
-- [ ] **ROUT-07**: Officer destination badge and override — Self-help/Government badge; escalate to government and mark resolved on self-help reports
-- [ ] **ROUT-08**: Auditable re-routing — citizen escalate and officer override flip `routing_destination` with `routing_reason` audit trail
+- [x] **ROUT-01**: Post-triage deterministic routing — evaluate destination only on terminal triage dispositions; policy rules on triage output; no separate AI routing call
+- [x] **ROUT-02**: Government vs self-help policy criteria — severity/priority/confidence/category gates with semver `routing_policy_version` persisted on every decision
+- [x] **ROUT-03**: Officer default queue includes unrouted reports — `routing_destination IS NULL` (pending/processing) treated as government-visible
+- [x] **ROUT-04**: Static bilingual self-help playbooks — in-repo catalog; hide all AI triage fields on self-help citizen path
+- [x] **ROUT-05**: Citizen status page self-help journey — adapted workflow steps; escalate CTA on status page; same access token after escalate
+- [x] **ROUT-06**: Officer default government queue filter — optional self-help chip; preserve Phase 8 `triage_bucket` sort
+- [x] **ROUT-07**: Officer destination badge and override — Self-help/Government badge; escalate to government and mark resolved on self-help reports
+- [x] **ROUT-08**: Auditable re-routing — citizen escalate and officer override flip `routing_destination` with `routing_reason` audit trail
 
 ## v2 Requirements
 
@@ -182,14 +182,14 @@ Deferred beyond Milestone v2.
 | TRIAGE-06 | Phase 8 | Complete |
 | TRIAGE-07 | Phase 8 | Complete |
 | TRIAGE-08 | Phase 10 | Pending |
-| ROUT-01 | Phase 9 | Pending |
-| ROUT-02 | Phase 9 | Pending |
-| ROUT-03 | Phase 9 | Pending |
-| ROUT-04 | Phase 9 | Pending |
-| ROUT-05 | Phase 9 | Pending |
-| ROUT-06 | Phase 9 | Pending |
-| ROUT-07 | Phase 9 | Pending |
-| ROUT-08 | Phase 9 | Pending |
+| ROUT-01 | Phase 9 | Complete |
+| ROUT-02 | Phase 9 | Complete |
+| ROUT-03 | Phase 9 | Complete |
+| ROUT-04 | Phase 9 | Complete |
+| ROUT-05 | Phase 9 | Complete |
+| ROUT-06 | Phase 9 | Complete |
+| ROUT-07 | Phase 9 | Complete |
+| ROUT-08 | Phase 9 | Complete |
 
 **Coverage:**
 

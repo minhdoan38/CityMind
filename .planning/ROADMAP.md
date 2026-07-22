@@ -22,7 +22,7 @@ Upgrade the shipped CityMind MVP into a production-ready, self-hosted platform a
 - [ ] **Phase 6: Maps & Geospatial** — PostGIS, MapLibre incident map, geo filters
 - [ ] **Phase 7: Next.js-Only Google-Free Platform** — Consolidate CityMind into Next.js/Node.js using a third-party API key and self-hosted Supabase; remove FastAPI, Python, Docker, and Google Cloud while retaining Google Fonts
 - [x] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts (completed 2026-07-22)
-- [ ] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue
+- [x] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue (completed 2026-07-22)
 - [ ] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover
 
 ## Phase Details
@@ -285,16 +285,16 @@ Plans:
 
 **Wave 1 — Schema + policy**
 
-- [ ] 09-01-PLAN.md — **Track A** — Routing columns migration, SQL contract, evaluateRoutingPolicy + unit tests, graffiti category (D-01..D-04, D-17..D-24)
+- [x] 09-01-PLAN.md — **Track A** — Routing columns migration, SQL contract, evaluateRoutingPolicy + unit tests, graffiti category (D-01..D-04, D-17..D-24)
 
 **Wave 2 — Worker + citizen API** *(depends on 09-01)*
 
-- [ ] 09-02-PLAN.md — **Track B** — applyRoutingForReport worker hook on terminal triage (D-01, D-02, D-20, D-21..D-24)
-- [ ] 09-03-PLAN.md — **Track C** — Static playbooks, citizen status projection, POST /escalate API (D-04..D-12)
+- [x] 09-02-PLAN.md — **Track B** — applyRoutingForReport worker hook on terminal triage (D-01, D-02, D-20, D-21..D-24)
+- [x] 09-03-PLAN.md — **Track C** — Static playbooks, citizen status projection, POST /escalate API (D-04..D-12)
 
 **Wave 3 — Officer + status UX** *(depends on 09-02 + 09-03)*
 
-- [ ] 09-04-PLAN.md — **Track D** — Government-default filter, destination badge, officer override, status page playbook UI (D-03, D-08..D-16)
+- [x] 09-04-PLAN.md — **Track D** — Government-default filter, destination badge, officer override, status page playbook UI (D-03, D-08..D-16)
 
 ---
 
@@ -329,7 +329,7 @@ Plans:
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
 | 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
-| 9. Self-help vs Government Routing | v2.0 | 0/4 | Planned | - |
+| 9. Self-help vs Government Routing | v2.0 | 4/4 | Complete   | 2026-07-22 |
 | 10. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
 
 ---
