@@ -475,21 +475,13 @@ export default function RoutingDestinationBadge({
 | A4 | Citizen escalate does not auto-set `current_status` to `reviewing` — only flips routing | Pattern 5 | UX may expect immediate officer pickup label |
 | A5 | Phase 8 migrations must be applied before Phase 9 SQL contract | Environment | Blocked execution |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Extend `CategorySchema` for `graffiti` in Phase 9?**
-   - What we know: Evaluator JSON includes `graffiti`; runtime Zod schema does not [VERIFIED: `report-analysis.ts`, evaluator JSON].
-   - What's unclear: Whether Phase 9 scope includes triage schema alignment or only routing policy.
-   - Recommendation: Add small schema expansion task OR accept dormant `graffiti` rule with policy unit test; planner checkpoint.
+1. **Extend `CategorySchema` for `graffiti` in Phase 9?** — **RESOLVED:** Yes. Plan 09-01 Task 3 adds `graffiti` to `CategorySchema` so D-22 self-help eligibility works end-to-end.
 
-2. **Citizen-initiated resolve on self-help path?**
-   - What we know: D-10 shows resolved as final step without officer review.
-   - What's unclear: Whether citizens can self-mark resolved or only officers via D-14 override.
-   - Recommendation: MVP — resolved only via officer `markResolved` on self-help reports; citizen path shows guidance until resolved/escalated.
+2. **Citizen-initiated resolve on self-help path?** — **RESOLVED:** No citizen self-resolve in MVP. Resolved only via officer `mark_resolved` override (09-04 Task 2, D-14). Citizen path shows guidance until escalated or officer resolves.
 
-3. **Phase 8 `SUPABASE_DB_URL` still missing?**
-   - What we know: `STATE.md` documents blocker (2026-07-22).
-   - Recommendation: Wave 0 human checkpoint before migration tasks.
+3. **Phase 8 `SUPABASE_DB_URL` still missing?** — **RESOLVED:** Operator checkpoint in 09-01 Task 2 (`autonomous: false`). Apply Phase 8 migrations first, then Phase 9 routing migration + SQL contract.
 
 ## Environment Availability
 

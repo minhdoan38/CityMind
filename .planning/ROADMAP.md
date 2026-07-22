@@ -278,12 +278,23 @@ Plans:
 **Goal**: Route citizen submissions to self-help guidance or the government officer queue based on triage and policy rules.
 **Mode:** mvp
 **Depends on**: Phase 8
-**Requirements**: TBD (at `/gsd-discuss-phase 9`)
-**Plans**: 0 plans
+**Requirements**: ROUT-01, ROUT-02, ROUT-03, ROUT-04, ROUT-05, ROUT-06, ROUT-07, ROUT-08
+**Plans**: 4 plans
 
 Plans:
 
-- [ ] TBD (run `/gsd-discuss-phase 9` then `/gsd-plan-phase 9`)
+**Wave 1 — Schema + policy**
+
+- [ ] 09-01-PLAN.md — **Track A** — Routing columns migration, SQL contract, evaluateRoutingPolicy + unit tests, graffiti category (D-01..D-04, D-17..D-24)
+
+**Wave 2 — Worker + citizen API** *(depends on 09-01)*
+
+- [ ] 09-02-PLAN.md — **Track B** — applyRoutingForReport worker hook on terminal triage (D-01, D-02, D-20, D-21..D-24)
+- [ ] 09-03-PLAN.md — **Track C** — Static playbooks, citizen status projection, POST /escalate API (D-04..D-12)
+
+**Wave 3 — Officer + status UX** *(depends on 09-02 + 09-03)*
+
+- [ ] 09-04-PLAN.md — **Track D** — Government-default filter, destination badge, officer override, status page playbook UI (D-03, D-08..D-16)
 
 ---
 
@@ -318,7 +329,7 @@ Plans:
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
 | 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
-| 9. Self-help vs Government Routing | v2.0 | 0/0 | Not started | - |
+| 9. Self-help vs Government Routing | v2.0 | 0/4 | Planned | - |
 | 10. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
 
 ---
