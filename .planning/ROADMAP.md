@@ -430,7 +430,7 @@ Plans:
 **Goal:** Run evaluator-spec triage synchronously on every citizen submit, then show immediate self-help guidance or government-queue messaging on a redesigned success page.
 **Requirements:** SHELP-01, SHELP-02, SHELP-03, SHELP-04, SHELP-05, TRIAGE-12, TRIAGE-13, PUB-04, PUB-06, CIT-02
 **Depends on:** Phase 12
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 **Success criteria:**
 - `npm run phase13:gate` passes (unit + legacy contracts + SQL retry claim)
@@ -441,7 +441,7 @@ Plans:
 
 Plans:
 - [x] 13-01-PLAN.md — UI-SPEC + citizen-success-triage contracts + fix stale report-form tests
-- [ ] 13-02-PLAN.md — dispatchTriageAndWait tests + government outcome + phase13:gate + SQL contract
+- [x] 13-02-PLAN.md — dispatchTriageAndWait tests + government outcome + phase13:gate + SQL contract
 - [ ] 13-03-PLAN.md — ai-logic.md + REQUIREMENTS/ROADMAP traceability + human UAT
 
 ---

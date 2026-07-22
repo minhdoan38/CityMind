@@ -89,8 +89,8 @@
 - [ ] **TRIAGE-09**: Runtime triage persists **11-key evaluator schema** from `prompt/citymind_ai_triage_structured_output_evaluator.json` (not legacy `summary`/`recommendation`/`estimated_impact`/`evidence`/`uncertainty` at persistence boundary)
 - [ ] **TRIAGE-10**: System prompt and Zod enums match evaluator **10 categories**; no prompt/schema drift (e.g. `graffiti`, `traffic_signal`, `utility_hazard`, `structural_damage`)
 - [ ] **TRIAGE-11**: Policy validation enforces evaluator assertions including **`critical` requires `severity == 5`** and reason-field traceability to `observed_facts`
-- [ ] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path. **Phase 13 override (citizen):** `dispatchTriageAndWait` sync-primary on `POST /api/public/reports`; push dispatch is sync-failure fallback and officer/internal path only.
-- [ ] **TRIAGE-13**: Verified UX contracts — citizen `failed` calm copy (no provider leakage); officer default queue elevates `failed`/`manual_review`; `triage_bucket` sort covered by automated tests
+- [x] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path. **Phase 13 override (citizen):** `dispatchTriageAndWait` sync-primary on `POST /api/public/reports`; push dispatch is sync-failure fallback and officer/internal path only.
+- [x] **TRIAGE-13**: Verified UX contracts — citizen `failed` calm copy (no provider leakage); officer default queue elevates `failed`/`manual_review`; `triage_bucket` sort covered by automated tests
 - [ ] **TRIAGE-14**: Eval suite and shadow compare operate on **11-key** snapshots; `/analyze` compatibility documented (410 permanent) or behind feature-flag shim with sunset
 
 ### Guided Self-Help Coach (SHELP) — Phase 11 (build) + Phase 13 (verification)
@@ -219,8 +219,8 @@ Deferred beyond Milestone v2.
 | TRIAGE-09 | Phase 11 | Pending |
 | TRIAGE-10 | Phase 11 | Pending |
 | TRIAGE-11 | Phase 11 | Pending |
-| TRIAGE-12 | Phase 11 + 13 | Pending |
-| TRIAGE-13 | Phase 11 + 13 | Pending |
+| TRIAGE-12 | Phase 11 + 13 | Complete |
+| TRIAGE-13 | Phase 11 + 13 | Complete |
 | TRIAGE-14 | Phase 11 | Pending |
 | SHELP-01 | Phase 13 | Complete |
 | SHELP-02 | Phase 13 | Pending |
