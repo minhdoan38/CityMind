@@ -62,3 +62,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# eval run artifacts (keep .gitkeep)
+evals/results/*
+!evals/results/.gitkeep
