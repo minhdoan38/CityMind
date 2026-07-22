@@ -304,12 +304,17 @@ Plans:
 **Mode:** mvp
 **Depends on**: Phase 9
 **Requirements**: TRIAGE-08 (eval gate)
-**Plans**: 2 plans (TBD at `/gsd-plan-phase 10`)
+**Plans**: 2 plans
 
 Plans:
 
-- [ ] 10-01: **Eval suite** — `backend/evals/` expert-labelled EN/VI dataset, macro-F1, severity agreement, under-triage, grounding, injection/safety tests, outage report-loss test
-- [ ] 10-02: **Shadow rollout** — compare baseline/new triage, pin evaluated provider/model routes, officer review workflow, feature flag, threshold gate before cutover
+**Wave 1 — Eval foundation**
+
+- [ ] 10-01-PLAN.md — **Eval suite** — `evals/` expert-labelled EN/VI dataset, metrics runner, mock/live CLI, verify-eval-gate, outage + injection tests
+
+**Wave 2** *(depends on 10-01)*
+
+- [ ] 10-02-PLAN.md — **Shadow rollout** — `TRIAGE_SHADOW_MODE` dual-run, `triage_shadow_comparisons` storage, officer disagreement UX, eval-gated cutover
 
 **Context**: Do not migrate models blindly; every permitted model/provider route must beat the baseline on agreed metrics and remain auditable.
 
