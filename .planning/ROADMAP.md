@@ -392,7 +392,7 @@ Plans:
 | 9. Self-help vs Government Routing | v2.0 | 4/4 | Complete   | 2026-07-22 |
 | 10. Shadow Rollout & Production Evaluation | v2.0 | 2/2 | Complete   | 2026-07-22 |
 | 11. Triage Spec & Guided Self-Help | v2.0 | 6/6 | Complete | 2026-07-22 |
-| 12. Dashboard Advisory Assistant | v2.0 | 0/3 | Planned | - |
+| 12. Dashboard Advisory Assistant | v2.0 | 3/3 | Complete   | 2026-07-22 |
 
 ### Phase 12: Dashboard advisory assistant — conversational officer chat widget
 
@@ -415,15 +415,15 @@ Plans:
 
 **Wave 1 — Persistence foundation**
 
-- [ ] 12-01-PLAN.md — **Schema + repository** — `officer_assistant_messages` migration, repository, SQL contract, DASH-10 in REQUIREMENTS, `phase12:gate` scaffold
+- [x] 12-01-PLAN.md — **Schema + repository** — `officer_assistant_messages` migration, repository, SQL contract, DASH-10 in REQUIREMENTS, `phase12:gate` scaffold
 
 **Wave 2** *(depends on 12-01)*
 
-- [ ] 12-02-PLAN.md — **Service hardening** — server history, report attach, GET messages, 429/404 tests, AI context injection
+- [x] 12-02-PLAN.md — **Service hardening** — server history, report attach, GET messages, 429/404 tests, AI context injection
 
 **Wave 3** *(depends on 12-02)*
 
-- [ ] 12-03-PLAN.md — **Widget UX** — 12-UI-SPEC health/degraded/load/attach, i18n keys, legacy widget contract test, final phase gate
+- [x] 12-03-PLAN.md — **Widget UX** — 12-UI-SPEC health/degraded/load/attach, i18n keys, legacy widget contract test, final phase gate
 
 ---
 *Roadmap created: 2026-07-20*
