@@ -128,6 +128,60 @@ function New-StartScript([string]$NodeExe, [string]$HostValue, [int]$ListenPort)
   return $scriptPath
 }
 
+function New-TriageStartScript() {
+  New-Item -ItemType Directory -Force -Path $logDir | Out-Null
+  $scriptPath = Join-Path $operationsRoot "start-citymind-triage.cmd"
+  $lines = @(
+    "@echo off",
+    "setlocal",
+    "cd /d `"$frontendRoot`"",
+    "call npm run triage:worker >> `"$stdoutLog`" 2>> `"$stderrLog`""
+  )
+  Set-Content -Path $scriptPath -Value ($lines -join "`r`n") -Encoding ASCII
+  return $scriptPath
+}
+
+function Register-CityMindTriageTask {
+  $nodeExe = Get-NodeExecutable
+  $startScript = New-TriageStartScript
+
+  $action = New-ScheduledTaskAction `
+    -Execute $startScript `
+    -WorkingDirectory $frontendRoot
+
+  $triggerLogon = New-ScheduledTaskTrigger -AtLogOn
+  $triggerStartup = New-ScheduledTaskTrigger -AtStartup
+
+  $settings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -RestartCount 3 `
+    -RestartInterval (New-TimeSpan -Minutes 1) `
+    -ExecutionTimeLimit ([TimeSpan]::Zero)
+
+  $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
+
+  Register-ScheduledTask `
+    -TaskName "CityMind-Triage" `
+    -Action $action `
+    -Trigger @($triggerLogon, $triggerStartup) `
+    -Settings $settings `
+    -Principal $principal `
+    -Force | Out-Null
+
+  Write-Info "Registered task 'CityMind-Triage' (workdir=$frontendRoot)"
+}
+
+function Unregister-CityMindTriageTask {
+  $existing = Get-ScheduledTask -TaskName "CityMind-Triage" -ErrorAction SilentlyContinue
+  if ($existing) {
+    Unregister-ScheduledTask -TaskName "CityMind-Triage" -Confirm:$false
+    Write-Info "Unregistered task 'CityMind-Triage'"
+  } else {
+    Write-Info "Task 'CityMind-Triage' not found"
+  }
+}
+
 function Register-CityMindTask {
   $hostValue = Resolve-BindHost
   Assert-LoopbackBind $hostValue
@@ -225,6 +279,7 @@ function Verify-CityMindTask {
 
 if ($Unregister) {
   Unregister-CityMindTask
+  Unregister-CityMindTriageTask
   exit 0
 }
 

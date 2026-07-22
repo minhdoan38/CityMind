@@ -1,5 +1,19 @@
 #!/usr/bin/env node
-import { loadProjectEnv, requireEnvKeys } from "./load-project-env.mjs";
+/**
+ * Production/dev entrypoint for the async triage worker.
+ * Loads project env, then runs the TypeScript worker loop via local tsx.
+ */
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { loadProjectEnv, requireEnvKeys, REPO_ROOT } from "./load-project-env.mjs";
+
+function fail(message) {
+  console.error(`triage-worker: ${message}`);
+  process.exit(1);
+}
 
 const env = loadProjectEnv();
 const missing = requireEnvKeys(env, [
@@ -10,28 +24,22 @@ const missing = requireEnvKeys(env, [
   "SUPABASE_SERVICE_ROLE_KEY",
   "SUPABASE_URL",
 ]);
-
 if (missing.length > 0) {
-  console.error(`triage-worker: missing required env: ${missing.join(", ")}`);
-  process.exit(1);
+  fail(`Missing required env keys: ${missing.join(", ")}`);
 }
 
-for (const [key, value] of Object.entries(env)) {
-  if (value) {
-    process.env[key] = value;
-  }
+Object.assign(process.env, env);
+
+const tsxCli = path.join(REPO_ROOT, "node_modules", "tsx", "dist", "cli.mjs");
+if (!fs.existsSync(tsxCli)) {
+  fail("tsx is not installed — run npm install");
 }
 
-const { createPgPool, runWorkerLoop } = await import("../src/server/triage/worker.ts");
-
-const pool = createPgPool(env.SUPABASE_DB_URL);
-const controller = new AbortController();
-
-process.on("SIGINT", () => {
-  console.log("triage-worker: shutting down");
-  controller.abort();
+const entry = path.join(REPO_ROOT, "src", "server", "triage", "worker-main.ts");
+const result = spawnSync(process.execPath, [tsxCli, entry], {
+  cwd: REPO_ROOT,
+  env: process.env,
+  stdio: "inherit",
 });
 
-console.log("triage-worker: started");
-await runWorkerLoop({ pool }, { signal: controller.signal });
-console.log("triage-worker: stopped");
+process.exit(result.status ?? 1);

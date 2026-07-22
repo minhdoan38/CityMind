@@ -1,42 +1,40 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { claimNextTriageReport, reclaimStuckTriageReports } from "./claim";
 
-describe("claim wrappers", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+function createClient(queryResults: unknown[] = []) {
+  const query = vi.fn();
+  for (const result of queryResults) {
+    query.mockResolvedValueOnce(result);
+  }
+  return { query } as never;
+}
 
-  it("calls reclaim RPC with parameterized interval", async () => {
-    const query = vi.fn().mockResolvedValue({ rows: [{ reclaimed: 2 }] });
-    const client = { query } as never;
-
-    const reclaimed = await reclaimStuckTriageReports(client, "15 minutes");
-
-    expect(reclaimed).toBe(2);
-    expect(query).toHaveBeenCalledWith(
-      "SELECT public.reclaim_stuck_triage_reports($1::interval) AS reclaimed",
-      ["15 minutes"],
+describe("claimNextTriageReport", () => {
+  it("returns report_id when claim RPC returns a row", async () => {
+    const client = createClient([{ rows: [{ report_id: "rep-42" }] }]);
+    const claimed = await claimNextTriageReport(client);
+    expect(claimed).toEqual({ report_id: "rep-42" });
+    expect(client.query).toHaveBeenCalledWith(
+      "SELECT report_id FROM public.claim_triage_report() LIMIT 1",
     );
   });
 
-  it("returns claimed report_id from claim RPC", async () => {
-    const query = vi.fn().mockResolvedValue({
-      rows: [{ report_id: "report-123" }],
-    });
-    const client = { query } as never;
-
-    const claimed = await claimNextTriageReport(client);
-
-    expect(claimed).toEqual({ report_id: "report-123" });
-    expect(query).toHaveBeenCalledWith("SELECT * FROM public.claim_triage_report()");
-  });
-
-  it("returns null when claim RPC is empty", async () => {
-    const query = vi.fn().mockResolvedValue({ rows: [] });
-    const client = { query } as never;
-
+  it("returns null when claim RPC returns no rows", async () => {
+    const client = createClient([{ rows: [] }]);
     const claimed = await claimNextTriageReport(client);
     expect(claimed).toBeNull();
+  });
+});
+
+describe("reclaimStuckTriageReports", () => {
+  it("calls reclaim RPC with parameterized interval", async () => {
+    const client = createClient([{ rows: [{ reclaimed: 2 }] }]);
+    const count = await reclaimStuckTriageReports(client, "15 minutes");
+    expect(count).toBe(2);
+    expect(client.query).toHaveBeenCalledWith(
+      "SELECT public.reclaim_stuck_triage_reports($1::interval) AS reclaimed",
+      ["15 minutes"],
+    );
   });
 });

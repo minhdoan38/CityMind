@@ -1,58 +1,53 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { workerTick } from "./worker";
+import { runWorkerTick } from "./worker";
 
-function createQueryMock(options: { claimRow?: { report_id: string } | null } = {}) {
-  return vi.fn(async (sql: string) => {
-    if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") {
-      return { rows: [] };
-    }
-    if (sql.includes("reclaim_stuck_triage_reports")) {
-      return { rows: [{ reclaimed: 1 }] };
-    }
-    if (sql.includes("claim_triage_report")) {
-      return { rows: options.claimRow ? [options.claimRow] : [] };
-    }
-    return { rows: [] };
-  });
+function createPool(client: { query: ReturnType<typeof vi.fn> }) {
+  return {
+    connect: vi.fn(async () => client),
+  } as never;
 }
 
-describe("workerTick", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
+describe("runWorkerTick", () => {
   it("reclaims before claim and runs triage after commit", async () => {
-    const callOrder: string[] = [];
-    const query = createQueryMock({ claimRow: { report_id: "report-42" } });
-    query.mockImplementation(async (sql: string) => {
-      if (sql === "BEGIN") callOrder.push("begin");
-      if (sql.includes("reclaim_stuck_triage_reports")) callOrder.push("reclaim");
-      if (sql.includes("claim_triage_report")) callOrder.push("claim");
-      if (sql === "COMMIT") callOrder.push("commit");
-      return createQueryMock({ claimRow: { report_id: "report-42" } })(sql);
+    const calls: string[] = [];
+    const query = vi.fn(async (sql: string) => {
+      if (sql === "BEGIN") calls.push("begin");
+      if (sql.includes("reclaim_stuck_triage_reports")) {
+        calls.push("reclaim");
+        return { rows: [{ reclaimed: 0 }] };
+      }
+      if (sql.includes("claim_triage_report")) {
+        calls.push("claim");
+        return { rows: [{ report_id: "rep-9" }] };
+      }
+      if (sql === "COMMIT") calls.push("commit");
+      return { rows: [] };
     });
-
-    const client = { query };
+    const release = vi.fn();
+    const pool = createPool({ query, release } as never);
     const runTriage = vi.fn(async () => {
-      callOrder.push("runTriage");
-      return { reportId: "report-42", disposition: "completed" };
+      calls.push("triage");
     });
 
-    const reportId = await workerTick(client as never, { runTriage });
+    await runWorkerTick(pool, { runTriage });
 
-    expect(reportId).toBe("report-42");
-    expect(callOrder).toEqual(["begin", "reclaim", "claim", "commit", "runTriage"]);
-    expect(runTriage).toHaveBeenCalledWith("report-42");
+    expect(calls).toEqual(["begin", "reclaim", "claim", "commit", "triage"]);
+    expect(runTriage).toHaveBeenCalledWith("rep-9");
+    expect(release).toHaveBeenCalled();
   });
 
-  it("skips triage when no report is claimed", async () => {
-    const client = { query: createQueryMock({ claimRow: null }) };
+  it("skips triage when claim returns no row", async () => {
+    const query = vi.fn(async (sql: string) => {
+      if (sql.includes("reclaim_stuck_triage_reports")) return { rows: [{ reclaimed: 0 }] };
+      if (sql.includes("claim_triage_report")) return { rows: [] };
+      return { rows: [] };
+    });
+    const pool = createPool({ query, release: vi.fn() } as never);
     const runTriage = vi.fn();
 
-    const reportId = await workerTick(client as never, { runTriage });
+    await runWorkerTick(pool, { runTriage });
 
-    expect(reportId).toBeNull();
     expect(runTriage).not.toHaveBeenCalled();
   });
 });

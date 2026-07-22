@@ -1,79 +1,70 @@
 import "server-only";
 
-import { Pool, type PoolClient } from "pg";
+import type { Pool } from "pg";
 
-import { claimNextTriageReport, reclaimStuckTriageReports } from "./claim";
+import { claimNextTriageReport, DEFAULT_RECLAIM_INTERVAL, reclaimStuckTriageReports } from "./claim";
 import { runTriageForReport } from "./service";
 
-export const DEFAULT_POLL_INTERVAL_MS = 5_000;
-export const DEFAULT_RECLAIM_INTERVAL = "15 minutes";
+export const WORKER_POLL_INTERVAL_MS = 5_000;
 
 export type WorkerDeps = {
-  pool: Pick<Pool, "connect">;
-  runTriage?: typeof runTriageForReport;
-  pollIntervalMs?: number;
-  reclaimInterval?: string;
-  sleep?: (ms: number) => Promise<void>;
+  runTriage?: (reportId: string) => Promise<unknown>;
 };
 
-async function defaultSleep(ms: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export async function workerTick(
-  client: PoolClient,
-  deps: Pick<WorkerDeps, "runTriage" | "reclaimInterval"> = {},
-): Promise<string | null> {
+export async function runWorkerTick(
+  pool: Pool,
+  deps: WorkerDeps = {},
+): Promise<void> {
   const runTriage = deps.runTriage ?? runTriageForReport;
-  const reclaimInterval = deps.reclaimInterval ?? DEFAULT_RECLAIM_INTERVAL;
+  const client = await pool.connect();
+  let reportId: string | null = null;
 
-  await client.query("BEGIN");
   try {
-    await reclaimStuckTriageReports(client, reclaimInterval);
+    await client.query("BEGIN");
+    await reclaimStuckTriageReports(client, DEFAULT_RECLAIM_INTERVAL);
     const claimed = await claimNextTriageReport(client);
     await client.query("COMMIT");
-
-    if (!claimed) {
-      return null;
-    }
-
-    try {
-      await runTriage(claimed.report_id);
-    } catch (error) {
-      console.error(`triage worker: runTriageForReport failed for ${claimed.report_id}`, error);
-    }
-
-    return claimed.report_id;
+    reportId = claimed?.report_id ?? null;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
+  }
+
+  if (reportId) {
+    try {
+      await runTriage(reportId);
+    } catch (error) {
+      console.error(`triage-worker: failed report ${reportId}`, error);
+    }
   }
 }
 
 export async function runWorkerLoop(
-  deps: WorkerDeps,
-  options: { signal?: AbortSignal } = {},
+  pool: Pool,
+  options: { signal?: AbortSignal; deps?: WorkerDeps } = {},
 ): Promise<void> {
-  const pollIntervalMs = deps.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
-  const sleep = deps.sleep ?? defaultSleep;
-  const signal = options.signal;
-
-  while (!signal?.aborted) {
-    const client = await deps.pool.connect();
-    try {
-      await workerTick(client, deps);
-    } finally {
-      client.release();
-    }
-
-    if (signal?.aborted) {
-      break;
-    }
-
-    await sleep(pollIntervalMs);
+  while (!options.signal?.aborted) {
+    await runWorkerTick(pool, options.deps);
+    await sleep(WORKER_POLL_INTERVAL_MS, options.signal);
   }
 }
 
-export function createPgPool(connectionString: string): Pool {
-  return new Pool({ connectionString });
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
 }

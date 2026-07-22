@@ -2,15 +2,17 @@ import "server-only";
 
 import type { PoolClient } from "pg";
 
-export type ClaimedReport = {
+export type ClaimedReportRow = {
   report_id: string;
 };
 
+export const DEFAULT_RECLAIM_INTERVAL = "15 minutes";
+
 export async function reclaimStuckTriageReports(
   client: PoolClient,
-  stuckInterval = "15 minutes",
+  stuckInterval: string = DEFAULT_RECLAIM_INTERVAL,
 ): Promise<number> {
-  const result = await client.query(
+  const result = await client.query<{ reclaimed: string | number }>(
     "SELECT public.reclaim_stuck_triage_reports($1::interval) AS reclaimed",
     [stuckInterval],
   );
@@ -19,9 +21,11 @@ export async function reclaimStuckTriageReports(
 
 export async function claimNextTriageReport(
   client: PoolClient,
-): Promise<ClaimedReport | null> {
-  const result = await client.query("SELECT * FROM public.claim_triage_report()");
-  const row = result.rows[0] as { report_id?: string } | undefined;
+): Promise<ClaimedReportRow | null> {
+  const result = await client.query<{ report_id: string }>(
+    "SELECT report_id FROM public.claim_triage_report() LIMIT 1",
+  );
+  const row = result.rows[0];
   if (!row?.report_id) {
     return null;
   }
