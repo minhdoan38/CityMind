@@ -2,12 +2,12 @@
 
 ## Overview
 
-Upgrade the shipped CityMind MVP into a production-ready platform across six phases. Each phase splits into three parallel tracks (Backend, Landing, Dashboard) so teams can work simultaneously after Phase 1 schema sync. Supabase becomes the operational store; BigQuery shifts to analytics; citizens gain token-based status tracking; officers get a polished shadcn dashboard.
+Upgrade the shipped CityMind MVP into a production-ready, self-hosted platform across ten phases. Supabase is the operational store; citizens gain token-based status tracking; officers get a polished shadcn dashboard; and Phase 7 consolidates the application into a laptop-hosted Next.js/Node.js runtime using provider-neutral AI, Postgres analytics, and Supabase Storage without Google Cloud, FastAPI, Python, or Docker.
 
 ## Milestones
 
 - ✅ **v1.0 MVP** — Shipped (Cloud Run, Gemini, BigQuery ops, shared-password auth)
-- 🚧 **v2.0 Platform** — Phases 1–6 (this roadmap)
+- 🚧 **v2.0 Platform** — Phases 1–10 (this roadmap)
 
 ## Phases
 
@@ -20,9 +20,10 @@ Upgrade the shipped CityMind MVP into a production-ready platform across six pha
 - [x] **Phase 5: Analytics Pipeline** — Supabase → BigQuery ETL and dashboard analytics
  (completed 2026-07-20)
 - [ ] **Phase 6: Maps & Geospatial** — PostGIS, MapLibre incident map, geo filters
-- [ ] **Phase 7: Async Triage Platform Refactor** — Persist-first intake, async triage, audit, officer/citizen contracts
-- [ ] **Phase 8: Self-help vs Government Routing** — Route citizens to self-help or government queue
-- [ ] **Phase 9: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover
+- [ ] **Phase 7: Next.js-Only Google-Free Platform** — Consolidate CityMind into Next.js/Node.js using a third-party API key and self-hosted Supabase; remove FastAPI, Python, Docker, and Google Cloud while retaining Google Fonts
+- [ ] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts
+- [ ] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue
+- [ ] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover
 
 ## Phase Details
 
@@ -196,78 +197,116 @@ Plans:
 
 ---
 
-### Phase 7: Async Triage Platform Refactor
+### Phase 7: Next.js-Only Google-Free Platform
+
+**Goal**: Consolidate CityMind into a Next.js-only Node.js/TypeScript application that connects to the existing self-hosted Supabase instance, uses provider-neutral AI authenticated by a third-party API key, replaces BigQuery and GCS, and removes FastAPI, the Python backend, Docker, and Google Cloud services while retaining Google Fonts.
+**Mode:** mvp
+**Depends on**: Phase 6
+**Requirements**: SELFHOST-01, SELFHOST-02, SELFHOST-03, SELFHOST-04, SELFHOST-05, SELFHOST-06
+**Parallel tracks**: A (Next.js backend convergence) → B (AI provider cutover) ∥ C (data and evidence migration); D (direct laptop operations) → E (Google exit audit)
+
+**Success Criteria**:
+
+1. All application APIs, report analysis, validation, persistence, evidence handling, and officer operations run in Next.js/Node.js/TypeScript; FastAPI and the Python backend are removed
+2. Report analysis uses a configurable OpenAI-compatible endpoint, model, and third-party API key while preserving structured multimodal output, provider/model lineage, advisory-only decisions, and human review; Vertex AI and Gemini are absent
+3. Operational and analytics queries run entirely on the existing self-hosted Supabase Postgres instance; BigQuery ETL, views, jobs, and dependencies are removed without losing retained report or analytics data
+4. Evidence is stored and served only through Supabase Storage; retained `gs://` evidence is migrated and verified before GCS compatibility is deleted
+5. CityMind runs directly on the laptop as a Node.js application with local environment configuration, startup, health, and backup procedures; Docker and all Google Cloud runtime/deployment services are absent, with Google Fonts as the sole Google exception
+
+**Plans**: 15 plans
+
+Plans:
+
+- [ ] 07-01-PLAN.md — Approve Windows schema tooling, verify Vitest, and capture sanitized FastAPI golden contracts
+- [ ] 07-02-PLAN.md — Provider-neutral structured multimodal AI adapter and live capability gate
+- [ ] 07-03-PLAN.md — Next.js-only citizen status slice with token privacy
+- [ ] 07-04-PLAN.md — Atomic citizen submission and private Supabase evidence slice
+- [ ] 07-05-PLAN.md — Officer queue/detail/geo reads and dashboard direct-module convergence
+- [ ] 07-06-PLAN.md — Atomic officer status updates and formula-safe exports
+- [ ] 07-07-PLAN.md — Postgres-backed officer analytics and privacy-safe public stats
+- [ ] 07-08-PLAN.md — Additive evidence path, read-only Google inventory, migration, and reconciliation
+- [ ] 07-09-PLAN.md — Isolated database/Storage restore and preserved-application rollback proof
+- [ ] 07-10-PLAN.md — Loopback laptop runtime, health, startup/restart, backup, and restore
+- [ ] 07-11-PLAN.md — Fail-closed Google-exit audit, non-destructive manifest, and cleanup approval
+- [ ] 07-12-PLAN.md — Approval-gated destructive legacy evidence schema removal
+- [ ] 07-13-PLAN.md — Approved Python, Google Cloud, and CityMind deployment cleanup
+- [ ] 07-14-PLAN.md — Frontend compatibility cleanup and complete Node runtime regression
+- [ ] 07-15-PLAN.md — Active documentation refresh and final live SQL/restore/end-to-end audit
+
+---
+
+### Phase 8: Async Triage Platform Refactor
 
 **Goal**: Persist citizen reports before AI triage; AI failure never blocks intake or citizen access; officers see all reports immediately with triage status.
 **Mode:** mvp
-**Depends on**: Phase 6
-**Requirements**: TRIAGE-01, TRIAGE-02, TRIAGE-03, TRIAGE-04, TRIAGE-05, TRIAGE-06, TRIAGE-07, TRIAGE-08
-**Parallel tracks**: A (intake/API) → B (triage module) → C (runner) ∥ D (audit); E (UI) after B+C contract stable
+**Depends on**: Phase 7
+**Requirements**: TRIAGE-01, TRIAGE-02, TRIAGE-03, TRIAGE-04, TRIAGE-05, TRIAGE-06, TRIAGE-07 (TRIAGE-08 → Phase 10)
+**Parallel tracks**: A (intake/API) → B (triage module) → C (self-hosted runner) ∥ D (audit); E (UI) after B+C contract stable
 
 **Success Criteria**:
 
 1. `POST /reports` persists report and returns `report_id` + `access_token` before triage completes
-2. Triage runs asynchronously (BackgroundTasks local; Cloud Tasks deployed) with idempotent claim
+2. Triage runs asynchronously through a self-hosted local worker or background runner with idempotent claim and reconciliation
 3. Semantic validation can route invalid AI output to `manual_review`
-4. `triage_runs` / `triage_attempts` audit tables capture model output and disposition
-5. Citizen status page shows service-progress wording; officers see pending/failed rows in default queue
+4. `triage_runs` / `triage_attempts` audit tables capture actual provider/model lineage, model output, and disposition
+5. Citizen status page shows service-progress wording; officers see pending/failed rows in the default queue
 
-**Plans**: 5 plans (TBD at `/gsd-plan-phase 7`)
+**Plans**: 5 plans
 
 Plans:
 
 **Wave 1 — Intake split**
 
-- [ ] 07-01: **Track A** — Schema (`triage_status`, `triage_error`, `triaged_at`), `POST /reports`, `ReportSubmissionResponse`, deprecate-sync `/analyze` shim
+- [ ] 08-01-PLAN.md — **Track A** — Schema + claim RPCs, `POST /api/public/reports` intake, `ReportSubmissionResponse`, `/analyze` → 410 Gone, blocking schema push + SQL contract
 
 **Wave 2 — Triage core**
 
-- [ ] 07-02: **Track B** — `backend/app/triage/` module, 11-key JSON contract, Gemini provider, schema + policy validators
-- [ ] 07-03: **Track C** — Cloud Tasks handler (deployed), BackgroundTasks (local), reconciliation sweep, deployed config gate
+- [ ] 08-02-PLAN.md — **Track B** — `src/server/triage/` module, schema-only provider path, MVP policy validation (D-21), validation retry → `manual_review`
 
-**Wave 3 — Audit + UI**
+**Wave 3 — Worker, audit, UX**
 
-- [ ] 07-04: **Track D** — `triage_runs`, `triage_attempts`, audit writer
-- [ ] 07-05: **Track E** — Citizen status UX (B+C), officer queue badges/sort/filter, detail display order
+- [ ] 08-03-PLAN.md — **Track C** — `pg` worker poll loop, claim/reclaim, `npm run triage:worker`, Task Scheduler registration (depends 08-01 + 08-02)
+- [ ] 08-04-PLAN.md — **Track D** — `triage_runs` / `triage_attempts` migration, `complete_triage_report` RPC, audit writer wired into service
+- [ ] 08-05-PLAN.md — **Track E** — Citizen 4-step status UX, officer triage badges/sort/filter, detail section reorder (D-13–D-20)
 
-**Context**: `.planning/notes/async-triage-architecture.md`
+**Context**: `.planning/notes/async-triage-architecture.md` must be reconciled with the Phase 7 self-hosted architecture during discussion/planning.
 
 ---
 
-### Phase 8: Self-help vs Government Routing
+### Phase 9: Self-help vs Government Routing
 
 **Goal**: Route citizen submissions to self-help guidance or the government officer queue based on triage and policy rules.
 **Mode:** mvp
-**Depends on**: Phase 7
-**Requirements**: TBD (at `/gsd-discuss-phase 8`)
+**Depends on**: Phase 8
+**Requirements**: TBD (at `/gsd-discuss-phase 9`)
 **Plans**: 0 plans
 
 Plans:
 
-- [ ] TBD (run `/gsd-discuss-phase 8` then `/gsd-plan-phase 8`)
+- [ ] TBD (run `/gsd-discuss-phase 9` then `/gsd-plan-phase 9`)
 
 ---
 
-### Phase 9: Shadow Rollout & Production Evaluation
+### Phase 10: Shadow Rollout & Production Evaluation
 
-**Goal**: Shadow-deploy new triage pipeline, evaluate against baseline, and gate production cutover on under-triage, grounding, EN/VI parity, and failure rate.
+**Goal**: Shadow-deploy the new provider-neutral triage pipeline, evaluate it against the baseline, and gate production cutover on under-triage, grounding, EN/VI parity, failure rate, and model-lineage reproducibility.
 **Mode:** mvp
-**Depends on**: Phase 8
+**Depends on**: Phase 9
 **Requirements**: TRIAGE-08 (eval gate)
-**Plans**: 0 plans
+**Plans**: 2 plans (TBD at `/gsd-plan-phase 10`)
 
 Plans:
 
-- [ ] 09-01: **Eval suite** — `backend/evals/` expert-labelled EN/VI dataset, macro-F1, severity agreement, under-triage, grounding, injection/safety tests, outage report-loss test
-- [ ] 09-02: **Shadow rollout** — compare old/new triage, officer review workflow, feature flag, threshold gate before model swap
+- [ ] 10-01: **Eval suite** — `backend/evals/` expert-labelled EN/VI dataset, macro-F1, severity agreement, under-triage, grounding, injection/safety tests, outage report-loss test
+- [ ] 10-02: **Shadow rollout** — compare baseline/new triage, pin evaluated provider/model routes, officer review workflow, feature flag, threshold gate before cutover
 
-**Context**: Do not migrate model blindly; new model must beat baseline on agreed metrics.
+**Context**: Do not migrate models blindly; every permitted model/provider route must beat the baseline on agreed metrics and remain auditable.
 
 ---
 
 ## Progress
 
-**Execution Order:** Phases 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 (tracks within each phase run in parallel)
+**Execution Order:** Phases 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 (tracks within each phase run in parallel)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -277,10 +316,12 @@ Plans:
 | 4. Citizen Status | v2.0 | 3/3 | UAT pending | - |
 | 5. Analytics Pipeline | v2.0 | 4/4 | Complete   | 2026-07-20 |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
-| 7. Async Triage Platform Refactor | v2.0 | 0/5 | Not started | - |
-| 8. Self-help vs Government Routing | v2.0 | 0/0 | Not started | - |
-| 9. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
+| 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
+| 8. Async Triage Platform Refactor | v2.0 | 0/5 | Not started | - |
+| 9. Self-help vs Government Routing | v2.0 | 0/0 | Not started | - |
+| 10. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-07-20*
 *Phases 7–9 added: 2026-07-21 (async triage explore)*
+*Phase 7 inserted for Google-service removal; former Phases 7–9 shifted to 8–10: 2026-07-21*

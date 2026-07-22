@@ -446,20 +446,15 @@ function projectCitizenTriageView(report: ReportRow): CitizenStatusView {
 | A4 | `pg` weekly download count ~6M | Package audit | Low — slopcheck OK |
 | A5 | `hasImmediateDangerEvidence` / `hasConflictingSignals` helpers derived from evaluator rules applied to `evidence`/`uncertainty` text | Policy | Under- or over-triage until Phase 10 eval calibrates |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Separate `triage_jobs` table vs columns on `reports`?**
-   - What we know: Discussion rejected pg-boss; D-02 allows either.
-   - What's unclear: Whether audit volume warrants separation.
-   - Recommendation: **Columns on `reports`** for claim scheduling (`triage_next_attempt_at`, `triage_attempt_count`, `triage_claimed_at`) plus `triage_runs`/`triage_attempts` for audit — no third queue table.
+1. **Separate `triage_jobs` table vs columns on `reports`?** — **RESOLVED:** Columns on `reports` for claim scheduling (`triage_next_attempt_at`, `triage_attempt_count`, `triage_claimed_at`) plus `triage_runs`/`triage_attempts` for audit — no third queue table.
 
-2. **v1 API mirror for intake?**
-   - What we know: Golden contracts reference `POST /api/v1/reports/analyze`.
-   - Recommendation: Add `POST /api/v1/reports` intake + 410 on v1 analyze in same wave as public routes.
+2. **v1 API mirror for intake?** — **RESOLVED:** Add `POST /api/v1/reports` intake + 410 on v1 analyze in same wave as public routes (08-01).
 
-3. **Urban context on async path?**
-   - What we know: Current sync path sets `urbanContext: null`; legacy FastAPI had optional enrichment.
-   - Recommendation: Defer urban context to triage worker if re-enabled env flag exists; do not block intake.
+3. **Urban context on async path?** — **RESOLVED:** Defer urban context to triage worker if re-enabled env flag exists; do not block intake.
+
+4. **Validation retry vs infrastructure attempt budget?** — **RESOLVED:** Validation retry runs inside one claimed worker tick; does not consume a separate infrastructure attempt slot beyond the service-layer retry counter.
 
 ## Environment Availability
 
