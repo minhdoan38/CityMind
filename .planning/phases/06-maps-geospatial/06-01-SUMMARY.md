@@ -44,7 +44,7 @@ key-decisions:
   - Export/summary bbox uses client-side lat/lng filter; map pins use PostGIS RPC
   - Docker compose excludes Supabase per D-21
 
-requirements-completed: []
+requirements-completed: [MAP-01]
 
 duration: 25min
 completed: 2026-07-21
@@ -52,12 +52,12 @@ completed: 2026-07-21
 
 # Phase 6 Plan 01: PostGIS Geo Pins API Summary
 
-**PostGIS migrations, bbox-only officer geo pins endpoint with D-20 field projection, and docker-compose app stack — pending localhost `supabase migration up`.**
+**PostGIS migrations, bbox-only officer geo pins endpoint with D-20 field projection, and docker-compose app stack — localhost migrations applied.**
 
 ## Performance
 
 - **Duration:** ~25 min
-- **Tasks:** 4/5 complete (Task 4 blocked at checkpoint)
+- **Tasks:** 5/5 complete
 - **Files modified:** 10
 
 ## Accomplishments
@@ -74,9 +74,9 @@ completed: 2026-07-21
 | Task | Commit | Notes |
 |------|--------|-------|
 | 1–3, 5 (bundled) | `447f01c` | Prior executor session — single feat commit |
-| 4 [BLOCKING] | — | Checkpoint: Supabase CLI not on PATH |
+| 4 | — | Human verified: `supabase migration up` applied locally |
 
-**Plan metadata:** pending (Task 4 checkpoint)
+**Plan metadata:** complete
 
 ## API
 
@@ -96,21 +96,9 @@ Plan references `get_report_pins`; migration uses `get_report_geo_pins` to avoid
 
 ## Auth Gates / Checkpoints
 
-**Task 4 — `supabase migration up` (blocking-human)**
+**Task 4 — `supabase migration up` (blocking-human)** — **VERIFIED** by human (2026-07-21).
 
-- `supabase` CLI not found on PATH (`where supabase` empty; not in scoop or Program Files)
-- Migrations exist on disk but are **not applied** to local Postgres
-- MAP-01 requirement remains open until human runs migration
-
-**Human steps:**
-
-1. Install [Supabase CLI](https://supabase.com/docs/guides/cli) and ensure `supabase` is on PATH
-2. From repo root: `supabase start` (if not already running)
-3. `supabase migration up` — apply `20260721_000001_postgis.sql` and `20260721_000002_geo_pins_rpc.sql`
-4. Verify: `supabase migration list` shows both 20260721 migrations applied
-5. Optional SQL check: `\dx postgis` and `SELECT get_report_geo_pins(105,20,106,22,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);`
-
-## Self-Check: PASSED (code) / BLOCKED (Task 4)
+## Self-Check: PASSED
 
 - FOUND: `supabase/migrations/20260721_000001_postgis.sql`
 - FOUND: `supabase/migrations/20260721_000002_geo_pins_rpc.sql`
@@ -118,13 +106,13 @@ Plan references `get_report_pins`; migration uses `get_report_geo_pins` to avoid
 - FOUND: `backend/tests/test_postgis_migration.py`
 - FOUND: `docker-compose.yml`
 - FOUND: commit `447f01c`
-- BLOCKED: local `supabase migration up` — CLI unavailable
+- VERIFIED: local `supabase migration up` (human)
 
 ## Next Phase Readiness
 
-- Track C (06-03) can integrate `/geo/pins` once Task 4 migration is applied on localhost
+- Track C (06-03) can integrate `/geo/pins` — PostGIS ready on localhost
 - Frontend map tiles env vars documented in `frontend/.env.example`
 
 ---
 *Phase: 06-maps-geospatial*
-*Plan: 01 — partial (Task 4 checkpoint)*
+*Plan: 01 — complete*

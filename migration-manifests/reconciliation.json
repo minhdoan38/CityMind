@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "signed": true,
+  "signer": "minhmice",
+  "signedAt": "2026-07-21T17:07:47.245Z",
+  "gitRevision": "608b839cb4c5805efc2662a0e0475072b4f67d5d",
+  "rowComparison": {
+    "missingInTarget": [],
+    "missingInSource": [],
+    "hashMismatches": [],
+    "pass": true
+  },
+  "objectComparison": {
+    "missingInTarget": [],
+    "hashMismatches": [],
+    "orphansInTarget": [],
+    "pass": true
+  },
+  "sourceCounts": {
+    "reports": 10,
+    "objects": 1
+  },
+  "targetCounts": {
+    "reports": 10,
+    "objects": 1,
+    "evidence_path_rows": 1,
+    "gs_uri_rows": 0
+  },
+  "uriSchemes": {
+    "null": 9,
+    "supabase": 1,
+    "gs": 0,
+    "other": 0
+  },
+  "unexplainedDifferences": []
+}

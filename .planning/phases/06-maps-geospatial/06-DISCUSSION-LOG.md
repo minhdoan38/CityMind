@@ -52,7 +52,9 @@ Discussed with agent discretion defaults: MapLibre client clustering, count labe
 ### 7. Docker one-shot (user freeform)
 | Question | Options | Selection |
 |----------|---------|-----------|
-| Docker scope | Full stack / App only / Docs only | **docker-compose: Supabase + backend + frontend** |
+| Docker scope | Full stack / App only / Docs only | **docker-compose: backend + frontend** (initial) |
+
+**Revision (2026-07-21):** User clarified **no Supabase docker** — Supabase stays on localhost CLI; compose is app-only.
 
 **Captured:** D-21..D-22
 

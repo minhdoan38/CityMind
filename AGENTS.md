@@ -4,20 +4,20 @@
 
 **CityMind AI**
 
-CityMind AI is an AI-assisted Decision Intelligence Platform for smart communities. Citizens submit urban incident reports (text, location, optional evidence); Vertex AI Gemini produces structured, advisory triage output; officers review, filter, and update status on a protected dashboard.
+CityMind AI is an AI-assisted Decision Intelligence Platform for smart communities. Citizens submit urban incident reports (text, location, optional evidence); a configurable third-party AI API produces structured, advisory triage output; officers review, filter, and update status on a protected dashboard.
 
-**Milestone v2 (this planning cycle):** Upgrade the shipped MVP into a production-ready platform with Supabase Postgres as the operational store, Supabase Auth for officers, shadcn/ui polish, bilingual EN/VI public landing, citizen status tracking via access tokens, and BigQuery retained for analytics only.
+**Milestone v2 (this planning cycle):** Next.js-only laptop runtime with self-hosted Supabase Postgres/Auth/Storage, provider-neutral AI, bilingual EN/VI public landing, and citizen status tracking via access tokens. Phase 7 removed FastAPI, Python, Docker, and Google Cloud services except Google Fonts.
 
 **Core Value:** Citizens can report community issues and officers can review AI-structured, prioritized, auditable reports to make faster evidence-based decisions — with AI as advisory only, never autonomous final authority.
 
 ### Constraints
 
-- **Tech stack:** Keep FastAPI for AI pipeline; Supabase for ops/auth; BigQuery analytics-only post-migration
+- **Tech stack:** Node.js 22 + Next.js 16 only; Supabase for ops/auth/storage; provider-neutral AI key
 - **Security:** AI output is advisory; officers remain decision authority; access tokens must be hashed at rest
 - **Privacy:** Citizen status lookup is token-scoped; no cross-report data leakage
-- **Compatibility:** Maintain Cloud Run deployment path; existing demo/seed data must migrate
+- **Compatibility:** Loopback-first laptop operation; historical phase artifacts preserved under `.planning/`
 - **Locale:** Bilingual EN/VI from Phase 2 onward
-- **Performance:** Synchronous analyze path acceptable for MVP; maps deferred to avoid blocking core migration
+- **Performance:** Synchronous analyze path acceptable; maps shipped in Phase 6
 
 <!-- GSD:project-end -->
 
@@ -27,48 +27,37 @@ CityMind AI is an AI-assisted Decision Intelligence Platform for smart communiti
 
 ## Languages
 
-- TypeScript 5.x - Frontend Next.js app (UI + Next server/API routes)
-- Python 3.12 - Backend FastAPI API, services (Gemini/BigQuery/GCS), and tests
+- TypeScript 5.x — Next.js app (UI + server/API routes)
+- SQL — Supabase migrations and contract tests
 
 ## Runtime
 
-- Node.js 22 (Alpine) - Frontend Docker image uses `node:22-alpine`
-- Python 3.12 - Backend Docker image uses `python:3.12-slim`
-- npm - Frontend uses `package-lock.json` and `npm ci` in Docker
-- Lockfile: `frontend/package-lock.json`
+- Node.js 22 — Direct laptop process (`next build` / `next start`)
+- npm — `frontend/package-lock.json`, `npm ci`
 
 ## Frameworks
 
-- Next.js 16.2.10 - App Router UI and Next API proxy endpoints
-- FastAPI 0.115.14 - REST API for report ingestion, querying, and officer operations
-- pytest 8.4.1 - Backend tests (API/unit tests)
-- TypeScript 5.x - Type checking + compilation for Next.js
-- ESLint 9.x (via `eslint-config-next`) - Linting
+- Next.js 16.2.10 — App Router UI and API route handlers
+- Vitest + node:test — Frontend unit and legacy contract tests
+- ESLint 9.x (`eslint-config-next`)
 
 ## Key Dependencies
 
-- google-genai 1.23.0 - Vertex AI Gemini content generation (JSON-schema shaped output)
-- google-cloud-bigquery 3.34.0 - Report persistence, querying, and status history
-- google-cloud-storage 3.12.0 - Evidence image upload/download (GCS URIs)
-- fastapi 0.115.14 - Backend web framework (Pydantic request/response models)
-- uvicorn 0.34.3 - Backend ASGI server
-- pydantic 2.11.7 - Typed schemas/models for request/response and Gemini parsing
-- requests 2.34.2 - Urban context enrichment (OpenWeather + Nominatim)
+- `@supabase/ssr`, `@supabase/supabase-js` — Auth, Postgres, Storage
+- `next-intl` — Bilingual EN/VI routes
+- Provider-neutral AI via `THIRD_PARTY_API_KEY` + `AI_BASE_URL` / `AI_MODEL`
 
 ## Configuration
 
-- Frontend (in `frontend/.env.example`):
-- Backend (in `backend/.env.example` / loaded from `backend/.env`):
-- `frontend/next.config.ts` sets `output: "standalone"` for container-friendly builds
+- `frontend/.env.example` / `frontend/.env.local` — all runtime secrets and Supabase URLs
+- `SUPABASE_DB_URL` — migrations and SQL gates via `frontend/scripts/run-supabase-sql.mjs`
 
 ## Platform Requirements
 
 - Node.js 22+
-- Python 3.12+
-- Run backend with `uvicorn app.main:app --reload`
-- Run frontend with `next dev`
-- Deploy containers (Cloud Run noted in `scripts/deploy_cloudrun.ps1`)
-- Google Cloud access:
+- Self-hosted Supabase + Supabase CLI
+- Optional: Windows Task Scheduler (`frontend/scripts/register-citymind-task.ps1`)
+- **Exception:** Google Fonts via `frontend/src/lib/fonts.ts` only
 
 <!-- GSD:stack-end -->
 
@@ -141,69 +130,41 @@ CityMind AI is an AI-assisted Decision Intelligence Platform for smart communiti
 
 ## Pattern Overview
 
-- Frontend serves both public submission UI and an authenticated officer dashboard
-- Backend is a thin REST API around services (Gemini, BigQuery, GCS, optional urban context)
-- Decision outputs from Gemini are structured and treated as advisory
+- Single Next.js process serves public citizen UI and authenticated officer dashboard
+- API routes call `frontend/src/server/` repositories and services directly
+- Supabase Postgres/Auth/Storage is the operational store; AI output is advisory
 
 ## Layers
 
-- Purpose: User-facing pages for citizens and officers
-- Contains: Server components/pages + client components for form interactions
-- Depends on: Next.js routing/rendering
-- Used by: End users (public) and officers (authenticated dashboard)
-- Key locations: `frontend/src/app/page.tsx`, `frontend/src/app/report/page.tsx`, `frontend/src/app/reports/[reportId]/page.tsx`
-- Purpose: Bridge Next app to FastAPI, add officer session handling, and stream evidence images
-- Contains: `route.ts` handlers that call `frontend/src/lib/backend.ts`
-- Depends on: Backend URL + officer API key header (env-driven)
-- Used by: UI pages/components
-- Key locations:
-- Purpose: HTTP boundary for report ingestion, querying, and status transitions
-- Contains: `/api/v1/reports/analyze`, `/recent`, `/summary`, `/{report_id}` and status/image endpoints
-- Depends on: service classes (GeminiAnalyzer, BigQueryReportSink, UrbanContextService, EvidenceStorage)
-- Used by: Next.js proxy routes
-- Key locations: `backend/app/api/reports.py`, `backend/app/main.py`
-- Purpose: Encapsulate external calls and persistence logic
-- Contains:
-- Depends on: external SDKs and environment configuration
+- **UI:** `frontend/src/app/[locale]/`, `frontend/src/app/dashboard/`
+- **API routes:** `frontend/src/app/api/public/**`, `frontend/src/app/api/v1/**`, health/ready
+- **Server modules:** `frontend/src/server/repositories/`, `frontend/src/server/services/`
+- **Officer guard:** `requireOfficerContext()` via Supabase `getClaims()`
 
 ## Data Flow
 
+- Citizen submit → `/api/public/reports/analyze` → AI + Supabase persist + access token
+- Officer dashboard → direct Postgres loaders → status/evidence via `/api/officer/**`
+- Evidence → private Storage bucket; `evidence_path` on report row
+
 ## Key Abstractions
 
-- Purpose: Turn citizen description + optional evidence image into structured `ReportAnalysis`
-- Examples: `backend/app/services/gemini.py::GeminiAnalyzer`
-- Pattern: Service object wrapping an SDK client; JSON-schema shaped responses
-- Purpose: Persist reports and status history; query recent items
-- Examples: `backend/app/services/bigquery.py::BigQueryReportSink`
-- Pattern: Data-access object; SQL queries with parameterized inputs
-- Purpose: Optional enrichment (weather + reverse geocoding)
-- Examples: `backend/app/services/context_data.py`
-- Pattern: Feature-gated HTTP enrichment with graceful degradation per sub-call
-- Purpose: Optional evidence image storage in GCS
-- Examples: `backend/app/services/storage.py`
-- Pattern: Feature-gated upload/download returning `gs://` URIs
+- `report-service.ts` — analyze + persist citizen reports
+- `evidence-service.ts` — upload/download private evidence
+- `officer-read.ts` / repositories — officer queries and image streaming
+- `readiness.ts` — bounded Supabase probe for `/api/ready`
 
 ## Entry Points
 
-- FastAPI app instantiation + CORS + router wiring:
-- Server runtime:
-- Next.js entry routes:
-- Next server route handlers:
-
-## Error Handling
-
-- Request-level validation via Pydantic/FastAPI produces 4xx responses.
-- External/service calls are wrapped:
-- Status transitions and image fetching:
-- Fetch wrappers check `res.ok` and show user-friendly error text.
-- Some officer actions use optimistic UI refresh (`router.refresh()`) after success.
+- `npm run dev` / `npm run start` in `frontend/`
+- `GET /api/health`, `GET /api/ready`
+- `supabase db push` for schema migrations
 
 ## Cross-Cutting Concerns
 
-- Configured in FastAPI `backend/app/main.py` using `settings.cors_origin_list`
-- Frontend session cookie + server components guard routes
-- Backend officer auth enforced per request via `X-CityMind-Officer-Key`
-- In-memory sliding window limiter per FastAPI instance:
+- Supabase Auth session cookies + `proxy.ts` dashboard gate
+- Token-scoped citizen status; hashed access tokens at rest
+- Loopback-first production bind; optional Task Scheduler registration
 
 <!-- GSD:architecture-end -->
 

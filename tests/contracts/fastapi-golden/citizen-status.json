@@ -1,0 +1,91 @@
+{
+  "source": "backend/tests/test_citizen_status.py",
+  "endpoint": "POST /api/v1/reports/status",
+  "cases": [
+    {
+      "id": "citizen-status-success",
+      "request": {
+        "contentType": "application/json",
+        "body": {
+          "report_id": "SYNTHETIC-REPORT-ID",
+          "token": "SYNTHETIC-CITIZEN-TOKEN"
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "status": "string",
+          "summary": "string|null",
+          "history": [
+            {
+              "status": "string",
+              "note": "string|null",
+              "created_at": "iso8601"
+            }
+          ]
+        },
+        "allowedKeys": ["status", "summary", "history"],
+        "forbiddenKeys": [
+          "recommendation",
+          "evidence",
+          "confidence",
+          "severity",
+          "actor_id",
+          "access_token"
+        ]
+      },
+      "invariants": [
+        "history sorted newest-first",
+        "history items expose only status, note, created_at"
+      ]
+    },
+    {
+      "id": "citizen-status-uniform-401-missing-token",
+      "request": {
+        "contentType": "application/json",
+        "body": { "report_id": "SYNTHETIC-REPORT-ID", "token": "SYNTHETIC-WRONG-TOKEN" }
+      },
+      "response": {
+        "status": 401,
+        "body": { "detail": "We could not verify that report and token." }
+      }
+    },
+    {
+      "id": "citizen-status-uniform-401-expired",
+      "request": {
+        "contentType": "application/json",
+        "body": { "report_id": "SYNTHETIC-REPORT-ID", "token": "SYNTHETIC-CITIZEN-TOKEN" },
+        "tokenState": "expired"
+      },
+      "response": {
+        "status": 401,
+        "body": { "detail": "We could not verify that report and token." }
+      }
+    },
+    {
+      "id": "citizen-status-uniform-401-report-mismatch",
+      "request": {
+        "contentType": "application/json",
+        "body": { "report_id": "SYNTHETIC-REPORT-ID", "token": "SYNTHETIC-CITIZEN-TOKEN" },
+        "tokenState": "report_id_mismatch"
+      },
+      "response": {
+        "status": 401,
+        "body": { "detail": "We could not verify that report and token." },
+        "mustNotUseStatus": 404
+      }
+    },
+    {
+      "id": "citizen-status-rate-limit",
+      "request": {
+        "contentType": "application/json",
+        "body": { "report_id": "SYNTHETIC-REPORT-ID", "token": "SYNTHETIC-CITIZEN-TOKEN" }
+      },
+      "response": {
+        "status": 429,
+        "headers": { "retry-after": "integer" }
+      },
+      "note": "Separate status rate limiter from report analyze limiter."
+    }
+  ]
+}

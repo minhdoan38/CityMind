@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-Deliver spatial intelligence for officers and optional citizen location picking: enable PostGIS on Supabase with geo indexes; expose bbox/radius/cluster geo APIs; add a MapLibre GL incident map on the officer dashboard that toggles with the existing table view; integrate bbox geo filtering with Phase 3 filter chrome; ship an optional pin-drop mini map on the citizen report form; provide a **docker-compose one-shot** local dev stack (Supabase + backend + frontend).
+Deliver spatial intelligence for officers and optional citizen location picking: enable PostGIS on Supabase with geo indexes; expose bbox/radius/cluster geo APIs; add a MapLibre GL incident map on the officer dashboard that toggles with the existing table view; integrate bbox geo filtering with Phase 3 filter chrome; ship an optional pin-drop mini map on the citizen report form; provide a **docker-compose one-shot** local dev stack (**backend + frontend only** — Supabase runs separately via localhost CLI).
 
 **In scope:** MAP-01, MAP-02, MAP-03.
 
@@ -52,8 +52,8 @@ Deliver spatial intelligence for officers and optional citizen location picking:
 - **D-20:** Cluster/viewport endpoint returns minimal fields for map pins: `report_id`, `latitude`, `longitude`, `priority`, `status`/`current_status`, `category`, `created_at` — no description, notes, tokens, or evidence URIs on map payloads.
 
 ### Docker one-shot local dev
-- **D-21:** Phase 6 delivers **`docker-compose` full stack**: **Supabase (local) + backend + frontend** runnable with one command (`docker compose up` or documented wrapper script). Officer should not need separate manual Supabase CLI steps for a fresh machine beyond `docker compose up` + `.env` template.
-- **D-22:** Compose file lives at repo root or `scripts/` with README section; env examples updated. This is **dev ergonomics**, not Cloud Run production deployment replacement.
+- **D-21:** Phase 6 delivers **`docker-compose` app stack**: **backend + frontend only** runnable with one command (`docker compose up` or documented wrapper script). **Supabase is NOT in Docker** — developers run localhost Supabase separately (`supabase start`, `supabase migration up`) per existing project ops (STATE.md).
+- **D-22:** Compose file lives at repo root or `scripts/` with README section; env examples point at host Supabase URLs (`localhost:54321`, etc.). README documents prerequisite: Supabase CLI running before `docker compose up`. This is **dev ergonomics**, not Cloud Run production deployment replacement.
 
 ### Claude's Discretion
 - Exact URL param names for bbox (`geo_bbox`, `north/south/east/west`, etc.) as long as D-08/D-09 hold
@@ -120,7 +120,7 @@ Deliver spatial intelligence for officers and optional citizen location picking:
 <specifics>
 ## Specific Ideas
 
-- User wants **Docker one-shot running** — full local stack via docker-compose (Supabase + backend + frontend), not fragmented manual startup.
+- User wants **Docker one-shot running** — backend + frontend via docker-compose; **no Supabase in Docker** (localhost Supabase CLI remains the database/auth path).
 - User selected **all discussion areas** — table-default map toggle, MapLibre clustering, bbox-only geo filter, citizen mini map supplementing geolocation, OSM dev + env-configurable prod tiles, hide unlocated reports with visible count.
 
 </specifics>

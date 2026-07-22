@@ -1,0 +1,11 @@
+{
+  "package": "vitest",
+  "version": "4.1.10",
+  "registryUrl": "https://www.npmjs.com/package/vitest",
+  "repositoryUrl": "https://github.com/vitest-dev/vitest",
+  "nextJsGuideUrl": "https://nextjs.org/docs/app/guides/testing/vitest",
+  "approved": true,
+  "signer": "minhmice",
+  "signedAt": "2026-07-21T19:55:00+07:00",
+  "note": "Slopcheck SUS flag reviewed; official Vitest package approved for Phase 7 contract tests."
+}

@@ -1,0 +1,16 @@
+{
+  "status": "PENDING",
+  "signed": false,
+  "signer": null,
+  "signedAt": null,
+  "bindHost": "127.0.0.1",
+  "publicExposureApproved": false,
+  "backupCommand": "node scripts/backup-citymind.mjs -Output <absolute-backup-dir>",
+  "restoreCommand": "node scripts/restore-citymind.mjs -Input <absolute-backup-dir> -Target isolated",
+  "isolatedTargetEnv": [
+    "CITYMIND_ISOLATED_DB_URL",
+    "CITYMIND_ISOLATED_SUPABASE_URL",
+    "CITYMIND_ISOLATED_SUPABASE_SECRET_KEY"
+  ],
+  "operatorNote": "Sign PASS after confirming loopback-only exposure and isolated restore target with the operator."
+}

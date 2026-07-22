@@ -1,125 +1,91 @@
 # CityMind AI
 
-CityMind AI is an AI-assisted Decision Intelligence Platform that transforms
-citizen reports, geolocation, evidence images, and urban context into
-structured, prioritized, and auditable actions for smarter communities.
+CityMind AI is an AI-assisted Decision Intelligence Platform for smart communities.
+Citizens submit urban incident reports; a configurable third-party AI API produces
+structured, advisory triage output; officers review, filter, and update status on
+a protected dashboard.
 
 AI recommendations are advisory. Officers remain responsible for verification
 and final decisions.
 
-## Live prototype
+The runnable application lives in [`frontend/`](frontend/). Planning artifacts
+remain in [`.planning/`](.planning/).
 
-- Web: <https://citymind-web-lvdth2uirq-uc.a.run.app>
-- Public report form: <https://citymind-web-lvdth2uirq-uc.a.run.app/report>
-- Officer login: <https://citymind-web-lvdth2uirq-uc.a.run.app/login>
-- API health: <https://citymind-api-lvdth2uirq-uc.a.run.app/health>
+## Platform (Milestone v2)
 
-The submission build includes one-click officer access for judges. Disable
-`ENABLE_QUICK_OFFICER_ACCESS` after evaluation because this mode grants full
-dashboard permissions.
+- **Runtime:** Node.js 22 + Next.js 16 (single process on your laptop)
+- **Data:** Self-hosted Supabase Postgres, Auth, and private Storage
+- **AI:** Provider-neutral `THIRD_PARTY_API_KEY` + endpoint/model env configuration
+- **Exception:** Google Fonts via `next/font/google` only
 
-## Core capabilities
-
-- Citizen reports with text, location, and optional image evidence.
-- Structured Gemini analysis: category, severity, confidence, priority,
-  evidence, uncertainty, impact, and recommended action.
-- BigQuery persistence and private Cloud Storage evidence.
-- Protected officer dashboard with operational filters.
-- Report detail, status updates, and append-only status history.
-- Responsive public form with browser geolocation and camera support.
-- Cloud Run deployment, Secret Manager, IAM, rate limiting, and cost alerts.
-
-## Architecture
-
-```text
-Next.js public form
-  -> FastAPI ingestion
-  -> Vertex AI Gemini
-  -> BigQuery + private Cloud Storage
-  -> authenticated Next.js officer dashboard
-```
-
-## Local development
-
-### Backend
-
-```powershell
-cd backend
-py -3.12 -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-copy .env.example .env
-uvicorn app.main:app --reload
-```
-
-### Frontend
+## Quick start
 
 ```powershell
 cd frontend
 npm ci
 copy .env.example .env.local
+# Edit .env.local with Supabase URL, keys, AI endpoint, and SUPABASE_DB_URL
+
+supabase db push
 npm run dev
 ```
 
-- Backend: `http://127.0.0.1:8000`
-- Frontend: `http://localhost:3000`
+- App (dev): `http://localhost:3000`
+- Liveness: `GET /api/health`
+- Readiness: `GET /api/ready` (Supabase connectivity; no AI tokens spent)
 
-### Docker (app only — no Supabase in Docker)
-
-Prerequisite: localhost Supabase running on the host (`supabase start`, then `supabase migration up`).
+### Production on laptop
 
 ```powershell
-# From repo root, after backend/.env is configured
-docker compose up --build
+cd frontend
+npm run build
+npm run start -- -H 127.0.0.1 -p 3000
 ```
 
-- Backend: `http://localhost:8000`
-- Frontend: `http://localhost:3000`
-- Supabase stays on host (`http://localhost:54321` via `host.docker.internal` inside containers)
+Loopback is the default bind. Use `scripts/register-citymind-task.ps1 -Register`
+from the `frontend` directory for Windows Task Scheduler startup/restart.
 
-Optional map tile env (frontend `.env.local`):
+```powershell
+npm run smoke:production
+```
+
+## Operations
+
+Run from the `frontend` directory:
+
+| Task | Command |
+|------|---------|
+| DB + Storage backup | `powershell -File scripts/backup-citymind.ps1 -Output <dir>` |
+| Isolated restore drill | `powershell -File scripts/restore-citymind.ps1 -Input <dir> -Target isolated` |
+| Officer role grant | `powershell -File scripts/seed_officer_role.ps1 -Email you@example.com` |
+| Google-exit audit | `npm run audit:google-exit -- --mode final` |
+| Apply SQL test | `node scripts/run-supabase-sql.mjs -f supabase/tests/<file>.sql` |
+
+## Verification
+
+```powershell
+cd frontend
+npm test
+npm run lint
+npm run build
+npm run smoke:production
+```
+
+## Architecture
+
+```text
+Citizen / officer browser
+  -> Next.js App Router (UI + API routes)
+  -> Supabase Postgres / Auth / private Storage
+  -> Third-party AI API (structured JSON analysis)
+```
+
+Historical FastAPI, BigQuery, GCS, and Cloud Run artifacts were removed in Phase 7.
+See `.planning/phases/07-google-free-self-hosted-platform/` for migration evidence.
+
+## Optional map tiles
 
 ```env
 NEXT_PUBLIC_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
 NEXT_PUBLIC_MAP_TILE_ATTRIBUTION=© OpenStreetMap contributors
 ```
-
-## Verification
-
-```powershell
-cd backend
-pytest -q
-
-cd ..\frontend
-npm run lint
-npx tsc --noEmit --incremental false
-npm run build
-```
-
-## Demo data
-
-```powershell
-python scripts\seed_reports.py
-python scripts\seed_reports.py --apply
-```
-
-The deterministic seed contains 10 reports, one synthetic evidence image,
-urban context, balanced priorities, and append-only status events.
-
-## Deployment
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\deploy_cloudrun.ps1
-powershell -ExecutionPolicy Bypass -File scripts\create_budget.ps1
-```
-
-## Current limitations
-
-- This MVP provides decision support, not validated prediction.
-- BigQuery is used as an MVP operational store; Firestore or PostgreSQL is a
-  better production choice.
-- Quick officer access must be disabled after judging.
-- The in-memory rate limiter is per Cloud Run instance.
-- Live urban-context enrichment is disabled in production.
-- Firebase Auth, per-user audit, frontend E2E tests, and full observability are
-  future work.

@@ -454,13 +454,13 @@ EN defaults; VI natural equivalents in `frontend/messages/{en,vi}.json` (`dashbo
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: pending
-- [ ] Dimension 2 Visuals: pending
-- [ ] Dimension 3 Color: pending
-- [ ] Dimension 4 Typography: pending
-- [ ] Dimension 5 Spacing: pending
-- [ ] Dimension 6 Registry Safety: pending
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-07-21
 
 **Researcher notes:** Revised 2026-07-21 to align with `06-CONTEXT.md` (D-01–D-22): client-side MapLibre clustering, bbox-only geo filter, direct marker→detail navigation, priority-first pin styling, OSM raster dev tiles via `NEXT_PUBLIC_MAP_TILE_URL`, dynamic unlocated count copy, docker-compose backend+frontend only (no Supabase). Inherits Phase 2/3/5 UI-SPECs. globals.css still shows teal tokens in repo; implementation should align to Clinic Blue per inherited contract.

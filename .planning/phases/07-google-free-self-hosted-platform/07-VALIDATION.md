@@ -1,89 +1,96 @@
 ---
 phase: 7
 slug: nextjs-only-google-free-platform
-status: draft
-nyquist_compliant: false
+status: planned
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-07-21
+updated: 2026-07-21
 ---
 
 # Phase 7 — Validation Strategy
 
-> Per-phase validation contract for feedback sampling during execution.
-
----
-
 ## Test Infrastructure
 
 | Property | Value |
-|----------|-------|
-| **Framework** | Existing Node `.mjs` contract tests plus Vitest 4.x after human package verification |
-| **Config file** | `frontend/vitest.config.mts` — Wave 0 installs/configures |
-| **Quick run command** | `cd frontend && npm run test:unit -- --run` |
-| **Full suite command** | `cd frontend && npm test && npm run lint && npm run build` |
-| **Estimated runtime** | ~180 seconds |
+|---|---|
+| Framework | Existing Node contract tests plus human-approved Vitest 4.1.10 |
+| Quick command | `cd frontend && rtk npm run test:unit` |
+| Wave command | `cd frontend && rtk npm test && rtk npm run lint` |
+| Final command | Plan 07-15 Task 2 exact live SQL, backup/restore, runtime, and audit command below |
 
----
+## Sampling Contract
 
-## Sampling Rate
+- Run the listed command after every task; no three-task verification gap exists.
+- Every schema task orders edit → `rtk supabase db push` → exact linked SQL file → downstream tests.
+- Inventory, backup, restore, approval, and decision checkpoints use signed machine-verifiable artifacts; unavailable evidence fails.
+- After every wave run `cd frontend && rtk npm test && rtk npm run lint`.
 
-- **After every task commit:** Run the targeted Vitest file plus any affected existing `.mjs` contract test.
-- **After every plan wave:** Run `cd frontend && npm test && npm run lint`.
-- **Before `$gsd-verify-work`:** Run a clean `npm ci`, the full suite, production build/start smoke, live data reconciliation, backup/restore drill, and Google-exit audit.
-- **Max feedback latency:** 180 seconds for automated checks; live migration/provider/restore checkpoints are separately gated.
+## Complete Per-Task Verification Map
 
----
-
-## Per-Task Verification Map
-
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 07-01-01 | 01 | 1 | SELFHOST-01 | T-07-01 / T-07-02 | Service-role secrets remain server-only; officer routes require valid role claims | unit + contract | `cd frontend && npm run test:unit -- tests/contracts tests/server` | ❌ W0 | ⬜ pending |
-| 07-02-01 | 02 | 2 | SELFHOST-02 | T-07-03 / T-07-04 | Provider URL is environment-only, output is schema-validated, errors and keys are redacted | unit + mocked contract | `cd frontend && npm run test:unit -- tests/server/ai` | ❌ W0 | ⬜ pending |
-| 07-03-01 | 03 | 2 | SELFHOST-03 | T-07-05 | Migration is non-destructive until inventory, reconciliation, backup, and rollback gates pass | SQL + migration | `cd frontend && npm run test:unit -- tests/migration/postgres-analytics.test.ts` | ❌ W0 | ⬜ pending |
-| 07-03-02 | 03 | 2 | SELFHOST-04 | T-07-05 / T-07-06 | Evidence remains private and every migrated object is reconciled by size and SHA-256 | unit + integration | `cd frontend && npm run test:unit -- tests/server/evidence tests/migration/evidence` | ❌ W0 | ⬜ pending |
-| 07-04-01 | 04 | 3 | SELFHOST-05 | T-07-07 | Runtime binds loopback unless an approved TLS proxy exists; secrets are not exposed | production smoke | `cd frontend && npm run build && npm run smoke:production` | ❌ W0 | ⬜ pending |
-| 07-05-01 | 05 | 4 | SELFHOST-06 | T-07-01 / T-07-08 | Forbidden Google/FastAPI/Python/Docker artifacts are absent with only the Google Fonts allowlist | static + build + runtime audit | `cd frontend && npm run audit:google-exit` | ❌ W0 | ⬜ pending |
-
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
-
----
+| Task ID | Wave | Requirement | Secure behavior | Automated command / fail-closed artifact gate |
+|---|---:|---|---|---|
+| 07-01-01 | 1 | SELFHOST-01 | Native Supabase CLI/psql versions signed PASS; no alternate or Docker | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker` |
+| 07-01-02 | 1 | SELFHOST-01 | Vitest identity/version explicitly approved | `rtk powershell -NoProfile -Command "$a=ConvertFrom-Json (Get-Content -Raw frontend/test-approvals/vitest-4.1.10.json); if($a.package -ne 'vitest' -or $a.version -ne '4.1.10' -or $a.approved -ne $true -or -not $a.signer){exit 1}"` |
+| 07-01-03 | 1 | SELFHOST-01 | Sanitized golden contracts | `cd frontend && rtk npm run test:unit -- tests/contracts/golden-contracts.test.ts && rtk npm run test:legacy` |
+| 07-02-01 | 2 | SELFHOST-02 | Strict analysis/policy contract | `cd frontend && rtk npm run test:unit -- src/server/domain/report-analysis.test.ts src/server/validation/analysis-policy.test.ts` |
+| 07-02-02 | 2 | SELFHOST-02 | SSRF/key/error/output hardening | `cd frontend && rtk npm run test:unit -- src/server/ai/openai-compatible.test.ts && rtk npm run lint` |
+| 07-02-03 | 2 | SELFHOST-02 | Live strict-schema/image/lineage/privacy gate | `cd frontend && rtk node scripts/smoke-ai.mjs --require-strict-schema --require-image --require-lineage --require-privacy-approval` |
+| 07-03-01 | 3 | SELFHOST-01 | Token binding, uniform 401, separate limiters | `cd frontend && rtk npm run test:unit -- src/server/security/access-tokens.test.ts src/server/security/rate-limit.test.ts src/server/repositories/reports.test.ts` |
+| 07-03-02 | 3 | SELFHOST-01 | Citizen-safe Next.js status route | `cd frontend && rtk npm run test:unit -- src/server/repositories/reports.test.ts tests/contracts/golden-contracts.test.ts && rtk npm run test:legacy -- tests/citizen-status.test.mjs` |
+| 07-04-01 | 4 | SELFHOST-01/04 | Atomic report/token and private evidence contract | `rtk powershell -NoProfile -Command "$s=Get-Content -Raw supabase/migrations/20260721130001_next_backend_contract.sql; if($s -notmatch 'create_report' -or $s -notmatch 'access_tokens' -or $s -notmatch 'security invoker'){exit 1}"` |
+| 07-04-02 | 4 | SELFHOST-01/04 | Native tooling gate plus live RPC privilege/rollback | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_next_backend_contract.sql` |
+| 07-04-03 | 4 | SELFHOST-01/02/04 | Synchronous submission parity after live schema | `cd frontend && rtk npm run test:unit -- src/server/services/report-service.test.ts src/server/services/evidence-service.test.ts tests/contracts/golden-contracts.test.ts && rtk npm run lint` |
+| 07-05-01 | 5 | SELFHOST-01 | Officer claims + RLS reads | `cd frontend && rtk npm run test:unit -- src/server/repositories/reports.test.ts tests/contracts/golden-contracts.test.ts` |
+| 07-05-02 | 5 | SELFHOST-01 | Dashboard direct-module wiring | `cd frontend && rtk npm run test:legacy -- tests/dashboard-map.test.mjs tests/dashboard-geo-params.test.mjs tests/dashboard-loading-list.test.mjs tests/dashboard-loading-detail.test.mjs && rtk npm run lint` |
+| 07-07-01 | 5 | SELFHOST-03 | Postgres analytics schema contract | `rtk powershell -NoProfile -Command "$s=Get-Content -Raw supabase/migrations/20260721130002_postgres_analytics.sql; if($s -notmatch 'security invoker' -or $s -notmatch 'k' -or $s -notmatch 'sla'){exit 1}"` |
+| 07-07-02 | 5 | SELFHOST-03 | Native tooling gate plus live analytics privileges/parity | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_postgres_analytics.sql` |
+| 07-07-03 | 5 | SELFHOST-03 | Analytics UI/API direct Postgres wiring | `cd frontend && rtk npm run test:unit -- src/server/repositories/analytics.test.ts tests/contracts/golden-contracts.test.ts && rtk npm run test:legacy -- tests/analytics-shell.test.mjs && rtk npm run lint` |
+| 07-06-01 | 6 | SELFHOST-01 | Atomic status schema and formula-safe export contract | `rtk powershell -NoProfile -Command "$s=Get-Content -Raw supabase/migrations/20260721130003_officer_operations.sql; if($s -notmatch 'security invoker' -or $s -notmatch 'status_events'){exit 1}"` |
+| 07-06-02 | 6 | SELFHOST-01 | Native tooling gate plus live officer privilege/atomicity | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_officer_operations.sql && cd frontend && rtk npm run test:unit -- src/server/repositories/reports.test.ts src/server/exports/reports.test.ts && rtk npm run lint` |
+| 07-08-01 | 7 | SELFHOST-03/04 | Signed inventory and two-part backup | `rtk powershell -NoProfile -Command "$g=ConvertFrom-Json (Get-Content -Raw frontend/migration-manifests/source-access-and-backup-gate.json); if(-not $g.signed -or $g.status -ne 'PASS' -or -not $g.read_only_inventory -or -not $g.db_backup_hash -or -not $g.storage_backup_hash){exit 1}"` |
+| 07-08-02 | 7 | SELFHOST-03/04 | Native tooling; additive-stage evidence contract and reconcile | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_evidence_additive.sql && cd frontend && rtk npm run test:unit -- tests/migration/reconciliation.test.ts tests/migration/evidence-reconciliation.test.ts && rtk node scripts/reconcile-migration.mjs --require-pass --require-signed` |
+| 07-09-01 | 8 | SELFHOST-03/04/05 | Native pg_dump/psql recovery wrapper invariants | `rtk supabase --version && rtk psql --version && rtk pg_dump --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --require-native-pg-dump --forbid-docker && rtk powershell -NoProfile -Command "$b=Get-Content -Raw frontend/scripts/backup-citymind.ps1; $r=Get-Content -Raw frontend/scripts/restore-citymind.ps1; if($b -notmatch 'Storage' -or $r -notmatch 'isolated'){exit 1}"` |
+| 07-09-02 | 8 | SELFHOST-03/04/05 | Exact DB+Storage restore and app rollback | `rtk powershell -NoProfile -File frontend/scripts/backup-citymind.ps1 -Output frontend/migration-backups/pre-clean && rtk powershell -NoProfile -File frontend/scripts/restore-citymind.ps1 -Input frontend/migration-backups/pre-clean -Target isolated && rtk node frontend/scripts/compare-migration-manifests.mjs --source frontend/migration-manifests/reconciliation.json --target frontend/migration-manifests/restore.json --require-exact && rtk node frontend/scripts/verify-gate-artifacts.mjs --gate restore-and-rollback --require-signed --require-db-restore --require-storage-restore --require-manifest-match --require-application-rollback` |
+| 07-10-01 | 9 | SELFHOST-05 | Safe liveness/readiness and loopback smoke | `cd frontend && rtk npm run test:unit -- src/server/health/readiness.test.ts && rtk npm run build && rtk npm run smoke:production` |
+| 07-10-02 | 9 | SELFHOST-05 | Signed backup/exposure decision | `rtk node frontend/scripts/verify-gate-artifacts.mjs --file frontend/operations/operator-runtime-decision.json --require-signed --require-backup-command --require-restore-command --require-isolated-target --require-loopback-or-tls-proxy` |
+| 07-10-03 | 9 | SELFHOST-05 | Startup/restart plus exact backup/restore proof | `rtk powershell -NoProfile -File frontend/scripts/register-citymind-task.ps1 -Verify && rtk powershell -NoProfile -File frontend/scripts/backup-citymind.ps1 -Output frontend/operations/backup && rtk powershell -NoProfile -File frontend/scripts/restore-citymind.ps1 -Input frontend/operations/backup -Target isolated && rtk node frontend/scripts/compare-migration-manifests.mjs --source frontend/migration-manifests/reconciliation.json --target frontend/migration-manifests/restore.json --require-exact && cd frontend && rtk npm run smoke:production` |
+| 07-11-01 | 10 | SELFHOST-06 | Exact allowlist audit | `cd frontend && rtk npm run test:unit -- tests/google-exit-audit.test.ts` |
+| 07-11-02 | 10 | SELFHOST-06 | Non-destructive cleanup manifest | `cd frontend && rtk npm run build && rtk npm run audit:google-exit -- --mode pre-clean --write-manifest` |
+| 07-11-03 | 10 | SELFHOST-01..06 | Explicit signed local cleanup approval | `rtk node frontend/scripts/verify-gate-artifacts.mjs --file frontend/operations/local-cleanup-approval.json --require-signed --require-inventory --require-reconciliation --require-db-restore --require-storage-restore --require-application-rollback --require-explicit-local-cleanup-approval` |
+| 07-12-01 | 11 | SELFHOST-04/06 | Native tooling, destructive assertions, durable final evidence contract | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk powershell -NoProfile -Command "$s=Get-Content -Raw supabase/migrations/20260721130005_remove_legacy_evidence.sql; $f=Get-Content -Raw supabase/tests/07_evidence_final.sql; if($s -notmatch 'image_gcs_uri' -or $s -notmatch 'evidence_path' -or $s -notmatch 'raise exception' -or $f -notmatch 'evidence_path' -or $f -match 'select.+image_gcs_uri'){exit 1}"` |
+| 07-12-02 | 11 | SELFHOST-04/06 | Approval-gated removal then durable evidence/RLS proof | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_remove_legacy_evidence.sql && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_evidence_final.sql && rtk node frontend/scripts/verify-gate-artifacts.mjs --gate restore-and-rollback --require-signed --require-pass` |
+| 07-13-01 | 12 | SELFHOST-01..06 | Approved legacy runtime/deployment cleanup | `cd frontend && rtk npm test && rtk npm run audit:google-exit -- --mode post-legacy-runtime-cleanup` |
+| 07-14-01 | 13 | SELFHOST-01/02/05/06 | Frontend compatibility cleanup regression | `cd frontend && rtk npm ci && rtk npm test && rtk npm run lint && rtk npm run build && rtk npm run smoke:production && rtk npm run audit:google-exit -- --mode post-runtime-cleanup` |
+| 07-15-01 | 14 | SELFHOST-05/06 | Active docs match target | `cd frontend && rtk npm run audit:google-exit -- --mode docs` |
+| 07-15-02 | 14 | SELFHOST-01..06 | Final native-tooling, durable SQL, recovery, runtime, and audit gate | `rtk supabase --version && rtk psql --version && rtk node frontend/scripts/verify-tooling-decision.mjs --file frontend/operations/tooling-decision.json --require-signed --require-native-supabase --supabase-range 2.48.3:3.0.0 --require-native-psql --psql-range 15:18 --forbid-docker && rtk supabase db push && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_next_backend_contract.sql && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_postgres_analytics.sql && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_officer_operations.sql && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_remove_legacy_evidence.sql && rtk psql $env:SUPABASE_DB_URL -v ON_ERROR_STOP=1 -f supabase/tests/07_evidence_final.sql && rtk powershell -NoProfile -File frontend/scripts/backup-citymind.ps1 -Output frontend/operations/final-backup && rtk powershell -NoProfile -File frontend/scripts/restore-citymind.ps1 -Input frontend/operations/final-backup -Target isolated && rtk node frontend/scripts/compare-migration-manifests.mjs --source frontend/migration-manifests/reconciliation.json --target frontend/migration-manifests/restore.json --require-exact && rtk node frontend/scripts/verify-gate-artifacts.mjs --gate restore-and-rollback --require-signed --require-db-restore --require-storage-restore --require-manifest-match --require-application-rollback && rtk node frontend/scripts/verify-gate-artifacts.mjs --file frontend/operations/local-cleanup-approval.json --require-signed --require-explicit-local-cleanup-approval && rtk powershell -NoProfile -File frontend/scripts/register-citymind-task.ps1 -Verify && cd frontend && rtk npm ci && rtk npm test && rtk npm run lint && rtk npm run build && rtk npm run smoke:production && rtk npm run audit:google-exit -- --mode final --require-all-signed-evidence` |
 
 ## Wave 0 Requirements
 
-- [ ] Human-verify the official `vitest` package identity/version before installation; record approval in the execution summary.
-- [ ] `frontend/vitest.config.mts` and `test:unit` script — executable TypeScript unit tests.
-- [ ] `frontend/tests/contracts/fastapi-golden/` — sanitized legacy request/response/status/header fixtures captured before backend removal.
-- [ ] `frontend/src/server/domain/report-analysis.test.ts` — Pydantic-to-Zod parity and JSON Schema snapshot.
-- [ ] `frontend/src/server/ai/openai-compatible.test.ts` — timeout, invalid JSON/schema, refusal/error, image, redaction, and lineage cases.
-- [ ] `frontend/src/server/repositories/*.test.ts` — RLS client selection, filters/cursors, token privacy, and status atomicity.
-- [ ] `frontend/tests/migration/reconciliation.test.ts` — canonical hashing, conflicts, counts, and object reconciliation.
-- [ ] `frontend/scripts/smoke-production.mjs` and `frontend/scripts/google-exit-audit.mjs`.
-- [ ] Supabase SQL tests for transactional RPCs, analytics parity, RLS, and legacy-column cutover.
+- [ ] Signed native Supabase CLI/psql installation decision and accepted version probes exist before schema work; refusal or absence fails closed and Docker is forbidden.
+- [ ] Signed Vitest 4.1.10 approval exists before install.
+- [ ] `frontend/vitest.config.mts`, unit/legacy scripts, and sanitized golden contracts are executable.
+- [ ] Server behavior tests cover schemas, AI, tokens, rate limits, repositories, evidence, exports, analytics, migration, health, and audit.
+- [ ] SQL tests cover anonymous/non-officer denial, officer/admin access, token privacy, atomic rollback, analytics parity, migration-stage additive evidence, destructive-drop gate, and durable post-cutover evidence/RLS behavior.
+- [ ] Production, AI, reconciliation, gate-verification, backup/restore, manifest-compare, and Google-exit scripts exist before their consuming tasks.
 
----
+## Manual External Gates with Automated Evidence
 
-## Manual-Only Verifications
+| Gate | Fail-closed evidence |
+|---|---|
+| Windows schema tooling | Signed native executable paths/version probes through approved non-Docker installs; no alternate branch |
+| Vitest legitimacy | Signed exact package/version approval JSON |
+| AI capability/privacy | Synthetic smoke requires schema, image, lineage, privacy flags |
+| Google inventory | Signed read-only inventory plus DB and Storage backup hashes |
+| Restore/application rollback | Signed isolated restore manifest match and Python-capable rollback PASS |
+| Backup/exposure | Signed exact commands and loopback-or-approved-TLS decision |
+| Local destructive cleanup | Explicit signed approval referencing all prior evidence hashes |
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| BigQuery/GCS retained-data inventory and signed reconciliation | SELFHOST-03, SELFHOST-04 | Google ADC/CLI is unavailable in the current environment | Obtain read-only credentials; export source inventories; compare primary keys, timestamps, null distributions, canonical row hashes, aggregate totals, object sizes/MIME/SHA-256; sign the manifest before deletion |
-| Configured AI endpoint capability and privacy smoke | SELFHOST-02 | Depends on the selected external endpoint and real credentials | Run authenticated text and image fixtures; verify strict schema behavior, actual model lineage, timeout/error mapping, and provider retention/privacy terms |
-| Windows startup and restart behavior | SELFHOST-05 | Requires the target laptop and Windows Task Scheduler | Register the task, reboot/log on, confirm loopback bind and readiness, terminate the process, and verify automatic restart without secret leakage |
-| Database and Storage restore drill | SELFHOST-03, SELFHOST-04, SELFHOST-05 | Requires access to the existing self-hosted Supabase backup system | Restore a database dump and Storage backup into an isolated target; compare manifests and execute representative citizen/officer reads |
-| Network exposure/TLS boundary | SELFHOST-05 | Public exposure intent and reverse-proxy ownership are not yet approved | Keep loopback-only by default; if public access is required, document the approved TLS reverse proxy and verify direct HTTP is unreachable externally |
+## Sign-Off
 
----
-
-## Validation Sign-Off
-
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 180s for automated checks
-- [ ] All high-severity threats have explicit mitigations and tests
-- [ ] Live BigQuery/GCS inventory and reconciliation are complete before Google deletion
-- [ ] `nyquist_compliant: true` set in frontmatter
-
-**Approval:** pending
+- [x] Every final task has an automated command or signed fail-closed artifact command.
+- [x] No three consecutive tasks lack automated sampling.
+- [x] Schema tasks enforce edit → push → live SQL → downstream verification.
+- [x] High-severity inventory, restore, auth/RLS, evidence, upload, SSRF, export, leakage, exposure, and deletion threats have explicit gates.
+- [x] No watch-mode commands.
+- [x] `nyquist_compliant: true` reflects complete planning coverage; `wave_0_complete` remains false until execution.

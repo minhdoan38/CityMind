@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "approved": true,
+  "signer": "minhmice",
+  "signedAt": "2026-07-21T21:40:00+07:00",
+  "platform": "win32",
+  "installRoutes": {
+    "supabaseCli": "scoop bucket add supabase https://github.com/supabase/scoop-bucket.git && scoop install supabase"
+  },
+  "forbidDocker": true,
+  "databaseAccess": {
+    "mode": "supabase-remote",
+    "migrationRunner": "supabase db push --db-url $SUPABASE_DB_URL",
+    "sqlRunner": "supabase db query --file <path> --db-url $SUPABASE_DB_URL",
+    "backupRunner": "supabase db dump --db-url $SUPABASE_DB_URL",
+    "wrapperScript": "scripts/run-supabase-sql.mjs",
+    "envKeys": ["SUPABASE_URL", "SUPABASE_SECRET_KEY", "SUPABASE_DB_URL"],
+    "envFiles": [".env.local"],
+    "note": "No standalone PostgreSQL install. Use project Supabase URL + service role key + direct Postgres URL."
+  },
+  "tools": {
+    "supabase": {
+      "executable": "C:\\Users\\minhmice\\scoop\\apps\\supabase\\current\\supabase.exe",
+      "version": "2.109.1",
+      "versionRange": ">=2.48.3 <3.0.0",
+      "sha256": "22C0F28F013411C7A7B880116CD33636EDB955A64278914692EEA010BCC98DC7",
+      "installer": "scoop/main/supabase 2.109.1"
+    }
+  },
+  "removedTools": {
+    "postgresqlClient": {
+      "reason": "Operator uses self-hosted Supabase from project env; native psql/pg_dump uninstalled",
+      "uninstalledAt": "2026-07-21T21:40:00+07:00",
+      "formerInstaller": "winget PostgreSQL.PostgreSQL.17"
+    }
+  },
+  "serverVersionProbe": {
+    "status": "supabase-remote",
+    "note": "Live Postgres version verified via supabase db query/push against SUPABASE_DB_URL at migration time."
+  }
+}

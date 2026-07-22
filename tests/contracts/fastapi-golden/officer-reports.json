@@ -1,0 +1,165 @@
+{
+  "source": "backend/tests/test_reports.py, backend/tests/test_export.py",
+  "endpoints": [
+    "GET /api/v1/reports/recent",
+    "GET /api/v1/reports/summary",
+    "GET /api/v1/reports/:id",
+    "GET /api/v1/reports/:id/status-history",
+    "GET /api/v1/reports/:id/image",
+    "PATCH /api/v1/reports/:id/status",
+    "GET /api/v1/reports/export"
+  ],
+  "cases": [
+    {
+      "id": "officer-auth-required-recent",
+      "endpoint": "GET /api/v1/reports/recent",
+      "request": { "auth": "none" },
+      "response": { "status": 401 }
+    },
+    {
+      "id": "officer-recent-filters-cursor",
+      "endpoint": "GET /api/v1/reports/recent",
+      "request": {
+        "auth": "officer-jwt",
+        "query": {
+          "limit": 2,
+          "cursor": "SYNTHETIC-CURSOR",
+          "sort": "created_at",
+          "order": "desc",
+          "status": "new"
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "items": "array",
+          "count": "integer",
+          "next_cursor": "string|null",
+          "sort": "created_at",
+          "order": "desc"
+        }
+      }
+    },
+    {
+      "id": "officer-recent-limit-bounds",
+      "endpoint": "GET /api/v1/reports/recent",
+      "request": { "auth": "officer-jwt", "query": { "limit": 0 } },
+      "response": { "status": 422, "bodyContains": "between 1 and 100" }
+    },
+    {
+      "id": "officer-summary-filters",
+      "endpoint": "GET /api/v1/reports/summary",
+      "request": {
+        "auth": "officer-jwt",
+        "query": { "status": "reviewing", "priority": "high", "min_severity": 3 }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "total_reports": "integer",
+          "critical_reports": "integer",
+          "avg_severity": "number",
+          "top_category": "string"
+        }
+      }
+    },
+    {
+      "id": "officer-report-detail-404",
+      "endpoint": "GET /api/v1/reports/:id",
+      "request": { "auth": "officer-jwt", "pathParams": { "id": "SYNTHETIC-MISSING-ID" } },
+      "response": { "status": 404, "body": { "detail": "Report not found" } }
+    },
+    {
+      "id": "officer-status-history",
+      "endpoint": "GET /api/v1/reports/:id/status-history",
+      "request": { "auth": "officer-jwt", "pathParams": { "id": "SYNTHETIC-REPORT-ID" } },
+      "response": {
+        "status": 200,
+        "bodyShape": { "items": "array", "count": "integer" }
+      }
+    },
+    {
+      "id": "officer-status-history-404",
+      "endpoint": "GET /api/v1/reports/:id/status-history",
+      "request": { "auth": "officer-jwt", "pathParams": { "id": "SYNTHETIC-MISSING-ID" } },
+      "response": { "status": 404 }
+    },
+    {
+      "id": "officer-image-404",
+      "endpoint": "GET /api/v1/reports/:id/image",
+      "request": { "auth": "officer-jwt", "pathParams": { "id": "SYNTHETIC-REPORT-ID" } },
+      "response": { "status": 404, "note": "When evidence URI absent." }
+    },
+    {
+      "id": "officer-status-note-required-resolved",
+      "endpoint": "PATCH /api/v1/reports/:id/status",
+      "request": {
+        "auth": "officer-jwt",
+        "pathParams": { "id": "SYNTHETIC-REPORT-ID" },
+        "query": { "status": "resolved" }
+      },
+      "response": { "status": 422, "bodyContains": "Note is required" }
+    },
+    {
+      "id": "officer-status-note-required-rejected",
+      "endpoint": "PATCH /api/v1/reports/:id/status",
+      "request": {
+        "auth": "officer-jwt",
+        "pathParams": { "id": "SYNTHETIC-REPORT-ID" },
+        "query": { "status": "rejected", "note": "   " }
+      },
+      "response": { "status": 422 }
+    },
+    {
+      "id": "officer-status-update-success",
+      "endpoint": "PATCH /api/v1/reports/:id/status",
+      "request": {
+        "auth": "officer-jwt",
+        "pathParams": { "id": "SYNTHETIC-REPORT-ID" },
+        "query": { "status": "resolved", "note": "Synthetic closure note." }
+      },
+      "response": { "status": 200, "bodyShape": { "updated": true } },
+      "invariants": ["actor_id from JWT sub only, never client-supplied"]
+    },
+    {
+      "id": "officer-export-auth-required",
+      "endpoint": "GET /api/v1/reports/export",
+      "request": { "auth": "none", "query": { "format": "csv" } },
+      "response": { "status": 401 }
+    },
+    {
+      "id": "officer-export-csv-headers",
+      "endpoint": "GET /api/v1/reports/export",
+      "request": { "auth": "officer-jwt", "query": { "format": "csv" } },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "text/csv",
+          "content-disposition": "attachment"
+        },
+        "bodyContains": ["report_id", "category", "priority", "status", "summary"]
+      }
+    },
+    {
+      "id": "officer-export-xlsx-headers",
+      "endpoint": "GET /api/v1/reports/export",
+      "request": { "auth": "officer-jwt", "query": { "format": "xlsx" } },
+      "response": {
+        "status": 200,
+        "headers": {
+          "content-type": "spreadsheet",
+          "content-disposition": "attachment"
+        }
+      }
+    },
+    {
+      "id": "officer-query-failure-502",
+      "endpoint": "GET /api/v1/reports/:id",
+      "request": { "auth": "officer-jwt", "pathParams": { "id": "SYNTHETIC-REPORT-ID" } },
+      "response": { "status": 502, "bodyContains": "Report query failed" }
+    }
+  ],
+  "deferredToLaterSlices": {
+    "GET /api/v1/reports/geo/pins": "07-RESEARCH.md Phase 6 geo pins; covered by dashboard-map.test.mjs until ported"
+  }
+}

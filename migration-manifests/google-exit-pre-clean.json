@@ -1,0 +1,183 @@
+{
+  "mode": "pre-clean",
+  "status": "FAIL",
+  "generatedAt": "2026-07-21T18:01:23.454Z",
+  "safetyEvidence": {
+    "pass": false,
+    "issues": [
+      "restore-and-rollback-gate missing signed PASS",
+      "restore gate missing application_rollback_pass"
+    ]
+  },
+  "counts": {
+    "activeFindings": 4,
+    "dependencyFindings": 0,
+    "envKeyFindings": 1,
+    "legacyInventoryItems": 4
+  },
+  "findings": [
+    {
+      "id": "backend-bridge",
+      "path": "frontend/src/lib/backend.ts",
+      "line": 6,
+      "disposition": "remove",
+      "excerpt": "process.env.BACKEND_API_URL ??"
+    },
+    {
+      "id": "backend-bridge",
+      "path": "frontend/src/lib/backend.ts",
+      "line": 12,
+      "disposition": "remove",
+      "excerpt": "export function backendEndpoint(path: string) {"
+    },
+    {
+      "id": "backend-bridge",
+      "path": "frontend/src/lib/backend.ts",
+      "line": 16,
+      "disposition": "remove",
+      "excerpt": "export async function officerFetch(path: string, init: RequestInit = {}) {"
+    },
+    {
+      "id": "backend-bridge",
+      "path": "frontend/src/lib/backend.ts",
+      "line": 22,
+      "disposition": "remove",
+      "excerpt": "return fetch(backendEndpoint(path), { ...init, headers });"
+    }
+  ],
+  "dependencyFindings": [],
+  "envKeyFindings": [
+    {
+      "id": "forbidden-env-key",
+      "path": "frontend/.env.example",
+      "line": 3,
+      "key": "BACKEND_API_URL",
+      "disposition": "remove-after-plan-12"
+    }
+  ],
+  "removalInventory": {
+    "trackedSource": [
+      {
+        "id": "backend-bridge",
+        "path": "frontend/src/lib/backend.ts",
+        "line": 6,
+        "disposition": "remove",
+        "excerpt": "process.env.BACKEND_API_URL ??"
+      },
+      {
+        "id": "backend-bridge",
+        "path": "frontend/src/lib/backend.ts",
+        "line": 12,
+        "disposition": "remove",
+        "excerpt": "export function backendEndpoint(path: string) {"
+      },
+      {
+        "id": "backend-bridge",
+        "path": "frontend/src/lib/backend.ts",
+        "line": 16,
+        "disposition": "remove",
+        "excerpt": "export async function officerFetch(path: string, init: RequestInit = {}) {"
+      },
+      {
+        "id": "backend-bridge",
+        "path": "frontend/src/lib/backend.ts",
+        "line": 22,
+        "disposition": "remove",
+        "excerpt": "return fetch(backendEndpoint(path), { ...init, headers });"
+      }
+    ],
+    "legacyTrack": [
+      {
+        "id": "legacy-backend-dir",
+        "pattern": "^backend\\/",
+        "disposition": "remove-after-plan-12",
+        "matches": [
+          "backend/.env",
+          "backend/.env.example",
+          "backend/app/api/analytics.py",
+          "backend/app/api/reports.py",
+          "backend/app/api/__init__.py",
+          "backend/app/config.py",
+          "backend/app/demo_data.py",
+          "backend/app/jobs/etl_supabase_to_bigquery.py",
+          "backend/app/jobs/__init__.py",
+          "backend/app/main.py",
+          "backend/app/schemas.py",
+          "backend/app/security.py",
+          "backend/app/services/analytics.py",
+          "backend/app/services/bigquery.py",
+          "backend/app/services/context_data.py",
+          "backend/app/services/gemini.py",
+          "backend/app/services/storage.py",
+          "backend/app/services/supabase.py",
+          "backend/app/services/tokens.py",
+          "backend/app/services/__init__.py",
+          "backend/app/__init__.py",
+          "backend/tests/test_access_tokens.py",
+          "backend/tests/test_analytics_api.py",
+          "backend/tests/test_analytics_views.py",
+          "backend/tests/test_analyze.py",
+          "backend/tests/test_bigquery.py",
+          "backend/tests/test_citizen_status.py",
+          "backend/tests/test_context_data.py",
+          "backend/tests/test_demo_data.py",
+          "backend/tests/test_etl_privacy.py",
+          "backend/tests/test_etl_watermarks.py",
+          "backend/tests/test_export.py",
+          "backend/tests/test_gemini.py",
+          "backend/tests/test_geo_pins.py",
+          "backend/tests/test_health.py",
+          "backend/tests/test_migrate_bigquery_to_supabase.py",
+          "backend/tests/test_postgis_migration.py",
+          "backend/tests/test_public_stats.py",
+          "backend/tests/test_reports.py",
+          "backend/tests/test_security.py",
+          "backend/tests/test_storage.py",
+          "backend/tests/test_supabase.py"
+        ]
+      },
+      {
+        "id": "legacy-docker-compose",
+        "pattern": "^docker-compose\\.yml$",
+        "disposition": "remove-after-plan-12",
+        "matches": [
+          "docker-compose.yml"
+        ]
+      },
+      {
+        "id": "legacy-infra-bq",
+        "pattern": "^infra\\/bigquery\\/",
+        "disposition": "remove-after-plan-12",
+        "matches": [
+          "infra/bigquery/analytics_views.sql",
+          "infra/bigquery/create_status_events.sql",
+          "infra/bigquery/etl_watermarks.sql",
+          "infra/bigquery/reports_analytics.sql",
+          "infra/bigquery/reports_schema.json",
+          "infra/bigquery/schema.sql",
+          "infra/bigquery/status_events_analytics.sql",
+          "infra/bigquery/status_events_schema.json"
+        ]
+      },
+      {
+        "id": "legacy-backend-bridge-module",
+        "pattern": "^frontend\\/src\\/lib\\/backend\\.ts$",
+        "disposition": "remove-after-plan-12",
+        "matches": [
+          "frontend/src/lib/backend.ts"
+        ]
+      }
+    ],
+    "dependencies": [],
+    "envKeys": [
+      {
+        "id": "forbidden-env-key",
+        "path": "frontend/.env.example",
+        "line": 3,
+        "key": "BACKEND_API_URL",
+        "disposition": "remove-after-plan-12"
+      }
+    ]
+  },
+  "manifestHash": "d1e4fa92c470d2599480dea9d677cdb7b395e95d0f48a038b77d6b0c49a0f2ec"
+}

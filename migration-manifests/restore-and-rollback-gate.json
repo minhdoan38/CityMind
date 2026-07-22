@@ -1,0 +1,13 @@
+{
+  "status": "PENDING",
+  "signed": false,
+  "signer": null,
+  "signedAt": null,
+  "db_restore_hash": null,
+  "storage_restore_hash": null,
+  "manifest_match": false,
+  "application_rollback_pass": false,
+  "preserved_git_revision": null,
+  "commands": [],
+  "operatorNote": "Run backup-citymind.ps1, restore-citymind.ps1 against isolated target, compare-migration-manifests.mjs --require-exact, then preserved Python smoke before signing PASS."
+}

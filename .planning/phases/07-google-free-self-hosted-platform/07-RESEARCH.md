@@ -250,7 +250,8 @@ supabase/migrations/
 ├── ...existing immutable migrations
 ├── *_next_backend_contract.sql      # constraints + transactional RPCs
 ├── *_postgres_analytics.sql         # views/functions/indexes
-└── *_evidence_path_cutover.sql      # additive backfill then legacy drop gate
+├── *_evidence_path_additive.sql     # add/backfill/switch before migration writes
+└── *_remove_legacy_evidence.sql     # later approval-gated legacy drop
 ```
 
 This layout keeps provider, repository, policy, and orchestration independent so Phase 8 can call the same provider from a durable runner without preserving a synchronous HTTP dependency. [VERIFIED: downstream TRIAGE-05 requirement]
@@ -591,7 +592,16 @@ Expose only dependency names/status/latency, not URLs, keys, SQL errors, or prov
 | A7 | Formula-leading export values should be neutralized even though this slightly changes exported text representation. | Pitfalls | Consumers expecting byte-for-byte raw CSV may need a documented opt-out; security favors neutralization. |
 | A8 | Phase 7 semantic validation should be a pure seam with conservative locked invariants, while durable `manual_review` behavior remains Phase 8. | Current contract | D-06 may be interpreted as requiring a larger semantic policy now; planner must reconcile without importing Phase 8 workflow. |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+The following fail-closed defaults are authoritative for planning and execution:
+
+| Former question | Authoritative resolution |
+|---|---|
+| Google inventory availability | If read-only BigQuery/GCS inventory is unavailable or incomplete, all compatibility and Google cleanup is blocked. Unavailable is never skipped. |
+| Laptop network exposure | Bind loopback-only by default. Any LAN/public exposure is blocked until the operator approves a TLS reverse proxy boundary and direct HTTP exposure tests fail closed. |
+| Third-party endpoint capability/privacy | Before report cutover, synthetic preflight must prove strict JSON Schema, image input, actual model/request lineage, generic refusal/error mapping, and operator-accepted privacy/retention terms. Failure blocks cutover; no named fallback is assumed. |
+| Self-hosted Supabase backup mechanism | If the operator-supported database and separate Storage backup mechanism is unknown, cleanup is blocked. A signed isolated DB+Storage restore drill and manifest comparison must pass before deletion. |
 
 1. **What retained BigQuery tables/rows and remote Google resources actually exist?**
    - What we know: local BigQuery configuration exists but is disabled; Google ADC/CLI is unavailable; Supabase has 10 reports. [VERIFIED: environment/live probes]
@@ -611,7 +621,7 @@ Expose only dependency names/status/latency, not URLs, keys, SQL errors, or prov
 4. **Which backup mechanism does the existing self-hosted Supabase operator support?**
    - What we know: `pg_dump`, `psql`, and Supabase CLI are absent on this laptop; self-hosted operators are responsible for backups/disaster recovery, and Storage objects need separate handling. [VERIFIED: environment probe] [CITED: https://supabase.com/docs/guides/self-hosting]
    - What's unclear: direct DB connectivity, existing physical/PITR backups, Postgres version, and Storage backend/S3 availability. [ASSUMED]
-   - Recommendation: make backup tooling discovery a blocking operations task; install a compatible PostgreSQL client or integrate with the operator's supported backup, then perform a restore drill. [ASSUMED]
+   - Resolved decision: install native Supabase CLI and the native PostgreSQL 17 client package on the laptop through the approved non-Docker Windows routes before any schema work. Require `rtk supabase --version` at `>=2.48.3 <3.0.0`, native `rtk psql --version` at `>=15 <18` and not older than the server major, plus native `pg_dump`; refusal, absence, or incompatible versions fail closed. No operator-equivalent, wrapper, remote alias, `npx --yes`, or Docker branch is allowed. [RESOLVED: execution gate]
 
 ## Environment Availability
 
@@ -622,17 +632,17 @@ Expose only dependency names/status/latency, not URLs, keys, SQL errors, or prov
 | Existing self-hosted Supabase | DB/Auth/Storage | ✓ | REST and Storage probes returned 200 | No alternative permitted. [VERIFIED: live probe] |
 | Third-party AI endpoint/key | Analysis | ✗ unconfigured | — | No provider fallback; keep generic 502 behavior until configured. [VERIFIED: env audit] |
 | Google source access | One-time migration | ✗ | Google CLI absent; ADC error | Obtain temporary read-only credential or operator export; blocking before cleanup. [VERIFIED: environment probe] |
-| PostgreSQL `pg_dump`/`psql` | Backup/restore | ✗ | absent | Use operator-supported compatible tooling; blocking before operations sign-off. [VERIFIED: environment probe] |
-| Supabase CLI | Optional migration backup | ✗ | absent | Direct compatible Postgres tools/operator backup; do not use `npx --yes`. [VERIFIED: environment probe] |
+| PostgreSQL `pg_dump`/`psql` | Schema tests and backup/restore | ✗ | absent | Install native PostgreSQL 17 client via approved `rtk winget install --exact --id PostgreSQL.PostgreSQL.17`; no fallback. [RESOLVED] |
+| Supabase CLI | Migration push | ✗ | absent | Install native CLI via approved Supabase Scoop bucket commands; no fallback and no `npx --yes`. [RESOLVED] |
 | Windows Scheduled Tasks | Startup/restart | ✓ | built into OS; no CityMind task registered | — [VERIFIED: OS probe] |
 | PM2 | Process management alternative | ✗ | absent | Windows Scheduled Tasks. [VERIFIED: environment probe] |
 | Docker | Legacy CityMind packaging | ✓ but forbidden target | 29.6.1; two CityMind images, no CityMind container | Remove CityMind compose/images after sign-off; do not disturb Supabase-owned infrastructure. [VERIFIED: Docker probe] |
 | slopcheck | Package legitimacy | ✓ | 0.6.1 | — [VERIFIED: environment probe] |
 | ctx7 | Preferred documentation lookup | ✗ | absent | Official documentation fetched directly. [VERIFIED: environment probe] |
 
-**Missing dependencies with no fallback:** configured third-party endpoint/key for live AI smoke; temporary BigQuery/GCS inventory access before removal; a supported DB backup/restore mechanism before operations sign-off. [VERIFIED: audit]
+**Missing dependencies with no fallback:** native Supabase CLI; native PostgreSQL `psql`/`pg_dump`; configured third-party endpoint/key for live AI smoke; temporary BigQuery/GCS inventory access before removal; a supported Storage backup/restore mechanism before operations sign-off. [VERIFIED: audit]
 
-**Missing dependencies with fallback:** PM2 is unnecessary because Windows Scheduled Tasks are available; Supabase CLI can be replaced only by an operator-approved compatible backup path. [CITED: Microsoft and Supabase official docs]
+**Deliberately unnecessary dependency:** PM2 is unnecessary because Windows Scheduled Tasks are available. Native Supabase CLI and PostgreSQL client installation are mandatory and have no fallback. [CITED: Microsoft and Supabase official docs]
 
 ## Validation Architecture
 

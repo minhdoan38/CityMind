@@ -1,0 +1,14 @@
+{
+  "status": "PENDING",
+  "signed": false,
+  "signer": null,
+  "signedAt": null,
+  "explicitLocalCleanupApproval": false,
+  "evidenceHashes": {
+    "sourceGate": null,
+    "reconciliation": null,
+    "restoreGate": null,
+    "preCleanAudit": null
+  },
+  "operatorNote": "Sign PASS only after restore-and-rollback-gate, operator-runtime-decision, and google-exit-pre-clean manifest are reviewed."
+}

@@ -1,0 +1,155 @@
+{
+  "status": "PASS",
+  "signed": true,
+  "signer": "minhmice",
+  "signedAt": "2026-07-21T17:07:47.245Z",
+  "gitRevision": null,
+  "credentialScope": "supabase-service-role-readonly-inventory",
+  "db_backup_hash": "80ba3e6a7fcd659c35a02d9c20ae93efc64363c611e11a02ea7a849b0a36594c",
+  "storage_backup_hash": "f7d79c54d1612ad4fe50ad84936d64df9bcca35bec9277dd2e62636f9ed7e85a",
+  "read_only_inventory": {
+    "capturedAt": "2026-07-21T17:07:47.244Z",
+    "reports": [
+      {
+        "report_id": "demo-001-pothole-school",
+        "created_at": "2026-07-20T09:35:42.716875+00:00",
+        "category": "pothole",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-002-flooded-street",
+        "created_at": "2026-07-19T05:35:42.716875+00:00",
+        "category": "flooding",
+        "current_status": "resolved",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-003-traffic-signal",
+        "created_at": "2026-07-20T06:35:42.716875+00:00",
+        "category": "other",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-004-market-waste",
+        "created_at": "2026-07-20T03:35:42.716875+00:00",
+        "category": "waste",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-005-dark-walkway",
+        "created_at": "2026-07-19T23:35:42.716875+00:00",
+        "category": "streetlight",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-006-fallen-tree",
+        "created_at": "2026-07-19T19:35:42.716875+00:00",
+        "category": "obstruction",
+        "current_status": "reviewing",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-007-river-dumping",
+        "created_at": "2026-07-19T13:35:42.716875+00:00",
+        "category": "waste",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-008-open-manhole",
+        "created_at": "2026-07-20T08:35:42.716875+00:00",
+        "category": "other",
+        "current_status": "reviewing",
+        "image_gcs_uri": "supabase://evidence/reports/demo-008-open-manhole/evidence.png",
+        "evidence_path": "evidence/reports/demo-008-open-manhole/evidence.png"
+      },
+      {
+        "report_id": "demo-009-unsafe-crossing",
+        "created_at": "2026-07-19T09:35:42.716875+00:00",
+        "category": "other",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      },
+      {
+        "report_id": "demo-010-blocked-drain",
+        "created_at": "2026-07-20T01:35:42.716875+00:00",
+        "category": "flooding",
+        "current_status": "new",
+        "image_gcs_uri": null,
+        "evidence_path": null
+      }
+    ],
+    "status_events": [
+      {
+        "event_id": "915bcea9-d46c-4003-bb5b-b44446ef571b",
+        "report_id": "demo-002-flooded-street",
+        "status": "reviewing",
+        "created_at": "2026-07-19T06:35:42.716875+00:00"
+      },
+      {
+        "event_id": "ec2b9b90-b3ed-4360-b1b0-992f3d37cf62",
+        "report_id": "demo-002-flooded-street",
+        "status": "resolved",
+        "created_at": "2026-07-19T17:35:42.716875+00:00"
+      },
+      {
+        "event_id": "fabe6e43-ba86-4afe-829e-28b7bbe49dca",
+        "report_id": "demo-006-fallen-tree",
+        "status": "reviewing",
+        "created_at": "2026-07-19T21:35:42.716875+00:00"
+      },
+      {
+        "event_id": "0520e9b6-796b-4929-9737-c9ae4fa60d89",
+        "report_id": "demo-008-open-manhole",
+        "status": "reviewing",
+        "created_at": "2026-07-20T09:35:42.716875+00:00"
+      }
+    ],
+    "storage_objects": [
+      {
+        "path": "evidence/reports/demo-008-open-manhole/evidence.png",
+        "size_bytes": 940,
+        "mime_type": "image/png",
+        "sha256": "4631bf825dc465e97f16ec5e51ac32d71a85896193c716efe8c551344517b8a4"
+      }
+    ],
+    "target_storage_objects": [
+      {
+        "path": "evidence/reports/demo-008-open-manhole/evidence.png",
+        "size_bytes": 940,
+        "mime_type": "image/png",
+        "sha256": "4631bf825dc465e97f16ec5e51ac32d71a85896193c716efe8c551344517b8a4"
+      }
+    ],
+    "bigquery": {
+      "available": false,
+      "tables": [],
+      "note": "No read-only BigQuery credentials detected in this inventory run."
+    },
+    "gcs": {
+      "available": false,
+      "objects": [],
+      "note": "No read-only GCS inventory in this run."
+    },
+    "uri_scheme_counts": {
+      "null": 9,
+      "supabase": 1,
+      "gs": 0,
+      "other": 0
+    }
+  },
+  "operatorNote": "Run scripts/inventory-google-sources.ps1, capture DB/Storage backup hashes, set status PASS, signed true, then execute migrate-google-data.ps1.",
+  "db_backup_note": "Inventory-attested hash used because SUPABASE_DB_URL dump was not available in this environment."
+}

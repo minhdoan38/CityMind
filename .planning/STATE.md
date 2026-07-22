@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
 status: verifying
-stopped_at: Phase 8 context gathered
-last_updated: "2026-07-22T00:20:59.072Z"
+stopped_at: Phase 8 — operator checkpoints (SUPABASE_DB_URL + schema push + triage smoke)
+last_updated: "2026-07-22T07:20:00+07:00"
 last_activity: 2026-07-22
 progress:
   total_phases: 10

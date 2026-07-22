@@ -1,0 +1,70 @@
+{
+  "source": "backend/tests/test_analytics_api.py",
+  "endpoint": "GET /api/v1/analytics",
+  "cases": [
+    {
+      "id": "analytics-auth-required",
+      "request": { "auth": "none", "query": { "from": "2026-06-01", "to": "2026-06-30" } },
+      "response": { "status": 401 }
+    },
+    {
+      "id": "analytics-invalid-range",
+      "request": {
+        "auth": "officer-jwt",
+        "query": { "from": "2026-07-01", "to": "2026-06-01" }
+      },
+      "response": { "status": 422 }
+    },
+    {
+      "id": "analytics-span-over-366-days",
+      "request": {
+        "auth": "officer-jwt",
+        "query": { "from": "2025-01-01", "to": "2026-12-31" }
+      },
+      "response": { "status": 422 }
+    },
+    {
+      "id": "analytics-empty-warehouse",
+      "request": {
+        "auth": "officer-jwt",
+        "query": { "from": "2026-06-01", "to": "2026-06-30" }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "from": "date",
+          "to": "date",
+          "empty": true,
+          "volume": [],
+          "category_mix": [],
+          "sla": { "closed_count": 0, "histogram": [] },
+          "hotspots": []
+        },
+        "forbiddenKeys": ["evidence", "access_token", "image_gcs_uri", "token"]
+      }
+    },
+    {
+      "id": "analytics-chart-payload",
+      "request": {
+        "auth": "officer-jwt",
+        "query": { "from": "2026-06-01", "to": "2026-06-30" }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "from": "date",
+          "to": "date",
+          "empty": false,
+          "volume": [{ "day": "date", "report_count": "integer" }],
+          "category_mix": [{ "category": "string", "report_count": "integer" }],
+          "sla": "object",
+          "hotspots": [{ "category": "string", "report_count": "integer" }]
+        }
+      }
+    }
+  ],
+  "deferredToLaterSlices": {
+    "GET /api/v1/public/stats": "Phase 5 public stats; covered by public-stats.test.mjs until ported",
+    "GET /health": "07-15 production smoke gate"
+  }
+}
