@@ -115,7 +115,66 @@
       "stepAiPending": "Đang chờ AI xem xét",
       "stepOfficerReview": "Cán bộ đang xem xét",
       "stepResolved": "Đã giải quyết",
-      "stepRejected": "Đã từ chối"
+      "stepRejected": "Đã từ chối",
+      "stepGuidanceAvailable": "Hướng dẫn đã sẵn sàng"
+    },
+    "routing": {
+      "escalateTitle": "Vẫn cần sự hỗ trợ của thành phố?",
+      "escalateCta": "Gửi cho cán bộ thành phố",
+      "escalateLoading": "Đang gửi cho cán bộ…",
+      "escalateError": "Không thể gửi báo cáo cho cán bộ. Vui lòng thử lại sau.",
+      "playbooks": {
+        "pothole": {
+          "title": "Ổ gà nhỏ — bạn có thể làm gì",
+          "steps": [
+            "Đánh dấu khu vực bằng cọc hoặc phấn để hàng xóm dễ thấy.",
+            "Chụp ảnh từ khoảng cách an toàn nếu tình trạng thay đổi.",
+            "Kiểm tra trang yêu cầu sửa đường của thành phố để biết bộ vá tạm thời (nếu có).",
+            "Nếu ổ gà mở rộng hoặc ảnh hưởng giao thông, dùng nút bên dưới để gửi cho cán bộ."
+          ],
+          "links": [
+            {
+              "label": "Thông tin bảo trì đường bộ (ví dụ)",
+              "url": "https://www.transportation.gov/"
+            }
+          ]
+        },
+        "waste": {
+          "title": "Rác thải bỏ lỡ hoặc tràn — các bước tiếp theo",
+          "steps": [
+            "Xác nhận ngày thu gom trên lịch rác của thành phố.",
+            "Đặt thùng ra lề đường đúng giờ và đậy nắp.",
+            "Báo thu gom bỏ lỡ qua đường dây rác thải nếu đã qua ngày thu gom.",
+            "Với rác đổ trái phép, ghi nhận vị trí và tránh chạm vào vật nguy hiểm."
+          ],
+          "links": [
+            {
+              "label": "Hướng dẫn rác thải sinh hoạt (EPA)",
+              "url": "https://www.epa.gov/recycle"
+            }
+          ]
+        },
+        "streetlight": {
+          "title": "Đèn đường hỏng — kiểm tra nhanh",
+          "steps": [
+            "Ghi số cột hoặc địa chỉ gần nhất nếu có.",
+            "Kiểm tra xem các đèn lân cận có tắt không (có thể là sự cố mạch).",
+            "Không leo cột hoặc mở thiết bị — để đơn vị điện lực xử lý.",
+            "Nếu khu vực không an toàn ban đêm, hãy chuyển cho cán bộ bên dưới."
+          ],
+          "links": []
+        },
+        "graffiti": {
+          "title": "Graffiti trên tài sản công — hướng dẫn",
+          "steps": [
+            "Chụp ảnh từ khoảng cách an toàn để lưu hồ sơ.",
+            "Không đối đầu với người đang vẽ graffiti — liên hệ cảnh sát nếu đang diễn ra.",
+            "Nhiều thành phố cung cấp bộ xóa graffiti miễn phí cho vết nhỏ trên hàng rào riêng.",
+            "Với tường công cộng hoặc graffiti tái diễn, đội thành phố có thể cần lên lịch xóa."
+          ],
+          "links": []
+        }
+      }
     },
     "triage": {
       "calmNoticeTitle": "Không thể tự động xem xét",

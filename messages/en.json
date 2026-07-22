@@ -115,7 +115,66 @@
       "stepAiPending": "AI review pending",
       "stepOfficerReview": "Under officer review",
       "stepResolved": "Resolved",
-      "stepRejected": "Rejected"
+      "stepRejected": "Rejected",
+      "stepGuidanceAvailable": "Guidance available"
+    },
+    "routing": {
+      "escalateTitle": "Still need city help?",
+      "escalateCta": "Send to city officers",
+      "escalateLoading": "Sending to officers…",
+      "escalateError": "Could not send your report to officers. Try again shortly.",
+      "playbooks": {
+        "pothole": {
+          "title": "Small pothole — what you can do",
+          "steps": [
+            "Mark the area with cones or chalk so neighbors can see it.",
+            "Take a photo from a safe distance if conditions change.",
+            "Check your city's road repair request page for DIY patch kits in some areas.",
+            "If the hole widens or affects traffic, use the button below to send it to officers."
+          ],
+          "links": [
+            {
+              "label": "Example municipal road maintenance info",
+              "url": "https://www.transportation.gov/"
+            }
+          ]
+        },
+        "waste": {
+          "title": "Missed or overflowing waste — next steps",
+          "steps": [
+            "Confirm your collection day on the city waste schedule.",
+            "Place bins at the curb by the posted time with lids closed.",
+            "Report missed pickup to the city waste line if it is the day after collection.",
+            "For illegal dumping, note the location and avoid touching hazardous items."
+          ],
+          "links": [
+            {
+              "label": "EPA household waste guidance",
+              "url": "https://www.epa.gov/recycle"
+            }
+          ]
+        },
+        "streetlight": {
+          "title": "Streetlight out — quick checks",
+          "steps": [
+            "Note the pole number or nearest address if visible.",
+            "Check whether nearby lights are also out (possible circuit issue).",
+            "Avoid climbing poles or opening equipment — leave repairs to the utility.",
+            "If the area feels unsafe at night, escalate to city officers below."
+          ],
+          "links": []
+        },
+        "graffiti": {
+          "title": "Graffiti on public property — guidance",
+          "steps": [
+            "Photograph the tagging from a safe distance for your records.",
+            "Do not confront anyone you see tagging — contact police if activity is ongoing.",
+            "Many cities offer free graffiti removal kits for small tags on your own fence.",
+            "For public walls or recurring tags, city crews may need to schedule removal."
+          ],
+          "links": []
+        }
+      }
     },
     "triage": {
       "calmNoticeTitle": "Automated review unavailable",
