@@ -64,15 +64,24 @@
 - [ ] **MAP-02**: MapLibre GL incident map on dashboard with clustering
 - [ ] **MAP-03**: Radius/bbox geo filter API and map-integrated filter UI
 
-### Async Triage (TRIAGE) — Phases 7 & 9
+### Self-Hosted Platform (SELFHOST) — Phase 7
 
-- [ ] **TRIAGE-01**: `POST /reports` persists report before triage; returns `report_id` + `access_token` immediately (`ReportSubmissionResponse`)
-- [ ] **TRIAGE-02**: `triage_status` lifecycle (`pending` → `processing` → `completed` \| `failed` \| `manual_review`); AI failure never blocks intake
-- [ ] **TRIAGE-03**: Citizen status shows service-progress wording; hides AI fields until `completed`; calm message on `failed` (no provider errors)
-- [ ] **TRIAGE-04**: Officers see all reports in default queue immediately; `failed`/`manual_review` elevated; filter by `triage_status`; NULL AI fields never backfilled
-- [ ] **TRIAGE-05**: Deployed env uses Cloud Tasks → authenticated internal triage handler; local dev may use BackgroundTasks; deployed config rejects BackgroundTasks-only
-- [ ] **TRIAGE-06**: `triage_runs` and `triage_attempts` audit tables (model, prompt/config version, raw output, latency, validation, disposition)
-- [ ] **TRIAGE-07**: Semantic policy validation (severity/priority/evidence rules); invalid output → `manual_review`
+- [ ] **SELFHOST-01**: All FastAPI routes and Python backend services are ported to Next.js/Node.js/TypeScript, with existing API behavior and security boundaries preserved
+- [ ] **SELFHOST-02**: AI analysis uses a configurable OpenAI-compatible endpoint, model, and third-party API key; Gemini, Vertex AI, Google credentials, and Google AI SDKs are removed
+- [ ] **SELFHOST-03**: Operational and analytics workloads use the existing self-hosted Supabase Postgres instance; retained BigQuery data is migrated and BigQuery ETL/views/jobs are removed
+- [ ] **SELFHOST-04**: Evidence uses Supabase Storage only; retained `gs://` objects are migrated and verified before GCS support is removed
+- [ ] **SELFHOST-05**: CityMind runs directly on the laptop as a Node.js application with documented local configuration, startup/restart, health checks, and backups; Docker is removed
+- [ ] **SELFHOST-06**: Cloud Run, Cloud Build, Artifact Registry, Secret Manager, IAM, Cloud Scheduler, Cloud Run Jobs, Google packages/configuration/credentials/scripts/tests/docs are removed; Google Fonts are the sole exception
+
+### Async Triage (TRIAGE) — Phases 8 & 10
+
+- [x] **TRIAGE-01**: `POST /reports` persists report before triage; returns `report_id` + `access_token` immediately (`ReportSubmissionResponse`)
+- [x] **TRIAGE-02**: `triage_status` lifecycle (`pending` → `processing` → `completed` \| `failed` \| `manual_review`); AI failure never blocks intake
+- [x] **TRIAGE-03**: Citizen status shows service-progress wording; hides AI fields until `completed`; calm message on `failed` (no provider errors)
+- [x] **TRIAGE-04**: Officers see all reports in default queue immediately; `failed`/`manual_review` elevated; filter by `triage_status`; NULL AI fields never backfilled
+- [x] **TRIAGE-05**: The Next.js/Node.js runtime uses a self-hosted background worker with durable retries and an authenticated internal triage handler; intake never depends on an in-request background task
+- [x] **TRIAGE-06**: `triage_runs` and `triage_attempts` audit tables (model, prompt/config version, raw output, latency, validation, disposition)
+- [x] **TRIAGE-07**: Semantic policy validation (severity/priority/evidence rules); invalid output → `manual_review`
 - [ ] **TRIAGE-08**: Eval suite + shadow rollout gate before production model/config swap (under-triage, grounding, EN/VI parity, failure rate)
 
 ## v2 Requirements
@@ -148,22 +157,29 @@ Deferred beyond Milestone v2.
 | MAP-01 | Phase 6 | Pending |
 | MAP-02 | Phase 6 | Pending |
 | MAP-03 | Phase 6 | Pending |
-| TRIAGE-01 | Phase 7 | Pending |
-| TRIAGE-02 | Phase 7 | Pending |
-| TRIAGE-03 | Phase 7 | Pending |
-| TRIAGE-04 | Phase 7 | Pending |
-| TRIAGE-05 | Phase 7 | Pending |
-| TRIAGE-06 | Phase 7 | Pending |
-| TRIAGE-07 | Phase 7 | Pending |
-| TRIAGE-08 | Phase 9 | Pending |
+| SELFHOST-01 | Phase 7 | Pending |
+| SELFHOST-02 | Phase 7 | Pending |
+| SELFHOST-03 | Phase 7 | Pending |
+| SELFHOST-04 | Phase 7 | Pending |
+| SELFHOST-05 | Phase 7 | Pending |
+| SELFHOST-06 | Phase 7 | Pending |
+| TRIAGE-01 | Phase 8 | Complete |
+| TRIAGE-02 | Phase 8 | Complete |
+| TRIAGE-03 | Phase 8 | Complete |
+| TRIAGE-04 | Phase 8 | Complete |
+| TRIAGE-05 | Phase 8 | Complete |
+| TRIAGE-06 | Phase 8 | Complete |
+| TRIAGE-07 | Phase 8 | Complete |
+| TRIAGE-08 | Phase 10 | Pending |
 
 **Coverage:**
 
-- v1 requirements: 35 total
-- Mapped to phases: 35
-- TRIAGE requirements: 8 (phases 7–9)
+- v1 requirements: 41 total
+- Mapped to phases: 41
+- SELFHOST requirements: 6 (Phase 7)
+- TRIAGE requirements: 8 (Phases 8–10)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-21 — TRIAGE-01..08 from async triage explore*
+*Last updated: 2026-07-21 — SELFHOST-01..06 added; TRIAGE requirements shifted to Phases 8 and 10*

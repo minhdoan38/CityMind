@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
-status: executing
+status: verifying
 stopped_at: Phase 8 context gathered
-last_updated: "2026-07-22T00:10:51.972Z"
-last_activity: 2026-07-22 -- Phase 8 planning complete
+last_updated: "2026-07-22T00:20:59.072Z"
+last_activity: 2026-07-22
 progress:
   total_phases: 10
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 46
-  completed_plans: 41
-  percent: 70
+  completed_plans: 46
+  percent: 80
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 05 — analytics-pipeline
+**Current focus:** Phase 08 — async-triage-platform-refactor
 
 ## Current Position
 
-Phase: 05 (analytics-pipeline) — VERIFYING
-Plan: 4 of 4 complete
-Status: Ready to execute
-Last activity: 2026-07-22 -- Phase 8 planning complete
+Phase: 08 (async-triage-platform-refactor) — VERIFYING
+Plan: 5 of 5 complete (code); 3 checkpoints pending operator SUPABASE_DB_URL
+Status: Code complete — schema push and smoke tests blocked
+Last activity: 2026-07-22 — Phase 8 execution complete (checkpoints pending)
 
 Progress: [██████████] 100%
 
@@ -137,6 +137,7 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
+- **Phase 8 (2026-07-22):** `SUPABASE_DB_URL` missing from `.env.local` — blocks 08-01/08-04 schema push (`run-supabase-sql.mjs`) and 08-03 two-terminal triage smoke. Operator must add direct Postgres URL; do not invent password.
 - Phase 1 verification status **human_needed** (2026-07-20): code must-haves largely present; live Auth/RLS + BQ migrate UAT pending — see `.planning/phases/01-supabase-foundation/01-VERIFICATION.md`. ROADMAP Phase 1 checkbox not marked complete until UAT clears.
 - Phase 2 verification status **human_needed** (2026-07-20 re-verify): D-03 code gap closed; live submit/login/visual UAT pending — ROADMAP Phase 2 checkbox not marked complete until UAT clears.
 - Track B soft-consumes Track A `access_token`; prefer finishing 02-01 before Report success smoke (02-04)
@@ -152,7 +153,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-22T00:01:31.749Z
+Last session: 2026-07-22T00:20:59.066Z
 Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-async-triage-platform-refactor/08-CONTEXT.md
+Resume file: None
 Notes: Phase 5 all four plans complete; ready for phase verification / UAT

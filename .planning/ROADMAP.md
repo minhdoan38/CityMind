@@ -21,7 +21,7 @@ Upgrade the shipped CityMind MVP into a production-ready, self-hosted platform a
  (completed 2026-07-20)
 - [ ] **Phase 6: Maps & Geospatial** — PostGIS, MapLibre incident map, geo filters
 - [ ] **Phase 7: Next.js-Only Google-Free Platform** — Consolidate CityMind into Next.js/Node.js using a third-party API key and self-hosted Supabase; remove FastAPI, Python, Docker, and Google Cloud while retaining Google Fonts
-- [ ] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts
+- [x] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts (completed 2026-07-22)
 - [ ] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue
 - [ ] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover
 
@@ -257,17 +257,17 @@ Plans:
 
 **Wave 1 — Intake split**
 
-- [ ] 08-01-PLAN.md — **Track A** — Schema + claim RPCs, `POST /api/public/reports` intake, `ReportSubmissionResponse`, `/analyze` → 410 Gone, blocking schema push + SQL contract
+- [x] 08-01-PLAN.md — **Track A** — Schema + claim RPCs, `POST /api/public/reports` intake, `ReportSubmissionResponse`, `/analyze` → 410 Gone, blocking schema push + SQL contract
 
 **Wave 2 — Triage core**
 
-- [ ] 08-02-PLAN.md — **Track B** — `src/server/triage/` module, schema-only provider path, MVP policy validation (D-21), validation retry → `manual_review`
+- [x] 08-02-PLAN.md — **Track B** — `src/server/triage/` module, schema-only provider path, MVP policy validation (D-21), validation retry → `manual_review`
 
 **Wave 3 — Worker, audit, UX**
 
-- [ ] 08-03-PLAN.md — **Track C** — `pg` worker poll loop, claim/reclaim, `npm run triage:worker`, Task Scheduler registration (depends 08-01 + 08-02)
-- [ ] 08-04-PLAN.md — **Track D** — `triage_runs` / `triage_attempts` migration, `complete_triage_report` RPC, audit writer wired into service
-- [ ] 08-05-PLAN.md — **Track E** — Citizen 4-step status UX, officer triage badges/sort/filter, detail section reorder (D-13–D-20)
+- [x] 08-03-PLAN.md — **Track C** — `pg` worker poll loop, claim/reclaim, `npm run triage:worker`, Task Scheduler registration (depends 08-01 + 08-02)
+- [x] 08-04-PLAN.md — **Track D** — `triage_runs` / `triage_attempts` migration, `complete_triage_report` RPC, audit writer wired into service
+- [x] 08-05-PLAN.md — **Track E** — Citizen 4-step status UX, officer triage badges/sort/filter, detail section reorder (D-13–D-20)
 
 **Context**: `.planning/notes/async-triage-architecture.md` must be reconciled with the Phase 7 self-hosted architecture during discussion/planning.
 
@@ -317,7 +317,7 @@ Plans:
 | 5. Analytics Pipeline | v2.0 | 4/4 | Complete   | 2026-07-20 |
 | 6. Maps & Geospatial | v2.0 | 0/3 | Not started | - |
 | 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
-| 8. Async Triage Platform Refactor | v2.0 | 0/5 | Not started | - |
+| 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
 | 9. Self-help vs Government Routing | v2.0 | 0/0 | Not started | - |
 | 10. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
 
