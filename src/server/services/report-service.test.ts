@@ -253,6 +253,32 @@ describe("submitReport", () => {
     expect(provider.analyze).not.toHaveBeenCalled();
   });
 
+  it("persists intake when triage provider is unavailable (outage contract)", async () => {
+    const client = createClient();
+    const provider = createProvider({
+      analyze: vi.fn(async () => {
+        throw new Error("provider outage");
+      }),
+    });
+    const form = formWith({
+      description: "Synthetic outage scenario incident report.",
+    });
+
+    const result = await submitReport(form, { client: client as never });
+
+    expect(result.report_id).toBeDefined();
+    expect(result.access_token).toBeDefined();
+    expect(result.intake_status).toBe("received");
+    expect(result.triage_status).toBe("pending");
+    expect(provider.analyze).not.toHaveBeenCalled();
+    expect(client.rpc).toHaveBeenCalledWith(
+      "create_intake_report_with_access_token",
+      expect.objectContaining({
+        p_description: "Synthetic outage scenario incident report.",
+      }),
+    );
+  });
+
   it("returns 502 when intake persistence fails and compensates storage", async () => {
     const client = createClient({ rpcError: new Error("db failed") });
     const form = formWith(

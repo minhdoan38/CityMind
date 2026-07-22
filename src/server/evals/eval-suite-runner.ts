@@ -26,8 +26,14 @@ export type EvalSuiteOptions = {
 export type EvalSuiteResult = {
   status: "PASS" | "FAIL";
   manifest_id: string;
-  baseline: EvalManifest["baseline"];
-  candidate: EvalManifest["candidate"];
+  baseline: EvalManifest["baseline"] & {
+    failure_rate?: number;
+    under_triage_rate?: number;
+  };
+  candidate: EvalManifest["candidate"] & {
+    failure_rate?: number;
+    under_triage_rate?: number;
+  };
   metrics: ReturnType<typeof aggregateOutcomes>;
   threshold_result: ReturnType<typeof passesThresholds>;
   case_count: number;
@@ -129,8 +135,16 @@ export async function runEvalSuite(options: EvalSuiteOptions): Promise<EvalSuite
   const payload: EvalSuiteResult = {
     status: thresholdResult.pass ? "PASS" : "FAIL",
     manifest_id: manifest.manifest_id,
-    baseline,
-    candidate,
+    baseline: {
+      ...baseline,
+      failure_rate: metrics.failure_rate,
+      under_triage_rate: metrics.under_triage_rate,
+    },
+    candidate: {
+      ...candidate,
+      failure_rate: metrics.failure_rate,
+      under_triage_rate: metrics.under_triage_rate,
+    },
     metrics,
     threshold_result: thresholdResult,
     case_count: allCases.length,
