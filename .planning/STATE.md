@@ -4,8 +4,8 @@ milestone: v2.0
 milestone_name: Platform
 status: completed
 stopped_at: Milestone v2 complete
-last_updated: "2026-07-22T05:00:50.931Z"
-last_activity: 2026-07-22 -- Phase 12 execution complete
+last_updated: "2026-07-22T05:14:00.000Z"
+last_activity: 2026-07-22 -- Phase 13 plan 13-03 docs complete; UAT pending
 progress:
   total_phases: 13
   completed_phases: 12
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 12 — dashboard advisory assistant widget (complete)
+**Current focus:** Phase 13 — immediate citizen triage on submit (13-03 docs done; UAT-1..4 pending)
 
 ## Current Position
 
-Phase: 12 (dashboard-advisory-assistant) — **COMPLETE** (3/3 plans)
-Status: Milestone v2 phase execution complete
-Last activity: 2026-07-22 -- Phase 12 execution complete
+Phase: 13 (immediate-citizen-triage) — **IN PROGRESS** (13-03 partial: docs complete, human UAT pending)
+Status: Milestone v2 phase execution — Phase 13 UAT gate open
+Last activity: 2026-07-22 -- Phase 13 plan 13-03 Tasks 1-2 complete
 
 **Pre-production (optional):** `npm run eval:live`, shadow mode observation, model cutover after gate PASS
 
@@ -153,7 +153,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-22T05:00:50.922Z
-Stopped at: Milestone v2 complete
-Resume file: None
-Notes: Phases 9–10 SQL contracts PASS; corrective migrations 40002/40003 applied; full test + eval:mock/gate green
+Last session: 2026-07-22T05:14:00.000Z
+Stopped at: Completed 13-03-PLAN.md (Tasks 1-2; UAT pending)
+Resume file: .planning/phases/13-immediate-citizen-triage-on-submit-with-evaluator-prompt-and/13-03-SUMMARY.md
+Notes: ai-logic.md sync docs + SHELP traceability closed; human UAT-1..4 not yet executed
