@@ -84,6 +84,31 @@
 - [x] **TRIAGE-07**: Semantic policy validation (severity/priority/evidence rules); invalid output → `manual_review`
 - [x] **TRIAGE-08**: Eval suite + shadow rollout gate before production model/config swap (under-triage, grounding, EN/VI parity, failure rate)
 
+### Triage Spec Conformance (TRIAGE) — Phase 11
+
+- [ ] **TRIAGE-09**: Runtime triage persists **11-key evaluator schema** from `prompt/citymind_ai_triage_structured_output_evaluator.json` (not legacy `summary`/`recommendation`/`estimated_impact`/`evidence`/`uncertainty` at persistence boundary)
+- [ ] **TRIAGE-10**: System prompt and Zod enums match evaluator **10 categories**; no prompt/schema drift (e.g. `graffiti`, `traffic_signal`, `utility_hazard`, `structural_damage`)
+- [ ] **TRIAGE-11**: Policy validation enforces evaluator assertions including **`critical` requires `severity == 5`** and reason-field traceability to `observed_facts`
+- [ ] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path
+- [ ] **TRIAGE-13**: Verified UX contracts — citizen `failed` calm copy (no provider leakage); officer default queue elevates `failed`/`manual_review`; `triage_bucket` sort covered by automated tests
+- [ ] **TRIAGE-14**: Eval suite and shadow compare operate on **11-key** snapshots; `/analyze` compatibility documented (410 permanent) or behind feature-flag shim with sunset
+
+### Guided Self-Help Coach (SHELP) — Phase 11
+
+- [ ] **SHELP-01**: Success page branches after triage — **self_help** opens coach AI chat; **government** shows queue messaging (no coach-first for hard cases)
+- [ ] **SHELP-02**: Token-scoped **coach chat API** (`report_id` + access token); messages grounded in report + category playbook; advisory only
+- [ ] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL`
+- [ ] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path
+- [ ] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page
+
+### Operations (OPS) — Phase 11
+
+- [ ] **OPS-01**: `GET /api/health/ai` probes configured triage model readiness; returns status + latency + model id; consumed by dashboard and citizen UI
+
+### Dashboard (DASH) — Phase 11
+
+- [ ] **DASH-09**: Officer dashboard **AI status chip** from health ping; per-row **Run triage now** quick action for pending/failed/retry reports
+
 ### Routing (ROUT) — Phase 9
 
 - [x] **ROUT-01**: Post-triage deterministic routing — evaluate destination only on terminal triage dispositions; policy rules on triage output; no separate AI routing call
@@ -182,6 +207,19 @@ Deferred beyond Milestone v2.
 | TRIAGE-06 | Phase 8 | Complete |
 | TRIAGE-07 | Phase 8 | Complete |
 | TRIAGE-08 | Phase 10 | Complete |
+| TRIAGE-09 | Phase 11 | Pending |
+| TRIAGE-10 | Phase 11 | Pending |
+| TRIAGE-11 | Phase 11 | Pending |
+| TRIAGE-12 | Phase 11 | Pending |
+| TRIAGE-13 | Phase 11 | Pending |
+| TRIAGE-14 | Phase 11 | Pending |
+| SHELP-01 | Phase 11 | Pending |
+| SHELP-02 | Phase 11 | Pending |
+| SHELP-03 | Phase 11 | Pending |
+| SHELP-04 | Phase 11 | Pending |
+| SHELP-05 | Phase 11 | Pending |
+| OPS-01 | Phase 11 | Pending |
+| DASH-09 | Phase 11 | Pending |
 | ROUT-01 | Phase 9 | Complete |
 | ROUT-02 | Phase 9 | Complete |
 | ROUT-03 | Phase 9 | Complete |
@@ -193,10 +231,12 @@ Deferred beyond Milestone v2.
 
 **Coverage:**
 
-- v1 requirements: 41 total
-- Mapped to phases: 41
+- v1 requirements: 55 total
+- Mapped to phases: 55
 - SELFHOST requirements: 6 (Phase 7)
-- TRIAGE requirements: 8 (Phases 8–10)
+- TRIAGE requirements: 14 (Phases 8–11)
+- SHELP requirements: 5 (Phase 11)
+- OPS requirements: 1 (Phase 11)
 - ROUT requirements: 8 (Phase 9)
 - Unmapped: 0 ✓
 

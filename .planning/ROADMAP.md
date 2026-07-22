@@ -24,6 +24,7 @@ Upgrade the shipped CityMind MVP into a production-ready, self-hosted platform a
 - [x] **Phase 8: Async Triage Platform Refactor** — Persist-first intake, self-hosted async triage, audit, officer/citizen contracts (completed 2026-07-22)
 - [x] **Phase 9: Self-help vs Government Routing** — Route citizens to self-help or government queue (completed 2026-07-22)
 - [x] **Phase 10: Shadow Rollout & Production Evaluation** — Shadow mode, eval gate, feature-flag production cutover (completed 2026-07-22)
+- [ ] **Phase 11: Triage Spec & Guided Self-Help** — Evaluator-aligned triage, AI health ping, success-page coach chat for easy issues, government path for hard ones, dashboard quick triage actions
 
 ## Phase Details
 
@@ -320,9 +321,63 @@ Plans:
 
 ---
 
+### Phase 11: Triage Spec & Guided Self-Help
+
+**Goal**: Align triage runtime with the evaluator spec, add **AI readiness monitoring**, give citizens a **success-page coach chat** for easy self-help problems, route hard cases to government, and equip officers with **dashboard quick triage actions**.
+**Mode:** mvp
+**Depends on**: Phase 10
+**Requirements**: TRIAGE-09 … TRIAGE-14, SHELP-01 … SHELP-05, OPS-01, DASH-09
+**Artifacts**: `11-GAP-ANALYSIS.md`, `11-CONTEXT.md`
+
+**Success Criteria** (what must be TRUE):
+
+**Triage spec (Tracks A–E)**
+
+1. Runtime triage persists **11-key evaluator schema** — not legacy `summary`/`recommendation`/`estimated_impact`/`evidence`/`uncertainty` at the persistence boundary
+2. System prompt and Zod enums **match** evaluator categories (10 values)
+3. Policy validation enforces **`critical` requires `severity == 5`** and evaluator assertions
+4. **Authenticated `POST /internal/triage/{report_id}`** on intake and officer quick action; poll worker is fallback only
+5. Citizen **failed** copy and officer **triage_bucket** elevation covered by automated contract tests
+6. Eval suite and shadow compare use **11-key** snapshots
+
+**AI health (Track F — OPS-01)**
+
+7. **`GET /api/health/ai`** (or extended `/api/ready`) probes configured triage model; returns `up`/`degraded`/`down`, latency, model id — no secrets
+8. Dashboard shows **AI status indicator**; success page and coach UI **disable or warn** when model not ready
+
+**Guided self-help (Track G — SHELP-01…05)**
+
+9. After submit, **success page** polls triage/routing state and branches:
+   - **`self_help` + completed triage** → embedded **coach AI chat** (conversational, advisory, category playbook–aware)
+   - **`government` or hard signals** → clear government-queue messaging + status link; no coach-first UX
+10. **Token-scoped chat API** — citizen proves `report_id` + access token; messages grounded in report context only
+11. Coach AI is **separate role** from triage classifier (distinct system prompt; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL`)
+12. **Escalate to government** CTA always visible in coach and status flows (Phase 9 escalate API)
+13. Bilingual **EN/VI** coach copy and branching states
+
+**Officer quick actions (Track H — DASH-09)**
+
+14. Dashboard row action **“Run triage now”** for `pending` / `failed` / `retry` reports — calls internal triage dispatch
+15. Dashboard header **AI status chip** linked to health ping; optional filter for “AI unavailable” backlog
+
+**Plans**: 6 plans in 4 waves
+
+Plans:
+
+- [ ] 11-01-PLAN.md — **Wave 1 (A+B)** — 11-key schema migration, evaluator prompt, dual-read adapter, policy fixes (TRIAGE-09..11)
+- [ ] 11-02-PLAN.md — **Wave 2 (C)** — Internal triage push route, intake enqueue, officer dispatch API hooks (TRIAGE-12)
+- [ ] 11-03-PLAN.md — **Wave 2 (F)** — GET /api/health/ai probe + TTL cache (OPS-01)
+- [ ] 11-04-PLAN.md — **Wave 3 (G)** — Coach chat API, chat_messages, success/status UI branching (SHELP-01..05)
+- [ ] 11-05-PLAN.md — **Wave 3 (H)** — Dashboard AI chip, Run triage now, bulk retry (DASH-09)
+- [ ] 11-06-PLAN.md — **Wave 4 (D+E)** — UX contract tests, eval 11-key alignment, E2E phase gate (TRIAGE-13..14)
+
+**Context**: Self-hosted laptop stack only — no Cloud Tasks. Coach and triage share provider-neutral config. See `11-CONTEXT.md` for product vision.
+
+---
+
 ## Progress
 
-**Execution Order:** Phases 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 (tracks within each phase run in parallel)
+**Execution Order:** Phases 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 (tracks within each phase run in parallel)
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -336,8 +391,42 @@ Plans:
 | 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
 | 9. Self-help vs Government Routing | v2.0 | 4/4 | Complete   | 2026-07-22 |
 | 10. Shadow Rollout & Production Evaluation | v2.0 | 2/2 | Complete   | 2026-07-22 |
+| 11. Triage Spec & Guided Self-Help | v2.0 | 6/6 | Complete | 2026-07-22 |
+| 12. Dashboard Advisory Assistant | v2.0 | 0/3 | Planned | - |
+
+### Phase 12: Dashboard advisory assistant — conversational officer chat widget
+
+**Goal:** Productionize the officer dashboard advisory assistant widget — server-persisted threads, optional report attach, health/degraded UX per UI-SPEC, tests + SQL contract, and DASH-10 traceability.
+**Depends on:** Phase 11 (health ping, coach patterns as negative reference — do not reuse `chat_messages`)
+**Requirements**: DASH-10
+**Artifacts**: `12-RESEARCH.md`, `12-PATTERNS.md`, `12-UI-SPEC.md`, `12-VALIDATION.md`
+
+**Success Criteria** (what must be TRUE):
+
+1. Officer assistant messages persist in `officer_assistant_messages` per `officer_user_id`; server loads history — client `history` is not trusted
+2. `GET` and `POST /api/officer/assistant/messages` require officer session; rate limit, health gate, and generic errors match DASH-10a
+3. Optional `report_id` attach grounds replies in officer-visible triage fields via `getOfficerReport` + evaluator projection (DASH-10b, DASH-10d)
+4. Widget matches `12-UI-SPEC`: degraded amber alert, send disabled only when AI `down`, persisted thread on refresh (P12-D-04)
+5. `npm run phase12:gate` passes unit tests + `12_phase12_contract.sql`; DASH-10 documented in REQUIREMENTS.md
+
+**Plans**: 3 plans in 3 waves
+
+Plans:
+
+**Wave 1 — Persistence foundation**
+
+- [ ] 12-01-PLAN.md — **Schema + repository** — `officer_assistant_messages` migration, repository, SQL contract, DASH-10 in REQUIREMENTS, `phase12:gate` scaffold
+
+**Wave 2** *(depends on 12-01)*
+
+- [ ] 12-02-PLAN.md — **Service hardening** — server history, report attach, GET messages, 429/404 tests, AI context injection
+
+**Wave 3** *(depends on 12-02)*
+
+- [ ] 12-03-PLAN.md — **Widget UX** — 12-UI-SPEC health/degraded/load/attach, i18n keys, legacy widget contract test, final phase gate
 
 ---
 *Roadmap created: 2026-07-20*
 *Phases 7–9 added: 2026-07-21 (async triage explore)*
 *Phase 7 inserted for Google-service removal; former Phases 7–9 shifted to 8–10: 2026-07-21*
+*Phase 11 added: 2026-07-22 — evaluator spec + guided self-help coach, AI health ping, dashboard quick triage*

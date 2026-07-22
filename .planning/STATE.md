@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
 status: executing
-stopped_at: Phase 10 plan complete; 10-01 executing
-last_updated: "2026-07-22T01:03:39.514Z"
-last_activity: 2026-07-22
+stopped_at: Milestone v2 complete
+last_updated: "2026-07-22T04:10:21.748Z"
+last_activity: 2026-07-22 -- Phase 12 planning complete
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 52
-  completed_plans: 52
-  percent: 100
+  total_phases: 12
+  completed_phases: 11
+  total_plans: 61
+  completed_plans: 58
+  percent: 92
 ---
 
 # Project State
@@ -21,14 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 08 — async-triage-platform-refactor
+**Current focus:** Phase 11 — triage spec + guided self-help coach, AI health ping, dashboard quick triage
 
 ## Current Position
 
-Phase: 10 (shadow-rollout-production-evaluation) — PLANNED
-Plan: 2 of 2 complete (10-01 Wave 1, 10-02 Wave 2)
+Phase: 11 (triage-spec-guided-self-help) — **COMPLETE** (6/6 plans)
 Status: Ready to execute
-Last activity: 2026-07-22
+Last activity: 2026-07-22 -- Phase 12 planning complete
+
+**Pre-production (optional):** `npm run eval:live`, shadow mode observation, model cutover after gate PASS
 
 ## Performance Metrics
 
@@ -63,6 +64,10 @@ Last activity: 2026-07-22
 
 ### Roadmap Evolution
 
+- Phase 12 added: Dashboard advisory assistant — conversational officer chat widget
+- Phase 11 discuss complete: coach on success+status, Postgres chat, push triage + poll fallback, dual-read 11-key schema, keep 410 analyze
+- Phase 11 expanded: guided self-help coach on success page, AI health ping, dashboard quick triage (SHELP/OPS/DASH-09)
+- Phase 11 added: Triage Evaluator Spec Conformance — 11-key schema, policy assertions, push internal triage handler, UX contract verification
 - Phase 10 added: Shadow Rollout & Production Evaluation
 - Phase 7 edited: inserted Google-Free Self-Hosted Platform; Google Fonts retained
 - Phase 8 edited: shifted Async Triage Platform Refactor from Phase 7 and removed Gemini/Cloud Tasks assumptions
@@ -135,12 +140,8 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- **Phase 9 (2026-07-22):** `SUPABASE_DB_URL` missing from `.env.local` — blocks `09_routing_contract.sql` and live `routing_*` columns. Code + unit/legacy tests pass.
-- **Phase 8 (2026-07-22):** Same `SUPABASE_DB_URL` gap blocks async triage schema if not yet applied.
-- Phase 1 verification status **human_needed** (2026-07-20): code must-haves largely present; live Auth/RLS + BQ migrate UAT pending — see `.planning/phases/01-supabase-foundation/01-VERIFICATION.md`. ROADMAP Phase 1 checkbox not marked complete until UAT clears.
-- Phase 2 verification status **human_needed** (2026-07-20 re-verify): D-03 code gap closed; live submit/login/visual UAT pending — ROADMAP Phase 2 checkbox not marked complete until UAT clears.
-- Track B soft-consumes Track A `access_token`; prefer finishing 02-01 before Report success smoke (02-04)
-- 03-01 schema push blocked: Supabase MCP DB connection timeouts; need SUPABASE_ACCESS_TOKEN + SUPABASE_DB_PASSWORD for project eimiblmctoekrntrqsrx to run supabase db push
+- **Pre-cutover (optional):** Run `npm run eval:live` + `eval:gate` before swapping `AI_MODEL`; enable `TRIAGE_SHADOW_MODE=compare` for observation.
+- Phase 1–2, 4–5 verification debt remains from earlier milestones — see `/gsd-audit-uat`.
 
 ## Deferred Items
 
@@ -152,7 +153,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-22T00:57:31.467Z
-Stopped at: Phase 10 plan complete; 10-01 executing
+Last session: 2026-07-22T09:25:00.000Z
+Stopped at: Milestone v2 complete
 Resume file: None
-Notes: Phase 10 planned (2 waves); chain started 10-01 eval suite executor
+Notes: Phases 9–10 SQL contracts PASS; corrective migrations 40002/40003 applied; full test + eval:mock/gate green

@@ -413,24 +413,12 @@ Phase 3 `03-UI-SPEC.md` covers table/detail chrome but **not** the insights-rail
 | A4 | `degraded` health should allow send (coach pattern) | Pitfall 4 | UX mismatch if users want hard block |
 | A5 | No new npm packages required | Standard Stack | Rare if persistence needs UUID helper beyond existing |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Thread scope: one global officer thread vs per-report threads?**
-   - What we know: MVP is single ephemeral thread; coach is per-report.
-   - What's unclear: Whether officers expect report-scoped side conversations.
-   - Recommendation: **One thread per officer** for Phase 12; store optional `report_id` on each message for audit; revisit per-report threads if UAT requests.
-
-2. **Attach UX: dashboard-only vs report detail embed?**
-   - What we know: Widget lives on dashboard home insights rail; attach button disabled.
-   - What's unclear: Auto-attach when navigating from report detail.
-   - Recommendation: Phase 12 enables manual attach with `report_id`; optional fast-follow prop `contextReportId` from detail page.
-
-3. **Should `GET /api/officer/assistant/messages` load history?**
-   - What we know: Coach uses GET with query params; officer MVP has no GET.
-   - Recommendation: Add GET (no body secrets) returning persisted turns for widget mount.
-
-4. **Formalize DASH-10 before or during plan-phase?**
-   - Recommendation: Planner adds to `REQUIREMENTS.md` in Wave 0 task — ROADMAP still says TBD.
+1. **Thread scope: one global officer thread vs per-report threads?** → **RESOLVED:** One thread per officer (P12-D-01); optional `report_id` per message for audit.
+2. **Attach UX: dashboard-only vs report detail embed?** → **RESOLVED:** Manual attach in Phase 12; optional `contextReportId` prop for detail embed (P12-D-03).
+3. **Should `GET /api/officer/assistant/messages` load history?** → **RESOLVED:** Yes — plan 12-02 adds GET for widget mount.
+4. **Formalize DASH-10 before or during plan-phase?** → **RESOLVED:** Added in plan 12-01 Wave 0 task.
 
 ## Environment Availability
 
