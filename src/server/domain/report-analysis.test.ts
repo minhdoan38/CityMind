@@ -118,6 +118,7 @@ describe("enum schemas", () => {
       "flooding",
       "waste",
       "streetlight",
+      "graffiti",
       "obstruction",
       "other",
     ]);

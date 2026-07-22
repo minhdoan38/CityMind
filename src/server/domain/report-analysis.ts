@@ -5,6 +5,7 @@ export const CategorySchema = z.enum([
   "flooding",
   "waste",
   "streetlight",
+  "graffiti",
   "obstruction",
   "other",
 ]);

@@ -22,6 +22,7 @@ export const VALID_CATEGORIES = new Set([
   "flooding",
   "waste",
   "streetlight",
+  "graffiti",
   "obstruction",
   "other",
 ]);
