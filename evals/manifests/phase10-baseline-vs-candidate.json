@@ -1,0 +1,19 @@
+{
+  "manifest_id": "phase10-candidate-2026-07-22",
+  "baseline": {
+    "ai_base_url": "${AI_BASE_URL}",
+    "ai_model": "${AI_MODEL}",
+    "prompt_version": "phase8-mvp-v1",
+    "routing_policy_version": "1.0.0"
+  },
+  "candidate": {
+    "ai_base_url": "${AI_BASE_URL_CANDIDATE}",
+    "ai_model": "${AI_MODEL_CANDIDATE}",
+    "prompt_version": "phase10-candidate-v1",
+    "routing_policy_version": "1.0.0"
+  },
+  "evaluator_config": "prompt/citymind_ai_triage_structured_output_evaluator.json",
+  "dataset": "evals/datasets/urban-incidents-v1.jsonl",
+  "thresholds_ref": "prompt/citymind_ai_triage_structured_output_evaluator.json#/thresholds",
+  "parity_epsilon": 0.05
+}

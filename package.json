@@ -12,7 +12,10 @@
     "test": "npm run test:unit && npm run test:legacy",
     "triage:worker": "node scripts/triage-worker.mjs",
     "smoke:production": "node scripts/smoke-production.mjs",
-    "audit:google-exit": "node scripts/google-exit-audit.mjs"
+    "audit:google-exit": "node scripts/google-exit-audit.mjs",
+    "eval:mock": "node scripts/eval-suite.mjs --mock",
+    "eval:live": "node scripts/eval-suite.mjs --live --require-privacy-approval",
+    "eval:gate": "node scripts/verify-eval-gate.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",
