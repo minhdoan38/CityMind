@@ -82,7 +82,7 @@
 - [x] **TRIAGE-05**: The Next.js/Node.js runtime uses a self-hosted background worker with durable retries and an authenticated internal triage handler; intake never depends on an in-request background task
 - [x] **TRIAGE-06**: `triage_runs` and `triage_attempts` audit tables (model, prompt/config version, raw output, latency, validation, disposition)
 - [x] **TRIAGE-07**: Semantic policy validation (severity/priority/evidence rules); invalid output → `manual_review`
-- [ ] **TRIAGE-08**: Eval suite + shadow rollout gate before production model/config swap (under-triage, grounding, EN/VI parity, failure rate)
+- [x] **TRIAGE-08**: Eval suite + shadow rollout gate before production model/config swap (under-triage, grounding, EN/VI parity, failure rate)
 
 ### Routing (ROUT) — Phase 9
 
@@ -181,7 +181,7 @@ Deferred beyond Milestone v2.
 | TRIAGE-05 | Phase 8 | Complete |
 | TRIAGE-06 | Phase 8 | Complete |
 | TRIAGE-07 | Phase 8 | Complete |
-| TRIAGE-08 | Phase 10 | Pending |
+| TRIAGE-08 | Phase 10 | Complete |
 | ROUT-01 | Phase 9 | Complete |
 | ROUT-02 | Phase 9 | Complete |
 | ROUT-03 | Phase 9 | Complete |

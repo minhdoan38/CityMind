@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
-status: verifying
-stopped_at: Phase 9 context gathered
-last_updated: "2026-07-22T00:46:58.306Z"
+status: executing
+stopped_at: Phase 10 plan complete; 10-01 executing
+last_updated: "2026-07-22T00:57:31.473Z"
 last_activity: 2026-07-22
 progress:
   total_phases: 10
   completed_phases: 9
-  total_plans: 50
-  completed_plans: 50
+  total_plans: 52
+  completed_plans: 51
   percent: 90
 ---
 
@@ -25,12 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-20)
 
 ## Current Position
 
-Phase: 08 (async-triage-platform-refactor) — VERIFYING
-Plan: 5 of 5 complete (code); 3 checkpoints pending operator SUPABASE_DB_URL
-Status: Phase complete — ready for verification
+Phase: 10 (shadow-rollout-production-evaluation) — PLANNED
+Plan: 1 of 2 complete (10-01 Wave 1, 10-02 Wave 2)
+Status: Ready to execute
 Last activity: 2026-07-22
-
-Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -137,7 +135,8 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- **Phase 8 (2026-07-22):** `SUPABASE_DB_URL` missing from `.env.local` — blocks 08-01/08-04 schema push (`run-supabase-sql.mjs`) and 08-03 two-terminal triage smoke. Operator must add direct Postgres URL; do not invent password.
+- **Phase 9 (2026-07-22):** `SUPABASE_DB_URL` missing from `.env.local` — blocks `09_routing_contract.sql` and live `routing_*` columns. Code + unit/legacy tests pass.
+- **Phase 8 (2026-07-22):** Same `SUPABASE_DB_URL` gap blocks async triage schema if not yet applied.
 - Phase 1 verification status **human_needed** (2026-07-20): code must-haves largely present; live Auth/RLS + BQ migrate UAT pending — see `.planning/phases/01-supabase-foundation/01-VERIFICATION.md`. ROADMAP Phase 1 checkbox not marked complete until UAT clears.
 - Phase 2 verification status **human_needed** (2026-07-20 re-verify): D-03 code gap closed; live submit/login/visual UAT pending — ROADMAP Phase 2 checkbox not marked complete until UAT clears.
 - Track B soft-consumes Track A `access_token`; prefer finishing 02-01 before Report success smoke (02-04)
@@ -153,7 +152,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-22T00:46:58.301Z
-Stopped at: Phase 9 context gathered
+Last session: 2026-07-22T00:57:31.467Z
+Stopped at: Phase 10 plan complete; 10-01 executing
 Resume file: None
-Notes: Phase 5 all four plans complete; ready for phase verification / UAT
+Notes: Phase 10 planned (2 waves); chain started 10-01 eval suite executor

@@ -310,7 +310,7 @@ Plans:
 
 **Wave 1 — Eval foundation**
 
-- [ ] 10-01-PLAN.md — **Eval suite** — `evals/` expert-labelled EN/VI dataset, metrics runner, mock/live CLI, verify-eval-gate, outage + injection tests
+- [x] 10-01-PLAN.md — **Eval suite** — `evals/` expert-labelled EN/VI dataset, metrics runner, mock/live CLI, verify-eval-gate, outage + injection tests
 
 **Wave 2** *(depends on 10-01)*
 
@@ -335,7 +335,7 @@ Plans:
 | 7. Google-Free Self-Hosted Platform | v2.0 | 0/15 | Not started | - |
 | 8. Async Triage Platform Refactor | v2.0 | 5/5 | Complete   | 2026-07-22 |
 | 9. Self-help vs Government Routing | v2.0 | 4/4 | Complete   | 2026-07-22 |
-| 10. Shadow Rollout & Production Evaluation | v2.0 | 0/2 | Not started | - |
+| 10. Shadow Rollout & Production Evaluation | v2.0 | 1/2 | In Progress|  |
 
 ---
 *Roadmap created: 2026-07-20*
