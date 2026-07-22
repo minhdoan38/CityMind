@@ -428,21 +428,13 @@ test("AgentConsoleViewer fetches officer triage console API", () => {
 | A3 | Truncation notice shown whenever unfiltered (not only at exactly 50 cases) | UI Polish | Under-disclosure if heuristic is wrong |
 | A4 | `generated_at` from API need not display in UI | UI Polish | Officers may want timestamp — low risk |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **DASH-11 vs DASH-10 sub-requirement**
-   - What we know: DASH-10 is assistant chat; console is separate per D-14-16.
-   - What's unclear: User preference on ID naming.
-   - Recommendation: **DASH-11** as sibling requirement under Dashboard (Phase 14); sub-bullets optional (11a API gate, 11b UI, 11e tests) mirroring DASH-10 pattern.
+1. **DASH-11 vs DASH-10 sub-requirement** — **RESOLVED:** Use **DASH-11** as sibling Dashboard requirement (separate from DASH-10 assistant per D-14-16). Sub-bullets DASH-11a–11e mirror DASH-10 pattern; locked in 14-03 Task 1.
 
-2. **Truncation notice trigger**
-   - What we know: Cap is run-based (50 runs), not case-based.
-   - What's unclear: Show always on unfiltered vs only when `runRows.length === 50`.
-   - Recommendation: Always show on unfiltered load (safer disclosure); mention "latest 50 triage runs" in copy.
+2. **Truncation notice trigger** — **RESOLVED:** Always show on unfiltered load (safer disclosure); copy references "latest 50 triage runs". Implemented in 14-02 Task 2 per D-14-15.
 
-3. **SQL gate when `SUPABASE_DB_URL` unset**
-   - What we know: Phase 13 VALIDATION allows skip with SUMMARY note.
-   - Recommendation: Same pattern in `14-VALIDATION.md`; gate script still invokes SQL when URL present.
+3. **SQL gate when `SUPABASE_DB_URL` unset** — **RESOLVED:** Mirror Phase 13 pattern — gate script still invokes SQL when URL present; document skip in SUMMARY when unset (14-03 Task 3).
 
 ## Environment Availability
 

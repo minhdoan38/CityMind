@@ -444,6 +444,33 @@ Plans:
 - [x] 13-02-PLAN.md — dispatchTriageAndWait tests + government outcome + phase13:gate + SQL contract
 - [~] 13-03-PLAN.md — ai-logic.md + REQUIREMENTS/ROADMAP traceability *(done)*; human UAT *(pending)*
 
+### Phase 14: Officer agent console — per-case triage run and attempt log viewer
+
+**Goal:** Harden and sign off the officer triage audit console — read-only per-case `triage_runs` and `triage_attempts` viewer at `/dashboard/agent-console` (code mostly exists; Phase 14 adds gates, tests, SQL contract, UI polish, and UAT).
+**Requirements:** DASH-11, TRIAGE-06 (viewer), AUTH-03 (partial), AUTH-04 (partial), DASH-07 (partial)
+**Depends on:** Phase 13
+**Plans:** 3 plans in 3 waves
+
+**Success criteria:**
+- `npm run phase14:gate` passes (unit + legacy contract + SQL privilege deny)
+- Truncation notice on unfiltered feed (D-14-15)
+- DASH-11 documented in REQUIREMENTS.md
+- Human UAT checklist UAT-1..6 in `14-VALIDATION.md` approved
+
+Plans:
+
+**Wave 1 — Gates, tests, SQL contract**
+
+- [ ] 14-01-PLAN.md — **Gate foundation** — `phase14:gate`, service 401/200/502 tests, legacy wiring contract, `14_phase14_contract.sql`
+
+**Wave 2** *(depends on 14-01)*
+
+- [ ] 14-02-PLAN.md — **UI-SPEC polish** — truncation notice, emptyFiltered/emptyRecent, keyboard case list
+
+**Wave 3** *(depends on 14-02)*
+
+- [ ] 14-03-PLAN.md — **Traceability + UAT** — DASH-11 in REQUIREMENTS, ROADMAP finalization, human UAT UAT-1..6
+
 ---
 *Roadmap created: 2026-07-20*
 *Phases 7–9 added: 2026-07-21 (async triage explore)*
