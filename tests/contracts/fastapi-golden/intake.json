@@ -1,0 +1,65 @@
+{
+  "source": "phase-8-intake",
+  "endpoint": "POST /api/v1/reports",
+  "cases": [
+    {
+      "id": "intake-text-success",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": {
+          "description": "Synthetic incident description for contract capture."
+        }
+      },
+      "response": {
+        "status": 200,
+        "bodyShape": {
+          "report_id": "string",
+          "access_token": "string",
+          "intake_status": "received",
+          "triage_status": "pending"
+        },
+        "headers": {}
+      },
+      "invariants": [
+        "issue-once access_token returned on successful persist",
+        "token stored as sha256 hash server-side only",
+        "no analysis fields on intake response"
+      ]
+    },
+    {
+      "id": "intake-empty-description-and-image",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": { "description": "" },
+        "files": { "image": { "filename": "empty.png", "mimeType": "image/png", "empty": true } }
+      },
+      "response": {
+        "status": 422,
+        "body": { "detail": "Provide description or image" }
+      }
+    },
+    {
+      "id": "intake-rate-limit",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": { "description": "Rate limit contract" }
+      },
+      "response": {
+        "status": 429,
+        "body": { "detail": "string" },
+        "headers": { "retry-after": "integer" }
+      }
+    },
+    {
+      "id": "intake-submission-failure",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": { "description": "Persistence failure contract" }
+      },
+      "response": {
+        "status": 502,
+        "body": { "detail": "Report submission failed" }
+      }
+    }
+  ]
+}

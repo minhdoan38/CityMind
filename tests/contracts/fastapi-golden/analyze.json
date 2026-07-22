@@ -1,0 +1,35 @@
+{
+  "source": "phase-8-analyze-removal",
+  "endpoint": "POST /api/v1/reports/analyze",
+  "cases": [
+    {
+      "id": "analyze-removed-gone",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": {
+          "description": "Legacy analyze endpoint contract."
+        }
+      },
+      "response": {
+        "status": 410,
+        "body": {
+          "detail": "POST /api/public/reports/analyze is removed. Use POST /api/public/reports for intake."
+        }
+      }
+    },
+    {
+      "id": "analyze-rate-limit",
+      "request": {
+        "contentType": "multipart/form-data",
+        "fields": { "description": "Synthetic report for rate-limit contract." }
+      },
+      "response": {
+        "status": 410,
+        "body": {
+          "detail": "POST /api/public/reports/analyze is removed. Use POST /api/public/reports for intake."
+        }
+      },
+      "note": "Legacy analyze route returns 410; rate limiting moved to POST /reports intake."
+    }
+  ]
+}
