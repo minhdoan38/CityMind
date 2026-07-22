@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -15,7 +15,9 @@
     "audit:google-exit": "node scripts/google-exit-audit.mjs",
     "eval:mock": "node scripts/eval-suite.mjs --mock",
     "eval:live": "node scripts/eval-suite.mjs --live --require-privacy-approval",
-    "eval:gate": "node scripts/verify-eval-gate.mjs"
+    "eval:gate": "node scripts/verify-eval-gate.mjs",
+    "phase11:gate": "npm run test:unit -- src/server/domain src/server/validation/evaluator-policy.test.ts src/server/triage src/server/health src/server/services/citizen-coach.test.ts src/server/ai/coach.test.ts src/server/evals && npm run test:legacy -- tests/citizen-status-contract.test.mjs tests/dashboard-table.test.mjs && npm run eval:mock && npm run eval:gate && node scripts/run-supabase-sql.mjs -f supabase/tests/11_phase11_contract.sql",
+    "phase12:gate": "npm run test:unit -- src/server/repositories/officer-assistant-messages.test.ts && node scripts/run-supabase-sql.mjs -f supabase/tests/12_phase12_contract.sql"
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",

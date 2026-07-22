@@ -109,6 +109,15 @@
 
 - [ ] **DASH-09**: Officer dashboard **AI status chip** from health ping; per-row **Run triage now** quick action for pending/failed/retry reports
 
+### Dashboard (DASH) — Phase 12
+
+- [ ] **DASH-10**: Officer dashboard **advisory assistant widget** — conversational chat in insights rail; authenticated officer session; advisory-only disclaimer; bilingual EN/VI; disabled when `/api/health/ai` is `down`; server-persisted thread; optional report attach; automated tests + SQL contract
+  - **DASH-10a**: `POST /api/officer/assistant/messages` — Zod validation, `requireOfficerContext`, per-officer rate limit, generic errors, 503 when AI down
+  - **DASH-10b**: Distinct officer system prompt — workflow/triage field guidance; must not claim to resolve/reject or invent report facts
+  - **DASH-10c**: Persist officer assistant thread in Postgres (`officer_assistant_messages`); server loads history; survives refresh
+  - **DASH-10d**: Optional report context attach — when `report_id` provided, ground reply in officer-visible triage fields via `getOfficerReport` + evaluator projection
+  - **DASH-10e**: Automated tests — service auth/health/validation/rate limit; prompt context unit test; SQL contract for officer message table RLS
+
 ### Routing (ROUT) — Phase 9
 
 - [x] **ROUT-01**: Post-triage deterministic routing — evaluate destination only on terminal triage dispositions; policy rules on triage output; no separate AI routing call
@@ -220,6 +229,7 @@ Deferred beyond Milestone v2.
 | SHELP-05 | Phase 11 | Pending |
 | OPS-01 | Phase 11 | Pending |
 | DASH-09 | Phase 11 | Pending |
+| DASH-10 | Phase 12 | Pending |
 | ROUT-01 | Phase 9 | Complete |
 | ROUT-02 | Phase 9 | Complete |
 | ROUT-03 | Phase 9 | Complete |
