@@ -46,6 +46,7 @@ function createDeps(client: ReturnType<typeof createClient>) {
     startTriageRun: vi.fn(async () => "run-1"),
     recordTriageAttempt: vi.fn(async () => "run-1"),
     finishTriageRun: vi.fn(async () => undefined),
+    applyRoutingForReport: vi.fn(async () => undefined),
   };
 }
 
@@ -73,6 +74,11 @@ describe("runTriageForReport", () => {
     expect(analyzeStructured).toHaveBeenCalledTimes(1);
     expect(deps.recordTriageAttempt).toHaveBeenCalled();
     expect(deps.finishTriageRun).toHaveBeenCalledWith(deps.client, "run-1", "completed");
+    expect(deps.applyRoutingForReport).toHaveBeenCalledWith(
+      deps.client,
+      "report-1",
+      expect.objectContaining({ disposition: "completed", analysis: validAnalysis }),
+    );
   });
 
   it("retries validation once then completes", async () => {
@@ -141,6 +147,11 @@ describe("runTriageForReport", () => {
 
     expect(result.disposition).toBe("manual_review");
     expect(analyzeStructured).toHaveBeenCalledTimes(2);
+    expect(deps.applyRoutingForReport).toHaveBeenCalledWith(
+      deps.client,
+      "report-1",
+      expect.objectContaining({ disposition: "manual_review" }),
+    );
   });
 
   it("routes third infra failure to manual_review", async () => {
@@ -163,6 +174,11 @@ describe("runTriageForReport", () => {
     const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("manual_review");
+    expect(deps.applyRoutingForReport).toHaveBeenCalledWith(
+      deps.client,
+      "report-1",
+      expect.objectContaining({ disposition: "manual_review" }),
+    );
   });
 
   it("returns failed when report row is missing", async () => {
@@ -174,5 +190,6 @@ describe("runTriageForReport", () => {
       analyzeStructured: vi.fn(),
     });
     expect(result.disposition).toBe("failed");
+    expect(deps.applyRoutingForReport).not.toHaveBeenCalled();
   });
 });

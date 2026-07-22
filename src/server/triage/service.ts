@@ -19,6 +19,10 @@ import { validateAnalysisPolicy } from "@/server/validation/analysis-policy";
 import { MAX_INFRA_ATTEMPTS } from "./config";
 import { finishTriageRun, recordTriageAttempt, startTriageRun } from "./audit";
 import { resolveInfraFailureDisposition } from "./disposition";
+import {
+  applyRoutingForReport,
+  type ApplyRoutingContext,
+} from "@/server/routing/apply-routing";
 
 export type TriageReportRow = {
   report_id: string;
@@ -47,6 +51,7 @@ export type TriageServiceDeps = {
   startTriageRun?: typeof startTriageRun;
   recordTriageAttempt?: typeof recordTriageAttempt;
   finishTriageRun?: typeof finishTriageRun;
+  applyRoutingForReport?: typeof applyRoutingForReport;
 };
 
 function buildValidationRetryInstruction(violations: PolicyViolation[]): string {
@@ -220,8 +225,19 @@ async function handleInfraFailure(
   if (disposition !== "retry") {
     const finish = deps.finishTriageRun ?? finishTriageRun;
     await finish(client, runId, disposition);
+    await applyTerminalRouting(deps, reportId, disposition);
   }
   return { reportId, disposition };
+}
+
+async function applyTerminalRouting(
+  deps: TriageServiceDeps,
+  reportId: string,
+  disposition: ApplyRoutingContext["disposition"],
+  analysis?: ReportAnalysis | null,
+): Promise<void> {
+  const apply = deps.applyRoutingForReport ?? applyRoutingForReport;
+  await apply(deps.client, reportId, { disposition, analysis: analysis ?? null });
 }
 
 export async function runTriageForReport(
@@ -250,6 +266,7 @@ export async function runTriageForReport(
       finishRun: true,
     });
     await finishRun(deps.client, runId, "failed");
+    await applyTerminalRouting(deps, reportId, "failed");
     return { reportId, disposition: "failed" };
   }
 
@@ -296,6 +313,7 @@ export async function runTriageForReport(
         finishRun: true,
       });
       await finishRun(deps.client, runId, "failed");
+      await applyTerminalRouting(deps, reportId, "failed");
       return { reportId, disposition: "failed" };
     }
 
@@ -313,6 +331,7 @@ export async function runTriageForReport(
         finishRun: true,
       });
       await finishRun(deps.client, runId, "completed");
+      await applyTerminalRouting(deps, reportId, "completed", structured.analysis);
       return { reportId, disposition: "completed" };
     }
 
@@ -340,9 +359,11 @@ export async function runTriageForReport(
       finishRun: true,
     });
     await finishRun(deps.client, runId, "manual_review");
+    await applyTerminalRouting(deps, reportId, "manual_review", structured.analysis);
     return { reportId, disposition: "manual_review" };
   }
 
   await finishRun(deps.client, runId, "manual_review");
+  await applyTerminalRouting(deps, reportId, "manual_review");
   return { reportId, disposition: "manual_review" };
 }
