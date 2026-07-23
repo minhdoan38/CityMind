@@ -143,6 +143,17 @@
 - [x] **ROUT-07**: Officer destination badge and override — Self-help/Government badge; escalate to government and mark resolved on self-help reports
 - [x] **ROUT-08**: Auditable re-routing — citizen escalate and officer override flip `routing_destination` with `routing_reason` audit trail
 
+### Secure Evidence Image Pipeline (SEC-IMG) — Phase 16
+
+- [x] **SEC-IMG-01**: Server accepts only JPEG/PNG/WebP detected by magic bytes; rejects SVG, GIF, spoofed `Content-Type`, and non-image payloads before Storage/AI
+- [x] **SEC-IMG-02**: Every evidence upload scanned via ClamAV `INSTREAM` before persist; **fail closed** on infection or scanner error when scanning is enabled (`CLAMAV_ENABLED` not `false`)
+- [x] **SEC-IMG-03**: Sharp sanitization: decode with `limitInputPixels`, auto-orient, WebP re-encode at quality 88 (configurable), strip metadata
+- [x] **SEC-IMG-04**: Process inbound bytes in-memory for ≤10MB uploads; final object in private bucket only under UUID key (`reports/{reportId}/{uuid}.webp`)
+- [x] **SEC-IMG-05**: Configurable max upload size (default **10MB**, aligned with Supabase `file_size_limit` 10485760)
+- [x] **SEC-IMG-06**: Batch script `scripts/migrate-evidence-to-webp.mjs` migrates legacy evidence objects to WebP and updates `reports.evidence_path` (`--dry-run`, `--limit`, `--report-id`)
+- [x] **SEC-IMG-07**: Ops health: `GET /api/health/clamav` PING probe with 45s TTL cache; `checkReadiness()` includes `clamav` dependency when enabled (overall `not_ready` when down)
+- [x] **SEC-IMG-08**: Client `accept` and Zod size limits stay consistent with server max bytes via shared `src/lib/evidence-limits.ts`
+
 ## v2 Requirements
 
 Deferred beyond Milestone v2.
@@ -256,18 +267,27 @@ Deferred beyond Milestone v2.
 | ROUT-06 | Phase 9 | Complete |
 | ROUT-07 | Phase 9 | Complete |
 | ROUT-08 | Phase 9 | Complete |
+| SEC-IMG-01 | Phase 16 | Complete |
+| SEC-IMG-02 | Phase 16 | Complete |
+| SEC-IMG-03 | Phase 16 | Complete |
+| SEC-IMG-04 | Phase 16 | Complete |
+| SEC-IMG-05 | Phase 16 | Complete |
+| SEC-IMG-06 | Phase 16 | Complete |
+| SEC-IMG-07 | Phase 16 | Complete |
+| SEC-IMG-08 | Phase 16 | Complete |
 
 **Coverage:**
 
-- v1 requirements: 55 total
+- v1 requirements: 63 total
 - Mapped to phases: 55
 - SELFHOST requirements: 6 (Phase 7)
 - TRIAGE requirements: 15 (Phases 8–11, 15)
 - SHELP requirements: 6 (Phase 11 build, Phase 13 verification, Phase 15 script delivery)
 - OPS requirements: 1 (Phase 11)
 - ROUT requirements: 8 (Phase 9)
+- SEC-IMG requirements: 8 (Phase 16)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-23 — Phase 15 planning: PUB-07 chat-first intake, SHELP-06 Hanoi scripts, TRIAGE-15 Hanoi v5.2*
+*Last updated: 2026-07-23 — Phase 16 complete: SEC-IMG-01..08 secure evidence pipeline*

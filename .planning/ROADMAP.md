@@ -521,20 +521,20 @@ Plans:
 
 **Wave 1 — Foundation**
 
-- [ ] 16-01-PLAN.md — **Deps + ClamAV client** — sharp/clamscan install, evidence-limits 10MB, clamav-client fail-closed + tests
+- [x] 16-01-PLAN.md — **Deps + ClamAV client** — sharp/clamscan install, evidence-limits 10MB, clamav-client fail-closed + tests
 
 **Wave 2** *(depends on 16-01)*
 
-- [ ] 16-02-PLAN.md — **Image pipeline** — evidence-image-pipeline, UUID WebP paths, GIF/SVG rejection, pipeline tests
+- [x] 16-02-PLAN.md — **Image pipeline** — evidence-image-pipeline, UUID WebP paths, GIF/SVG rejection, pipeline tests
 
 **Wave 3** *(16-03 ∥ 16-04 after 16-02)*
 
-- [ ] 16-03-PLAN.md — **Upload wiring** — report-service, citizen-chat-intake, ReportForm 10MB, generic HTTP errors (DATA-10)
-- [ ] 16-04-PLAN.md — **Ops tooling** — clamav health/readiness, migrate-evidence-to-webp.mjs batch script
+- [x] 16-03-PLAN.md — **Upload wiring** — report-service, citizen-chat-intake, ReportForm 10MB, generic HTTP errors (DATA-10)
+- [x] 16-04-PLAN.md — **Ops tooling** — clamav health/readiness, migrate-evidence-to-webp.mjs batch script
 
 **Wave 4** *(depends 16-03 + 16-04)*
 
-- [ ] 16-05-PLAN.md — **Gate + traceability** — phase16:gate, SQL contract, bucket migration, SEC-IMG in REQUIREMENTS, env docs
+- [x] 16-05-PLAN.md — **Gate + traceability** — phase16:gate, SQL contract, bucket migration, SEC-IMG in REQUIREMENTS, env docs
 
 ---
 *Roadmap created: 2026-07-20*
