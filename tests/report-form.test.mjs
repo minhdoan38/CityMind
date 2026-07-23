@@ -123,9 +123,9 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
   );
 });
 
-test('locale report page wires ReportForm without dashboard chrome', () => {
+test('locale report page wires chat-first intake without dashboard chrome', () => {
   const page = read(src('app', '[locale]', 'report', 'page.tsx'));
-  assert.match(page, /ReportForm/);
+  assert.match(page, /ReportIntakeShell|ChatIntakePanel/);
   assert.match(page, /reportPageTitle|reportCTA/);
   assert.doesNotMatch(page, /slate-950/);
 });

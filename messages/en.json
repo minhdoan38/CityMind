@@ -224,13 +224,31 @@
       "openStatusPage": "Open status page"
     },
     "intake": {
+      "title": "Report with chat support",
+      "subtitle": "Describe your issue in conversation. Submit when you're ready — an officer still reviews every report.",
       "welcome": "Hi! I'm here to help you report a community issue. Tell me what happened, where it is, and share a photo if you have one.",
       "placeholder": "Describe the issue, location, or ask a question…",
+      "inputLabel": "Message to intake assistant",
+      "messageLogLabel": "Intake conversation",
+      "send": "Send",
+      "sending": "Sending…",
+      "loading": "Starting conversation…",
+      "empty": "Tell us what happened to get started.",
       "submitReport": "Submit report",
+      "submitting": "Submitting…",
+      "submitError": "Could not submit your report. Try again later.",
       "loadError": "Could not load the conversation. Try again later.",
       "sendError": "Could not send your message. Try again later.",
       "aiDown": "Chat assistance is temporarily unavailable. You can still submit using the classic form.",
-      "classicFormLink": "Use classic report form"
+      "classicFormLink": "Use classic report form",
+      "chatFirstLink": "Back to chat intake"
+    },
+    "guidance": {
+      "title": "Guidance for you",
+      "disclaimer": "This guidance is advisory only. Officers make final decisions.",
+      "allowedTitle": "You may",
+      "prohibitedTitle": "Do not",
+      "generateLaterMessage": "An officer will prepare personalized guidance. Your report is in the review queue."
     }
   },
   "login": {

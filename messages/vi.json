@@ -224,13 +224,31 @@
       "openStatusPage": "Mở trang trạng thái"
     },
     "intake": {
+      "title": "Báo cáo qua trò chuyện",
+      "subtitle": "Mô tả sự cố trong hội thoại. Gửi khi sẵn sàng — cán bộ vẫn xem xét mọi báo cáo.",
       "welcome": "Xin chào! Tôi ở đây để giúp bạn báo cáo sự cố cộng đồng. Hãy mô tả điều gì đã xảy ra, vị trí, và đính kèm ảnh nếu có.",
       "placeholder": "Mô tả sự cố, vị trí, hoặc đặt câu hỏi…",
+      "inputLabel": "Tin nhắn tới trợ lý tiếp nhận",
+      "messageLogLabel": "Hội thoại tiếp nhận",
+      "send": "Gửi",
+      "sending": "Đang gửi…",
+      "loading": "Đang bắt đầu hội thoại…",
+      "empty": "Hãy mô tả sự cố để bắt đầu.",
       "submitReport": "Gửi báo cáo",
+      "submitting": "Đang gửi…",
+      "submitError": "Không thể gửi báo cáo. Thử lại sau.",
       "loadError": "Không thể tải hội thoại. Thử lại sau.",
       "sendError": "Không thể gửi tin nhắn. Thử lại sau.",
       "aiDown": "Trợ lý trò chuyện tạm thời không khả dụng. Bạn vẫn có thể gửi bằng biểu mẫu cổ điển.",
-      "classicFormLink": "Dùng biểu mẫu báo cáo cổ điển"
+      "classicFormLink": "Dùng biểu mẫu báo cáo cổ điển",
+      "chatFirstLink": "Quay lại trò chuyện tiếp nhận"
+    },
+    "guidance": {
+      "title": "Hướng dẫn cho bạn",
+      "disclaimer": "Hướng dẫn này chỉ mang tính tư vấn. Cán bộ đưa ra quyết định cuối cùng.",
+      "allowedTitle": "Bạn có thể",
+      "prohibitedTitle": "Không được",
+      "generateLaterMessage": "Cán bộ sẽ chuẩn bị hướng dẫn phù hợp. Báo cáo của bạn đang trong hàng chờ xem xét."
     }
   },
   "login": {
