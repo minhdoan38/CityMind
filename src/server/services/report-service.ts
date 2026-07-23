@@ -11,6 +11,7 @@ import type { ReportAnalysis } from "@/server/domain/report-analysis";
 import { getServerEnv } from "@/server/config/env";
 import {
   HttpError,
+  evidenceScanningUnavailable,
   imageTooLarge,
   jsonErrorResponse,
   reportAnalysisFailed,
@@ -39,11 +40,11 @@ import {
   deleteEvidenceByUri,
   EvidenceServiceError,
   resolveMaxEvidenceBytes,
-  uploadEvidence,
   validateEvidenceBytes,
   formatEvidencePath,
   parseSupabaseEvidenceUri,
 } from "./evidence-service";
+import { processAndStoreEvidence } from "./evidence-image-pipeline";
 
 export const EVIDENCE_BUCKET = "evidence";
 export const MAX_DESCRIPTION_LENGTH = 3000;
@@ -109,6 +110,25 @@ function mapEvidenceValidationError(
     return imageTooLarge();
   }
   return unsupportedImageType("unknown");
+}
+
+function mapEvidenceServiceError(error: EvidenceServiceError): HttpError {
+  if (error.code === "oversized") {
+    return imageTooLarge();
+  }
+  if (error.code === "scanner_unavailable") {
+    return evidenceScanningUnavailable();
+  }
+  if (
+    error.code === "invalid_type" ||
+    error.code === "spoofed_mime" ||
+    error.code === "empty" ||
+    error.code === "infected" ||
+    error.code === "transform_failed"
+  ) {
+    return unsupportedImageType("unknown");
+  }
+  throw error;
 }
 
 type ParsedReportForm = {
@@ -200,7 +220,7 @@ export async function submitReport(
 
   try {
     if (imageBytes && imageMime) {
-      evidenceUri = await uploadEvidence({
+      const pipelineResult = await processAndStoreEvidence({
         client: deps.client,
         reportId,
         bytes: imageBytes,
@@ -209,6 +229,7 @@ export async function submitReport(
         declaredContentLength: imageBytes.byteLength,
         declaredMimeType: imageMime,
       });
+      evidenceUri = pipelineResult.evidenceUri;
     }
 
     const { plaintext, tokenHash, expiresAt } = issueAccessToken();
@@ -256,16 +277,7 @@ export async function submitReport(
       throw error;
     }
     if (error instanceof EvidenceServiceError) {
-      if (error.code === "oversized") {
-        throw imageTooLarge();
-      }
-      if (
-        error.code === "invalid_type" ||
-        error.code === "spoofed_mime" ||
-        error.code === "empty"
-      ) {
-        throw unsupportedImageType("unknown");
-      }
+      throw mapEvidenceServiceError(error);
     }
 
     throw reportSubmissionFailed();
@@ -313,10 +325,11 @@ export async function analyzeReport(
 
   const reportId = randomUUID();
   let evidenceUri: string | null = null;
+  let webpBytes: Uint8Array | null = null;
 
   try {
     if (imageBytes && imageMime) {
-      evidenceUri = await uploadEvidence({
+      const pipelineResult = await processAndStoreEvidence({
         client: deps.client,
         reportId,
         bytes: imageBytes,
@@ -325,11 +338,15 @@ export async function analyzeReport(
         declaredContentLength: imageBytes.byteLength,
         declaredMimeType: imageMime,
       });
+      evidenceUri = pipelineResult.evidenceUri;
+      webpBytes = pipelineResult.webpBytes;
     }
 
     const analysisResult = await deps.provider.analyze({
       description: description.trim(),
-      image: imageBytes && imageMime ? { bytes: imageBytes, mimeType: imageMime } : undefined,
+      image: webpBytes
+        ? { bytes: webpBytes, mimeType: "image/webp" }
+        : undefined,
     });
 
     const { plaintext, tokenHash, expiresAt } = issueAccessToken();
@@ -369,16 +386,7 @@ export async function analyzeReport(
       throw error;
     }
     if (error instanceof EvidenceServiceError) {
-      if (error.code === "oversized") {
-        throw imageTooLarge();
-      }
-      if (
-        error.code === "invalid_type" ||
-        error.code === "spoofed_mime" ||
-        error.code === "empty"
-      ) {
-        throw unsupportedImageType("unknown");
-      }
+      throw mapEvidenceServiceError(error);
     }
 
     throw reportAnalysisFailed();

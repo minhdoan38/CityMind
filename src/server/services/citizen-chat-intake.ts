@@ -11,6 +11,7 @@ import type { SupportedImageMimeType } from "@/server/ai/provider";
 import { checkAiHealth } from "@/server/health/ai-readiness";
 import {
   citizenStatusUnauthorized,
+  evidenceScanningUnavailable,
   genericServiceFailure,
   HttpError,
   imageTooLarge,
@@ -44,9 +45,9 @@ import {
   formatEvidencePath,
   parseSupabaseEvidenceUri,
   resolveMaxEvidenceBytes,
-  uploadEvidence,
   validateEvidenceBytes,
 } from "@/server/services/evidence-service";
+import { processAndStoreEvidence } from "@/server/services/evidence-image-pipeline";
 import {
   dispatchTriageAndWait,
   enqueueTriageDispatch,
@@ -288,6 +289,25 @@ function mapEvidenceValidationError(
   return unsupportedImageType("unknown");
 }
 
+function mapEvidenceServiceError(error: EvidenceServiceError): HttpError {
+  if (error.code === "oversized") {
+    return imageTooLarge();
+  }
+  if (error.code === "scanner_unavailable") {
+    return evidenceScanningUnavailable();
+  }
+  if (
+    error.code === "invalid_type" ||
+    error.code === "spoofed_mime" ||
+    error.code === "empty" ||
+    error.code === "infected" ||
+    error.code === "transform_failed"
+  ) {
+    return unsupportedImageType("unknown");
+  }
+  throw error;
+}
+
 async function buildIntakeTriageOutcome(
   client: SupabaseClient,
   reportId: string,
@@ -403,7 +423,7 @@ export async function finalizeIntakeSubmit(
 
   try {
     if (input.imageBytes && input.imageMime) {
-      evidenceUri = await uploadEvidence({
+      const pipelineResult = await processAndStoreEvidence({
         client,
         reportId: input.auth.report_id,
         bytes: input.imageBytes,
@@ -412,6 +432,7 @@ export async function finalizeIntakeSubmit(
         declaredContentLength: input.imageBytes.byteLength,
         declaredMimeType: input.imageMime,
       });
+      evidenceUri = pipelineResult.evidenceUri;
     }
 
     const evidencePath = evidenceUri
@@ -468,16 +489,7 @@ export async function finalizeIntakeSubmit(
       throw error;
     }
     if (error instanceof EvidenceServiceError) {
-      if (error.code === "oversized") {
-        throw imageTooLarge();
-      }
-      if (
-        error.code === "invalid_type" ||
-        error.code === "spoofed_mime" ||
-        error.code === "empty"
-      ) {
-        throw unsupportedImageType("unknown");
-      }
+      throw mapEvidenceServiceError(error);
     }
 
     throw new HttpError(502, "Report submission failed");

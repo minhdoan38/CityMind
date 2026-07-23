@@ -30,6 +30,16 @@ vi.mock("@/server/repositories/reports", async (importOriginal) => {
   };
 });
 
+vi.mock("./evidence-image-pipeline", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./evidence-image-pipeline")>();
+  return {
+    processAndStoreEvidence: vi.fn(actual.processAndStoreEvidence),
+  };
+});
+
+import { processAndStoreEvidence } from "./evidence-image-pipeline";
+import { EvidenceServiceError } from "./evidence-service";
+
 const validAnalysis: ReportAnalysis = {
   category: "pothole",
   severity: 4,
@@ -49,10 +59,12 @@ const PNG_BYTES = Uint8Array.from(
   (char) => char.charCodeAt(0),
 );
 
-const JPEG_BYTES = Uint8Array.from([
-  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00,
-  0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
-]);
+const JPEG_BYTES = Uint8Array.from(
+  atob(
+    "/9j/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQf/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCDgB1If//Z",
+  ),
+  (char) => char.charCodeAt(0),
+);
 
 function createProvider(
   overrides: Partial<AnalysisProvider> = {},
@@ -98,6 +110,10 @@ function formWith(fields: Record<string, string>, file?: File): FormData {
 }
 
 describe("analyzeReport", () => {
+  beforeEach(() => {
+    process.env.CLAMAV_ENABLED = "false";
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
     resetRateLimiters();
@@ -239,7 +255,8 @@ describe("analyzeReport", () => {
 });
 
 describe("submitReport", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    process.env.CLAMAV_ENABLED = "false";
     dispatchTriageAndWait.mockReset();
     dispatchTriageAndWait.mockResolvedValue(undefined);
     enqueueTriageDispatch.mockReset();
@@ -257,6 +274,10 @@ describe("submitReport", () => {
       routing_destination: "self_help",
       history: [],
     });
+    const actual = await vi.importActual<typeof import("./evidence-image-pipeline")>(
+      "./evidence-image-pipeline",
+    );
+    vi.mocked(processAndStoreEvidence).mockImplementation(actual.processAndStoreEvidence);
   });
 
   afterEach(() => {
@@ -277,6 +298,46 @@ describe("submitReport", () => {
 
     expect(result.intake_status).toBe("received");
     expect(client.bucketApi.upload).toHaveBeenCalled();
+  });
+
+  it("maps scanner_unavailable to 503", async () => {
+    const client = createClient();
+    const form = formWith(
+      { description: "Pothole with photo evidence attached." },
+      new File([PNG_BYTES], "evidence.png", { type: "image/png" }),
+    );
+
+    vi.mocked(processAndStoreEvidence).mockRejectedValueOnce(
+      new EvidenceServiceError("scanner_unavailable", "down"),
+    );
+
+    await expect(submitReport(form, { client: client as never })).rejects.toMatchObject({
+      status: 503,
+      message: "Evidence scanning is temporarily unavailable.",
+    });
+  });
+
+  it("passes sanitized WebP bytes to analyze provider", async () => {
+    const client = createClient();
+    const provider = createProvider();
+    const webpBytes = new Uint8Array([0x52, 0x49, 0x46, 0x46]);
+    vi.mocked(processAndStoreEvidence).mockResolvedValueOnce({
+      evidenceUri: "supabase://evidence/reports/rep-analyze/test.webp",
+      webpBytes,
+    });
+
+    const form = formWith(
+      { description: "Synthetic valid incident report." },
+      new File([PNG_BYTES], "evidence.png", { type: "image/png" }),
+    );
+
+    await analyzeReport(form, { client: client as never, provider });
+
+    expect(provider.analyze).toHaveBeenCalledWith(
+      expect.objectContaining({
+        image: { bytes: webpBytes, mimeType: "image/webp" },
+      }),
+    );
   });
 
   it("returns government intake outcome with officer_review and no self-help coach fields", async () => {

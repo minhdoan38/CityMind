@@ -20,9 +20,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import ReportLocationMiniMap from "@/components/ReportLocationMiniMap";
+import { DEFAULT_MAX_EVIDENCE_BYTES } from "@/lib/evidence-limits";
 
 const FLASH_KEY = "citymind:report-success";
-const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -79,8 +79,8 @@ const reportSchema = z.object({
     .optional()
     .refine((files) => {
       if (!files || files.length === 0) return true;
-      return files[0].size <= MAX_FILE_SIZE;
-    }, "Max image size is 8MB.")
+      return files[0].size <= DEFAULT_MAX_EVIDENCE_BYTES;
+    }, "Max image size is 10MB.")
     .refine((files) => {
       if (!files || files.length === 0) return true;
       return isAcceptedImageFile(files[0]);

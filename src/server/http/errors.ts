@@ -56,3 +56,7 @@ export function unsupportedImageType(received = "unknown"): HttpError {
     `Only JPEG, PNG, or WebP images are accepted. Received: ${received}`,
   );
 }
+
+export function evidenceScanningUnavailable(): HttpError {
+  return new HttpError(503, "Evidence scanning is temporarily unavailable.");
+}

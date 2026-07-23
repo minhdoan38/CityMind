@@ -39,7 +39,9 @@ test('ReportForm uses RHF+Zod, analyzing state, and sessionStorage flash (PUB-03
   assert.match(form, /zodResolver/);
   assert.match(form, /from ['"]zod['"]/);
   assert.match(form, /\.max\(\s*3000\s*\)/);
-  assert.match(form, /8\s*\*\s*1024\s*\*\s*1024/);
+  assert.match(form, /evidence-limits/);
+  assert.match(form, /DEFAULT_MAX_EVIDENCE_BYTES/);
+  assert.doesNotMatch(form, /8\s*\*\s*1024\s*\*\s*1024/);
   assert.match(form, /image\/jpeg|image\/png|image\/webp/);
   assert.match(form, /\/api\/public\/reports/);
   assert.doesNotMatch(form, /\/api\/public\/reports\/analyze/);
@@ -91,7 +93,7 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
     formErrorNetwork: 'Could not send your report. Check your connection and try again.',
     successHeading: 'Report received',
     successBody:
-      'Your report is saved. Review the AI guidance below, then keep your ID and token to check status later.',
+      'Your report is saved. Read the guidance below, then chat for step-by-step help. Keep your ID and token to check status later.',
     copyReportId: 'Copy report ID',
     copyAccessToken: 'Copy access token',
     tokenWarning: 'This token is shown once. We can’t show it again.',
@@ -123,9 +125,9 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
   );
 });
 
-test('locale report page wires chat-first intake without dashboard chrome', () => {
+test('locale report page wires classic ReportForm without dashboard chrome', () => {
   const page = read(src('app', '[locale]', 'report', 'page.tsx'));
-  assert.match(page, /ChatIntakePanel/);
+  assert.match(page, /ReportForm/);
   assert.match(page, /reportPageTitle|reportCTA/);
   assert.doesNotMatch(page, /slate-950/);
 });
