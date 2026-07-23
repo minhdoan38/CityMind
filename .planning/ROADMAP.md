@@ -503,6 +503,39 @@ Plans:
 - [x] 15-03-PLAN.md — **Citizen UX + routing** — ChatIntakePanel, handling_type policy, GuidanceScriptCard on success/status
 - [x] 15-04-PLAN.md — **Gate + traceability** — phase15:gate, SQL contract, legacy tests, UAT checkpoint
 
+### Phase 16: Secure evidence image pipeline — accept JPEG/PNG/WebP via magic bytes, ClamAV scan, Sharp re-encode to WebP, quarantine and batch conversion script
+
+**Goal:** Harden citizen evidence uploads — accept only JPEG/PNG/WebP via magic bytes (reject SVG/GIF), scan every upload with ClamAV INSTREAM (fail closed), re-encode to sanitized WebP via Sharp with metadata stripped, store under UUID keys in the private evidence bucket, align client/server 10MB limits, and provide batch legacy conversion plus ClamAV health probes for ops.
+**Requirements:** SEC-IMG-01, SEC-IMG-02, SEC-IMG-03, SEC-IMG-04, SEC-IMG-05, SEC-IMG-06, SEC-IMG-07, SEC-IMG-08
+**Depends on:** Phase 15
+**Plans:** 5 plans in 4 waves
+
+**Success criteria:**
+- `npm run phase16:gate` passes (unit + legacy + migration dry-run + SQL contract)
+- Citizen uploads route through `processAndStoreEvidence` (in-memory scan → Sharp WebP → Storage)
+- ClamAV down when enabled returns 503; infected uploads return generic 415 (no virus names)
+- `evidence_path` ends with `.webp` for new uploads; batch script dry-run lists legacy objects
+- `GET /api/health/clamav` reports up/down with latency; `/api/ready` includes clamav when `CLAMAV_ENABLED` is true
+
+Plans:
+
+**Wave 1 — Foundation**
+
+- [ ] 16-01-PLAN.md — **Deps + ClamAV client** — sharp/clamscan install, evidence-limits 10MB, clamav-client fail-closed + tests
+
+**Wave 2** *(depends on 16-01)*
+
+- [ ] 16-02-PLAN.md — **Image pipeline** — evidence-image-pipeline, UUID WebP paths, GIF/SVG rejection, pipeline tests
+
+**Wave 3** *(16-03 ∥ 16-04 after 16-02)*
+
+- [ ] 16-03-PLAN.md — **Upload wiring** — report-service, citizen-chat-intake, ReportForm 10MB, generic HTTP errors (DATA-10)
+- [ ] 16-04-PLAN.md — **Ops tooling** — clamav health/readiness, migrate-evidence-to-webp.mjs batch script
+
+**Wave 4** *(depends 16-03 + 16-04)*
+
+- [ ] 16-05-PLAN.md — **Gate + traceability** — phase16:gate, SQL contract, bucket migration, SEC-IMG in REQUIREMENTS, env docs
+
 ---
 *Roadmap created: 2026-07-20*
 *Phases 7–9 added: 2026-07-21 (async triage explore)*
