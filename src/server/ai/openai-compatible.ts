@@ -1,35 +1,23 @@
 import "server-only";
 
+import { projectToLegacyReportAnalysisFromHanoi } from "../domain/analysis-projection";
 import {
-  ReportAnalysisSchema,
-  type ReportAnalysis,
-} from "../domain/report-analysis";
-import { validateAnalysisPolicy } from "../validation/analysis-policy";
+  HanoiAnalysisSchema,
+  type HanoiAnalysis,
+} from "../domain/hanoi-analysis";
+import type { ReportAnalysis } from "../domain/report-analysis";
+import { buildHanoiSystemPrompt } from "./hanoi";
+import { validateHanoiPolicy } from "../validation/hanoi-policy";
 import { buildChatCompletionsUrl, type ServerEnv } from "../config/env";
 import type {
   AnalysisInput,
+  AnalysisLineage,
   AnalysisProvider,
   AnalysisResult,
   SupportedImageMimeType,
 } from "./provider";
 
-export const SYSTEM_INSTRUCTION = `You analyze urban incident reports for triage support.
-Return evidence-based output only. Do not invent facts not visible in the image or text.
-Severity scale: 1 cosmetic, 2 minor, 3 service disruption, 4 safety risk, 5 immediate danger.
-Priority must reflect severity, affected people, urgency, and uncertainty.
-When evidence is insufficient, lower confidence and state uncertainty.
-This is decision support, not an autonomous final decision.
-Respond with one JSON object only. No markdown fences or extra prose.
-JSON keys and types (strict):
-- category: one of pothole|flooding|waste|streetlight|obstruction|other
-- severity: integer 1-5
-- confidence: number 0-1
-- summary: string 5-500 chars
-- recommendation: string 5-1000 chars
-- priority: one of low|medium|high|critical
-- estimated_impact: string 3-500 chars
-- evidence: array of up to 8 strings
-- uncertainty: array of up to 8 strings`;
+export const SYSTEM_INSTRUCTION = buildHanoiSystemPrompt();
 
 export const OPENAI_COMPATIBLE_RESPONSE_FORMAT = {
   type: "json_object" as const,
@@ -144,22 +132,101 @@ async function readBoundedBody(
   return new TextDecoder().decode(merged);
 }
 
+type StreamingChoice = ChatCompletionResponse["choices"] extends Array<infer T> | undefined
+  ? T & {
+      delta?: {
+        content?: string | null;
+        reasoning_content?: string | null;
+      };
+    }
+  : never;
+
+function parseChatCompletionResponseBody(rawBody: string): ChatCompletionResponse {
+  const trimmed = rawBody.trim();
+  if (!trimmed) {
+    throw new AnalysisProviderError("invalid_response");
+  }
+
+  if (trimmed.startsWith("{")) {
+    try {
+      return JSON.parse(trimmed) as ChatCompletionResponse;
+    } catch {
+      throw new AnalysisProviderError("invalid_response");
+    }
+  }
+
+  if (trimmed.includes("data:")) {
+    let lastPayload: ChatCompletionResponse | null = null;
+    let aggregatedContent = "";
+    let aggregatedReasoning = "";
+
+    for (const line of trimmed.split(/\r?\n/)) {
+      if (!line.startsWith("data:")) {
+        continue;
+      }
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") {
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(payload) as ChatCompletionResponse;
+        if (parsed.choices) {
+          lastPayload = parsed;
+          const choice = parsed.choices[0] as StreamingChoice | undefined;
+          const delta = choice?.delta;
+          if (typeof delta?.content === "string") {
+            aggregatedContent += delta.content;
+          }
+          if (typeof delta?.reasoning_content === "string") {
+            aggregatedReasoning += delta.reasoning_content;
+          }
+        }
+      } catch {
+        // Ignore malformed SSE chunks.
+      }
+    }
+
+    const mergedText = aggregatedContent.trim() || aggregatedReasoning.trim();
+    if (lastPayload && mergedText) {
+      const choice = lastPayload.choices?.[0];
+      return {
+        ...lastPayload,
+        choices: [
+          {
+            ...choice,
+            message: {
+              ...choice?.message,
+              content: mergedText,
+            },
+          },
+        ],
+      };
+    }
+
+    if (lastPayload) {
+      return lastPayload;
+    }
+  }
+
+  throw new AnalysisProviderError("invalid_response");
+}
+
 function parseAssistantContent(payload: ChatCompletionResponse): string {
   const choice = payload.choices?.[0];
   if (!choice) {
     throw new AnalysisProviderError("invalid_response");
   }
   if (choice.message?.refusal) {
-    throw new AnalysisProviderError("refused");
+    throw new AnalysisProviderError("invalid_response");
   }
   const content = choice.message?.content;
   if (!content || !content.trim()) {
-    throw new AnalysisProviderError("refused");
+    throw new AnalysisProviderError("invalid_response");
   }
   return content;
 }
 
-function parseAndValidateSchema(content: string): ReportAnalysis {
+function parseAndValidateSchema(content: string): HanoiAnalysis {
   let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(content);
@@ -167,9 +234,14 @@ function parseAndValidateSchema(content: string): ReportAnalysis {
     throw new AnalysisProviderError("invalid_response");
   }
 
-  const schemaResult = ReportAnalysisSchema.safeParse(parsedJson);
+  const schemaResult = HanoiAnalysisSchema.safeParse(parsedJson);
   if (!schemaResult.success) {
     throw new AnalysisProviderError("schema_invalid");
+  }
+
+  const policyResult = validateHanoiPolicy(schemaResult.data);
+  if (!policyResult.ok) {
+    throw new AnalysisProviderError("policy_invalid");
   }
 
   return schemaResult.data;
@@ -179,7 +251,12 @@ async function requestStructuredAnalysis(
   options: OpenAiCompatibleOptions,
   input: AnalysisInput,
   systemInstruction: string,
-): Promise<{ analysis: ReportAnalysis; lineage: AnalysisLineage; rawContent: string }> {
+): Promise<{
+  hanoiAnalysis: HanoiAnalysis;
+  analysis: ReportAnalysis;
+  lineage: AnalysisLineage;
+  rawContent: string;
+}> {
   const { env } = options;
   const fetchImpl = options.fetchImpl ?? fetch;
   const endpoint = buildChatCompletionsUrl(env.AI_BASE_URL);
@@ -205,6 +282,7 @@ async function requestStructuredAnalysis(
         model: env.AI_MODEL,
         temperature: 0.1,
         max_tokens: 1200,
+        stream: false,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: buildUserContent(input, includeVision) },
@@ -233,16 +311,28 @@ async function requestStructuredAnalysis(
   const rawBody = await readBoundedBody(response, MAX_RESPONSE_BYTES);
   let payload: ChatCompletionResponse;
   try {
-    payload = JSON.parse(rawBody) as ChatCompletionResponse;
-  } catch {
+    payload = parseChatCompletionResponseBody(rawBody);
+  } catch (error) {
+    if (error instanceof AnalysisProviderError) {
+      throw error;
+    }
     throw new AnalysisProviderError("invalid_response");
   }
 
   const content = parseAssistantContent(payload);
-  const analysis = parseAndValidateSchema(content);
+  let hanoiAnalysis: HanoiAnalysis;
+  try {
+    hanoiAnalysis = parseAndValidateSchema(content);
+  } catch (error) {
+    if (error instanceof AnalysisProviderError && error.code === "schema_invalid") {
+      throw error;
+    }
+    throw error;
+  }
 
   return {
-    analysis,
+    hanoiAnalysis,
+    analysis: projectToLegacyReportAnalysisFromHanoi(hanoiAnalysis),
     rawContent: content,
     lineage: {
       providerLabel: env.AI_PROVIDER_LABEL,
@@ -253,19 +343,155 @@ async function requestStructuredAnalysis(
   };
 }
 
-export type StructuredAnalysisResult = AnalysisResult & { rawContent: string };
+export type StructuredAnalysisResult = AnalysisResult & {
+  hanoiAnalysis: HanoiAnalysis;
+  rawContent: string;
+};
 
 export async function analyzeStructured(
   options: OpenAiCompatibleOptions,
   input: AnalysisInput,
   systemInstruction: string = SYSTEM_INSTRUCTION,
 ): Promise<StructuredAnalysisResult> {
-  const result = await requestStructuredAnalysis(options, input, systemInstruction);
-  return {
-    analysis: result.analysis,
-    lineage: result.lineage,
-    rawContent: result.rawContent,
-  };
+  try {
+    const result = await requestStructuredAnalysis(options, input, systemInstruction);
+    return {
+      hanoiAnalysis: result.hanoiAnalysis,
+      analysis: result.analysis,
+      lineage: result.lineage,
+      rawContent: result.rawContent,
+    };
+  } catch (error) {
+    if (error instanceof AnalysisProviderError && error.code === "schema_invalid") {
+      const retry = await requestStructuredAnalysis(options, input, systemInstruction);
+      return {
+        hanoiAnalysis: retry.hanoiAnalysis,
+        analysis: retry.analysis,
+        lineage: retry.lineage,
+        rawContent: retry.rawContent,
+      };
+    }
+    throw error;
+  }
+}
+
+export type ConversationalChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+export async function completeConversationalChat(
+  options: OpenAiCompatibleOptions,
+  messages: ConversationalChatMessage[],
+): Promise<{ content: string; lineage: AnalysisLineage }> {
+  const { env } = options;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const endpoint = buildChatCompletionsUrl(env.AI_BASE_URL);
+  const startedAt = Date.now();
+
+  try {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      redirect: "error",
+      signal: AbortSignal.timeout(env.AI_TIMEOUT_MS),
+      headers: {
+        Authorization: `Bearer ${env.THIRD_PARTY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: env.AI_MODEL,
+        temperature: 0.3,
+        max_tokens: 800,
+        stream: false,
+        messages,
+      }),
+    });
+
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new AnalysisProviderError("http_error");
+    }
+
+    const rawBody = await readBoundedBody(response, MAX_RESPONSE_BYTES);
+    const payload = parseChatCompletionResponseBody(rawBody);
+    const content = parseAssistantContent(payload);
+
+    return {
+      content: content.trim(),
+      lineage: {
+        providerLabel: env.AI_PROVIDER_LABEL,
+        responseModel: payload.model ?? env.AI_MODEL,
+        requestId: payload.id ?? null,
+        latencyMs: Date.now() - startedAt,
+      },
+    };
+  } catch (error) {
+    if (error instanceof AnalysisProviderError) {
+      throw error;
+    }
+    if (error instanceof DOMException && error.name === "TimeoutError") {
+      throw new AnalysisProviderError("timeout");
+    }
+    if (error instanceof TypeError) {
+      throw new AnalysisProviderError("redirect");
+    }
+    throw new AnalysisProviderError("invalid_response");
+  }
+}
+
+export async function probeChatCompletion(
+  options: OpenAiCompatibleOptions,
+): Promise<{ ok: boolean; latencyMs: number; model: string }> {
+  const { env } = options;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const endpoint = buildChatCompletionsUrl(env.AI_BASE_URL);
+  const startedAt = Date.now();
+
+  try {
+    const response = await fetchImpl(endpoint, {
+      method: "POST",
+      redirect: "error",
+      signal: AbortSignal.timeout(Math.min(env.AI_TIMEOUT_MS, 10_000)),
+      headers: {
+        Authorization: `Bearer ${env.THIRD_PARTY_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: env.AI_MODEL,
+        temperature: 0,
+        max_tokens: 5,
+        stream: false,
+        messages: [
+          { role: "system", content: "Reply with OK" },
+          { role: "user", content: "ping" },
+        ],
+        response_format: OPENAI_COMPATIBLE_RESPONSE_FORMAT,
+      }),
+    });
+
+    if (!response.ok) {
+      await response.body?.cancel();
+      return {
+        ok: false,
+        latencyMs: Date.now() - startedAt,
+        model: env.AI_MODEL,
+      };
+    }
+
+    const rawBody = await readBoundedBody(response, MAX_RESPONSE_BYTES);
+    parseChatCompletionResponseBody(rawBody);
+    return {
+      ok: true,
+      latencyMs: Date.now() - startedAt,
+      model: env.AI_MODEL,
+    };
+  } catch {
+    return {
+      ok: false,
+      latencyMs: Date.now() - startedAt,
+      model: env.AI_MODEL,
+    };
+  }
 }
 
 export function createOpenAiCompatibleProvider(
@@ -274,10 +500,6 @@ export function createOpenAiCompatibleProvider(
   return {
     async analyze(input: AnalysisInput): Promise<AnalysisResult> {
       const result = await analyzeStructured(options, input);
-      const policyResult = validateAnalysisPolicy(result.analysis);
-      if (!policyResult.ok) {
-        throw new AnalysisProviderError("policy_invalid");
-      }
       return {
         analysis: result.analysis,
         lineage: result.lineage,

@@ -1,25 +1,65 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { HanoiAnalysis } from "@/server/domain/hanoi-analysis";
 import type { ReportAnalysis } from "@/server/domain/report-analysis";
+import { projectToLegacyReportAnalysisFromHanoi } from "@/server/domain/analysis-projection";
 import { AnalysisProviderError } from "@/server/ai/openai-compatible";
 import { runTriageForReport } from "./service";
 
-const validAnalysis: ReportAnalysis = {
-  category: "pothole",
-  severity: 5,
-  confidence: 0.82,
-  summary: "Active flooding with imminent danger near the school crossing.",
-  recommendation: "Inspect the road and secure the affected lane.",
-  priority: "critical",
-  estimated_impact: "Safety risk for students and road users.",
-  evidence: ["Citizen reports immediate danger from active flooding."],
-  uncertainty: ["Exact depth is not verified."],
+const validHanoiAnalysis: HanoiAnalysis = {
+  category: "obstruction",
+  matched_known_issue: true,
+  observed_facts: ["A tree is visibly cracking and leaning over an occupied bus stop."],
+  inferences: ["The cracking tree presents an imminent falling-object danger."],
+  unknowns: ["The tree's structural condition is unknown."],
+  severity: "critical",
+  severity_reason:
+    "A cracking tree leaning over an occupied area is a directly evidenced imminent danger.",
+  confidence: 0.9,
+  handling_type: 3,
+  handling_label: "KEEP_AWAY",
+  allowed_actions: ["Move far outside the potential fall area and report the exact location."],
+  prohibited_actions: ["Do not approach, touch, or stand beneath the tree."],
+  recommended_action: "Escalate immediately to authorized tree-hazard personnel.",
+  guidance_code: "generate_later",
+  critical_alert: true,
+  requires_human_review: true,
 };
 
-const candidateAnalysis: ReportAnalysis = {
-  ...validAnalysis,
-  category: "flooding",
+const validAnalysis: ReportAnalysis =
+  projectToLegacyReportAnalysisFromHanoi(validHanoiAnalysis);
+
+const candidateHanoiAnalysis: HanoiAnalysis = {
+  ...validHanoiAnalysis,
+  category: "pothole",
+  observed_facts: ["A large pothole occupies part of one traffic lane."],
+  inferences: ["The defect may materially impair mobility."],
+  unknowns: ["Pothole depth is unknown."],
+  severity: "medium",
+  severity_reason:
+    "The road defect materially impairs normal lane use without an explicit active hazard.",
+  handling_type: 2,
+  handling_label: "TEMPORARY_SAFE_ACTION",
+  allowed_actions: ["Report the exact location from a safe position."],
+  prohibited_actions: ["Do not enter the traffic lane or repair the road."],
+  recommended_action: "Inspect and schedule authorized road repair.",
+  guidance_code: "report_road_damage",
+  critical_alert: false,
 };
+
+function structuredResult(analysis: HanoiAnalysis) {
+  return {
+    hanoiAnalysis: analysis,
+    analysis: projectToLegacyReportAnalysisFromHanoi(analysis),
+    lineage: {
+      providerLabel: "test",
+      responseModel: "test-model",
+      requestId: "req-1",
+      latencyMs: 10,
+    },
+    rawContent: JSON.stringify(analysis),
+  };
+}
 
 function createClient(options: {
   report?: Record<string, unknown> | null;
@@ -28,7 +68,7 @@ function createClient(options: {
     data: options.report === undefined
       ? {
           report_id: "report-1",
-          description: "Flooding near school crossing with immediate danger.",
+          description: "Tree cracking over occupied bus stop.",
           evidence_path: null,
           triage_attempt_count: 0,
         }
@@ -66,18 +106,9 @@ function createDeps(client: ReturnType<typeof createClient>) {
 }
 
 describe("runTriageForReport", () => {
-  it("completes when policy passes on first attempt", async () => {
+  it("completes when Hanoi policy passes on first attempt", async () => {
     const client = createClient();
-    const analyzeStructured = vi.fn(async () => ({
-      analysis: validAnalysis,
-      lineage: {
-        providerLabel: "test",
-        responseModel: "test-model",
-        requestId: "req-1",
-        latencyMs: 10,
-      },
-      rawContent: JSON.stringify(validAnalysis),
-    }));
+    const analyzeStructured = vi.fn(async () => structuredResult(validHanoiAnalysis));
     const deps = {
       ...createDeps(client),
       analyzeStructured,
@@ -96,63 +127,26 @@ describe("runTriageForReport", () => {
     );
   });
 
-  it("retries validation once then completes", async () => {
+  it("routes to manual_review when handling_type 1 is used with medium severity", async () => {
     const client = createClient();
-    const invalid = {
-      ...validAnalysis,
-      priority: "critical" as const,
-      severity: 4 as const,
+    const invalid: HanoiAnalysis = {
+      ...validHanoiAnalysis,
+      category: "pothole",
+      observed_facts: ["A large pothole occupies part of one traffic lane."],
+      inferences: ["The defect may materially impair mobility."],
+      unknowns: ["Pothole depth is unknown."],
+      severity: "medium",
+      severity_reason:
+        "The road defect materially impairs normal lane use without an explicit active hazard.",
+      handling_type: 1,
+      handling_label: "SELF_GUIDANCE",
+      allowed_actions: ["Collect debris only if safe."],
+      prohibited_actions: ["Do not enter traffic."],
+      recommended_action: "Inspect and schedule authorized road repair.",
+      guidance_code: "self_collect_safe_litter",
+      critical_alert: false,
     };
-    const analyzeStructured = vi
-      .fn()
-      .mockResolvedValueOnce({
-        analysis: invalid,
-        lineage: {
-          providerLabel: "test",
-          responseModel: "test-model",
-          requestId: "req-1",
-          latencyMs: 10,
-        },
-        rawContent: JSON.stringify(invalid),
-      })
-      .mockResolvedValueOnce({
-        analysis: validAnalysis,
-        lineage: {
-          providerLabel: "test",
-          responseModel: "test-model",
-          requestId: "req-2",
-          latencyMs: 12,
-        },
-        rawContent: JSON.stringify(validAnalysis),
-      });
-    const deps = {
-      ...createDeps(client),
-      analyzeStructured,
-    };
-
-    const result = await runTriageForReport("report-1", deps);
-
-    expect(result.disposition).toBe("completed");
-    expect(analyzeStructured).toHaveBeenCalledTimes(2);
-  });
-
-  it("routes to manual_review after validation retry still fails", async () => {
-    const client = createClient();
-    const invalid = {
-      ...validAnalysis,
-      priority: "critical" as const,
-      severity: 4 as const,
-    };
-    const analyzeStructured = vi.fn(async () => ({
-      analysis: invalid,
-      lineage: {
-        providerLabel: "test",
-        responseModel: "test-model",
-        requestId: "req-1",
-        latencyMs: 10,
-      },
-      rawContent: JSON.stringify(invalid),
-    }));
+    const analyzeStructured = vi.fn(async () => structuredResult(invalid));
     const deps = {
       ...createDeps(client),
       analyzeStructured,
@@ -161,7 +155,7 @@ describe("runTriageForReport", () => {
     const result = await runTriageForReport("report-1", deps);
 
     expect(result.disposition).toBe("manual_review");
-    expect(analyzeStructured).toHaveBeenCalledTimes(2);
+    expect(analyzeStructured).toHaveBeenCalledTimes(1);
     expect(deps.applyRoutingForReport).toHaveBeenCalledWith(
       deps.client,
       "report-1",
@@ -169,11 +163,29 @@ describe("runTriageForReport", () => {
     );
   });
 
+  it("routes to manual_review when critical severity lacks critical_alert", async () => {
+    const client = createClient();
+    const invalid: HanoiAnalysis = {
+      ...validHanoiAnalysis,
+      critical_alert: false,
+    };
+    const analyzeStructured = vi.fn(async () => structuredResult(invalid));
+    const deps = {
+      ...createDeps(client),
+      analyzeStructured,
+    };
+
+    const result = await runTriageForReport("report-1", deps);
+
+    expect(result.disposition).toBe("manual_review");
+    expect(analyzeStructured).toHaveBeenCalledTimes(1);
+  });
+
   it("does not call applyRoutingForReport on infra retry disposition", async () => {
     const client = createClient({
       report: {
         report_id: "report-1",
-        description: "Flooding near school crossing with immediate danger.",
+        description: "Tree cracking over occupied bus stop.",
         evidence_path: null,
         triage_attempt_count: 0,
       },
@@ -196,7 +208,7 @@ describe("runTriageForReport", () => {
     const client = createClient({
       report: {
         report_id: "report-1",
-        description: "Flooding near school crossing with immediate danger.",
+        description: "Tree cracking over occupied bus stop.",
         evidence_path: null,
         triage_attempt_count: 2,
       },
@@ -235,26 +247,8 @@ describe("runTriageForReport", () => {
     const client = createClient();
     const analyzeStructured = vi
       .fn()
-      .mockResolvedValueOnce({
-        analysis: validAnalysis,
-        lineage: {
-          providerLabel: "test",
-          responseModel: "baseline-model",
-          requestId: "req-1",
-          latencyMs: 10,
-        },
-        rawContent: JSON.stringify(validAnalysis),
-      })
-      .mockResolvedValueOnce({
-        analysis: candidateAnalysis,
-        lineage: {
-          providerLabel: "test",
-          responseModel: "candidate-model",
-          requestId: "req-2",
-          latencyMs: 11,
-        },
-        rawContent: JSON.stringify(candidateAnalysis),
-      });
+      .mockResolvedValueOnce(structuredResult(validHanoiAnalysis))
+      .mockResolvedValueOnce(structuredResult(candidateHanoiAnalysis));
     const deps = {
       ...createDeps(client),
       analyzeStructured,

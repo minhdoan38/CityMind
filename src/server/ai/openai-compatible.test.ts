@@ -6,20 +6,29 @@ import {
   GENERIC_ANALYSIS_FAILURE,
   MAX_RESPONSE_BYTES,
   analyzeStructured,
+  completeConversationalChat,
   createOpenAiCompatibleProvider,
   redactSensitiveText,
 } from "./openai-compatible";
 
-const validAnalysis = {
+const validHanoiAnalysis = {
   category: "pothole",
-  severity: 4,
-  confidence: 0.82,
-  summary: "Large pothole near a school entrance.",
-  recommendation: "Inspect the road and secure the affected lane.",
-  priority: "high",
-  estimated_impact: "Safety risk for students and road users.",
-  evidence: ["Citizen description identifies a large pothole."],
-  uncertainty: ["Exact dimensions are not verified."],
+  matched_known_issue: true,
+  observed_facts: ["A large pothole occupies part of one traffic lane."],
+  inferences: ["The defect may materially impair mobility."],
+  unknowns: ["Pothole depth is unknown."],
+  severity: "medium",
+  severity_reason:
+    "The road defect materially impairs normal lane use without an explicit active hazard.",
+  confidence: 0.9,
+  handling_type: 2,
+  handling_label: "TEMPORARY_SAFE_ACTION",
+  allowed_actions: ["Report the exact location from a safe position."],
+  prohibited_actions: ["Do not enter the traffic lane or repair the road."],
+  recommended_action: "Inspect and schedule authorized road repair.",
+  guidance_code: "report_road_damage",
+  critical_alert: false,
+  requires_human_review: true,
 };
 
 function testEnv(overrides: Partial<ServerEnv> = {}): ServerEnv {
@@ -43,13 +52,25 @@ function completionResponse(overrides: Record<string, unknown> = {}) {
     choices: [
       {
         message: {
-          content: JSON.stringify(validAnalysis),
+          content: JSON.stringify(validHanoiAnalysis),
         },
         finish_reason: "stop",
       },
     ],
     ...overrides,
   };
+}
+
+function mockFetchText(
+  body: string,
+  init: { ok?: boolean; status?: number } = {},
+): typeof fetch {
+  return vi.fn(async () => {
+    return new Response(body, {
+      status: init.status ?? (init.ok === false ? 500 : 200),
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  }) as typeof fetch;
 }
 
 function mockFetchJson(
@@ -69,6 +90,21 @@ describe("createOpenAiCompatibleProvider", () => {
     vi.restoreAllMocks();
   });
 
+  it("parses SSE chat completion bodies from OpenAI-compatible proxies", async () => {
+    const sseBody = `data: ${JSON.stringify(completionResponse())}\n\ndata: [DONE]\n\n`;
+    const provider = createOpenAiCompatibleProvider({
+      env: testEnv(),
+      fetchImpl: mockFetchText(sseBody),
+    });
+
+    const result = await provider.analyze({
+      description: "Large pothole near a school entrance.",
+    });
+
+    expect(result.analysis.category).toBe("pothole");
+    expect(result.lineage.responseModel).toBe("actual-response-model");
+  });
+
   it("sends text-only requests to the configured fixed chat/completions path", async () => {
     const fetchImpl = mockFetchJson(completionResponse());
     const env = testEnv();
@@ -84,6 +120,7 @@ describe("createOpenAiCompatibleProvider", () => {
 
     const payload = JSON.parse(String(request.body));
     expect(payload.model).toBe("configured-model");
+    expect(payload.stream).toBe(false);
     expect(payload.response_format.type).toBe("json_object");
     expect(payload.messages[1].content[0].text).toContain("Large pothole near a school entrance.");
     expect(payload.messages[1].content).toHaveLength(1);
@@ -158,7 +195,7 @@ describe("createOpenAiCompatibleProvider", () => {
     });
   });
 
-  it("maps refusal and empty content to generic failures", async () => {
+  it("maps refusal and empty content to invalid_response", async () => {
     const refusedProvider = createOpenAiCompatibleProvider({
       env: testEnv(),
       fetchImpl: mockFetchJson(
@@ -169,7 +206,7 @@ describe("createOpenAiCompatibleProvider", () => {
     });
     await expect(
       refusedProvider.analyze({ description: "Valid incident report" }),
-    ).rejects.toMatchObject({ code: "refused" });
+    ).rejects.toMatchObject({ code: "invalid_response" });
 
     const emptyProvider = createOpenAiCompatibleProvider({
       env: testEnv(),
@@ -181,7 +218,7 @@ describe("createOpenAiCompatibleProvider", () => {
     });
     await expect(
       emptyProvider.analyze({ description: "Valid incident report" }),
-    ).rejects.toMatchObject({ code: "refused" });
+    ).rejects.toMatchObject({ code: "invalid_response" });
   });
 
   it("maps invalid JSON and schema violations to generic failures", async () => {
@@ -259,31 +296,89 @@ describe("createOpenAiCompatibleProvider", () => {
   });
 });
 
+describe("completeConversationalChat", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("requests non-streaming chat completions", async () => {
+    const fetchImpl = mockFetchJson({
+      model: "configured-model",
+      choices: [{ message: { content: "Severity measures impact." } }],
+    });
+
+    const result = await completeConversationalChat(
+      { env: testEnv(), fetchImpl },
+      [
+        { role: "system", content: "Be brief." },
+        { role: "user", content: "What is severity?" },
+      ],
+    );
+
+    expect(result.content).toBe("Severity measures impact.");
+    const payload = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body));
+    expect(payload.stream).toBe(false);
+  });
+
+  it("aggregates SSE reasoning deltas when proxies stream anyway", async () => {
+    const sseBody = [
+      'data: {"choices":[{"delta":{"reasoning_content":"Severity measures impact."}}]}',
+      'data: {"choices":[{"delta":{},"finish_reason":"stop"}]}',
+      "data: [DONE]",
+      "",
+    ].join("\n");
+
+    const result = await completeConversationalChat(
+      { env: testEnv(), fetchImpl: mockFetchText(sseBody) },
+      [{ role: "user", content: "What is severity?" }],
+    );
+
+    expect(result.content).toBe("Severity measures impact.");
+  });
+});
+
 describe("analyzeStructured", () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("returns parsed analysis without enforcing policy", async () => {
-    const policyInvalid = {
-      ...validAnalysis,
-      priority: "critical",
-      severity: 1,
-    };
+  it("returns parsed Hanoi analysis for valid provider content", async () => {
     const result = await analyzeStructured(
       {
         env: testEnv(),
-        fetchImpl: mockFetchJson(
-          completionResponse({
-            choices: [{ message: { content: JSON.stringify(policyInvalid) } }],
-          }),
-        ),
+        fetchImpl: mockFetchJson(completionResponse()),
       },
-      { description: "Valid incident report" },
+      { description: "A large pothole occupies part of one traffic lane." },
     );
 
-    expect(result.analysis).toEqual(policyInvalid);
-    expect(result.rawContent).toContain("critical");
+    expect(result.hanoiAnalysis.category).toBe("pothole");
+    expect(result.hanoiAnalysis.severity).toBe("medium");
+    expect(result.analysis.severity).toBe(2);
+    expect(result.rawContent).toContain("report_road_damage");
+  });
+
+  it("rejects policy-invalid Hanoi output before returning", async () => {
+    const policyInvalid = {
+      ...validHanoiAnalysis,
+      severity: "medium",
+      handling_type: 1,
+      handling_label: "SELF_GUIDANCE",
+      guidance_code: "self_collect_safe_litter",
+    };
+
+    await expect(
+      analyzeStructured(
+        {
+          env: testEnv(),
+          fetchImpl: mockFetchJson(
+            completionResponse({
+              choices: [{ message: { content: JSON.stringify(policyInvalid) } }],
+            }),
+          ),
+        },
+        { description: "Valid incident report" },
+      ),
+    ).rejects.toMatchObject({ code: "policy_invalid" });
   });
 });
 

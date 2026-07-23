@@ -1,24 +1,37 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ReportAnalysis } from "@/server/domain/report-analysis";
+import type { HanoiAnalysis } from "@/server/domain/hanoi-analysis";
 import { compareShadowTriage, insertShadowComparison } from "./shadow-service";
 
-const baseline: ReportAnalysis = {
+const baseline: HanoiAnalysis = {
   category: "pothole",
-  severity: 3,
-  confidence: 0.82,
-  summary: "Pothole near the school crossing with moderate depth.",
-  recommendation: "Schedule road repair inspection within the week.",
-  priority: "medium",
-  estimated_impact: "Localized traffic disruption for school route.",
-  evidence: ["Visible pothole in citizen photo near crossing."],
-  uncertainty: ["Exact depth is not verified."],
+  matched_known_issue: true,
+  observed_facts: ["A large pothole occupies part of one traffic lane."],
+  inferences: ["The defect may materially impair mobility."],
+  unknowns: ["Pothole depth is unknown."],
+  severity: "medium",
+  severity_reason:
+    "The road defect materially impairs normal lane use without an explicit active hazard.",
+  confidence: 0.9,
+  handling_type: 2,
+  handling_label: "TEMPORARY_SAFE_ACTION",
+  allowed_actions: ["Report the exact location from a safe position."],
+  prohibited_actions: ["Do not enter the traffic lane or repair the road."],
+  recommended_action: "Inspect and schedule authorized road repair.",
+  guidance_code: "report_road_damage",
+  critical_alert: false,
+  requires_human_review: true,
 };
 
-const candidate: ReportAnalysis = {
+const candidate: HanoiAnalysis = {
   ...baseline,
   category: "flooding",
-  priority: "high",
+  observed_facts: ["Standing water blocks the crosswalk."],
+  severity_reason: "Standing water blocks the crosswalk.",
+  severity: "high",
+  handling_type: 3,
+  handling_label: "KEEP_AWAY",
+  guidance_code: "generate_later",
 };
 
 function createClient() {
@@ -115,7 +128,8 @@ describe("compareShadowTriage", () => {
   it("persists disagreement without updating reports", async () => {
     const client = createClient();
     const analyzeStructured = vi.fn(async () => ({
-      analysis: candidate,
+      hanoiAnalysis: candidate,
+      analysis: {} as never,
       lineage: {
         providerLabel: "test",
         responseModel: "candidate-model",

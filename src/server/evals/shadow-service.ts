@@ -7,7 +7,7 @@ import {
   type StructuredAnalysisResult,
 } from "@/server/ai/openai-compatible";
 import { getServerEnv, getShadowConfig as loadShadowConfig } from "@/server/config/env";
-import type { ReportAnalysis } from "@/server/domain/report-analysis";
+import type { HanoiAnalysis } from "@/server/domain/hanoi-analysis";
 import { ROUTING_POLICY_VERSION } from "@/server/routing/policy";
 import { compareShadowTriage as buildShadowDisagreement } from "./shadow-compare";
 
@@ -22,8 +22,8 @@ export type ShadowComparisonInsert = {
   productionRunId: string;
   candidateModel: string;
   candidatePromptVersion: string;
-  baselineSnapshot: ReportAnalysis;
-  candidateSnapshot: ReportAnalysis | null;
+  baselineSnapshot: HanoiAnalysis;
+  candidateSnapshot: HanoiAnalysis | null;
   disagreement: Record<string, unknown>;
   hasDisagreement: boolean;
 };
@@ -31,7 +31,7 @@ export type ShadowComparisonInsert = {
 export type CompareShadowTriageInput = {
   reportId: string;
   productionRunId: string;
-  baseline: ReportAnalysis;
+  baseline: HanoiAnalysis;
   description: string;
   image?: {
     bytes: Uint8Array;
@@ -60,8 +60,8 @@ export type ShadowComparisonRow = {
   production_run_id: string;
   candidate_model: string;
   candidate_prompt_version: string;
-  baseline_snapshot: ReportAnalysis;
-  candidate_snapshot: ReportAnalysis | null;
+  baseline_snapshot: HanoiAnalysis;
+  candidate_snapshot: HanoiAnalysis | null;
   disagreement: Record<string, unknown>;
   has_disagreement: boolean;
   compared_at: string;
@@ -137,17 +137,19 @@ export async function compareShadowTriage(
     return;
   }
 
-  let candidateSnapshot: ReportAnalysis | null = null;
+  let candidateSnapshot: HanoiAnalysis | null = null;
   let disagreementPayload: Record<string, unknown> = {
     category: false,
     severity: false,
     priority: false,
+    observed_facts: false,
+    severity_reason: false,
   };
   let hasDisagreement = false;
 
   try {
     const structured = await callCandidateAnalyze(deps, config, input);
-    candidateSnapshot = structured.analysis;
+    candidateSnapshot = structured.hanoiAnalysis;
     const comparison = buildShadowDisagreement(input.baseline, candidateSnapshot);
     disagreementPayload = { ...comparison.disagreement };
     hasDisagreement = comparison.has_disagreement;
@@ -156,6 +158,8 @@ export async function compareShadowTriage(
       category: false,
       severity: false,
       priority: false,
+      observed_facts: false,
+      severity_reason: false,
       error:
         error instanceof Error ? error.message : "candidate_analyze_failed",
     };

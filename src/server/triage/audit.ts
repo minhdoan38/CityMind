@@ -4,9 +4,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { getServerEnv } from "@/server/config/env";
 import { redactSensitiveText } from "@/server/ai/openai-compatible";
-import type { ReportAnalysis } from "@/server/domain/report-analysis";
-import type { PolicyViolation } from "@/server/validation/analysis-policy";
-import { PROMPT_VERSION } from "./config";
+import type { HanoiAnalysis } from "@/server/domain/hanoi-analysis";
+import type { PolicyViolation } from "@/server/validation/hanoi-policy";
+import { HANOI_PROMPT_VERSION } from "./config";
 
 export type AttemptRecordInput = {
   reportId: string;
@@ -17,7 +17,7 @@ export type AttemptRecordInput = {
   latencyMs: number;
   validationErrors: PolicyViolation[];
   disposition: string;
-  analysis?: ReportAnalysis | null;
+  analysis?: HanoiAnalysis | Record<string, unknown> | null;
   finishRun?: boolean;
 };
 
@@ -29,7 +29,7 @@ export async function startTriageRun(
     .from("triage_runs")
     .insert({
       report_id: reportId,
-      prompt_version: PROMPT_VERSION,
+      prompt_version: HANOI_PROMPT_VERSION,
     })
     .select("run_id")
     .single();
@@ -55,7 +55,7 @@ export async function recordTriageAttempt(
     p_run_id: input.runId,
     p_attempt_number: input.attemptNumber,
     p_model: input.model,
-    p_prompt_version: PROMPT_VERSION,
+    p_prompt_version: HANOI_PROMPT_VERSION,
     p_raw_output: redactedOutput,
     p_latency_ms: input.latencyMs,
     p_validation_errors: input.validationErrors,

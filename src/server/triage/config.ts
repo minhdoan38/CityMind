@@ -1,4 +1,5 @@
-export const PROMPT_VERSION = "phase8-mvp-v1";
+export const PROMPT_VERSION = "1.0.0";
+export const HANOI_PROMPT_VERSION = "5.2.0";
 export const MAX_INFRA_ATTEMPTS = 3;
 
 export const INFRA_BACKOFF_MS = [30_000, 120_000, 600_000] as const;

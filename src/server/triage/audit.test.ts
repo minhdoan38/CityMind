@@ -29,7 +29,7 @@ describe("audit writers", () => {
     expect(runId).toBe("run-1");
     expect(insert).toHaveBeenCalledWith({
       report_id: "report-1",
-      prompt_version: "phase8-mvp-v1",
+      prompt_version: "5.2.0",
     });
   });
 

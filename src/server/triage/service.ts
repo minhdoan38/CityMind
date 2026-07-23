@@ -10,13 +10,14 @@ import {
 } from "@/server/ai/openai-compatible";
 import { getServerEnv, getShadowConfig } from "@/server/config/env";
 import { compareShadowTriage } from "@/server/evals/shadow-service";
+import { projectHanoiPayloadForRpc } from "@/server/domain/analysis-projection";
+import type { HanoiAnalysis } from "@/server/domain/hanoi-analysis";
 import type { ReportAnalysis } from "@/server/domain/report-analysis";
 import {
   downloadEvidenceLocation,
-  parseSupabaseEvidenceUri,
 } from "@/server/services/evidence-service";
-import type { PolicyViolation } from "@/server/validation/analysis-policy";
-import { validateAnalysisPolicy } from "@/server/validation/analysis-policy";
+import type { PolicyViolation } from "@/server/validation/hanoi-policy";
+import { validateHanoiPolicy } from "@/server/validation/hanoi-policy";
 import { MAX_INFRA_ATTEMPTS } from "./config";
 import { finishTriageRun, recordTriageAttempt, startTriageRun } from "./audit";
 import { resolveInfraFailureDisposition } from "./disposition";
@@ -58,11 +59,6 @@ export type TriageServiceDeps = {
   getShadowConfig?: typeof getShadowConfig;
 };
 
-function buildValidationRetryInstruction(violations: PolicyViolation[]): string {
-  const lines = violations.map((item) => `- ${item.code}: ${item.message}`).join("\n");
-  return `Previous output failed semantic validation. Fix these issues and return valid JSON only:\n${lines}`;
-}
-
 async function loadReportRow(
   client: SupabaseClient,
   reportId: string,
@@ -99,11 +95,9 @@ async function loadEvidenceImage(
     return undefined;
   }
 
-  const location = parseSupabaseEvidenceUri(`supabase://${evidencePath}`);
   const { bytes, mimeType } = await downloadEvidenceLocation({
     client,
-    bucketName: location.bucket,
-    objectPath: location.objectPath,
+    evidencePath,
   });
 
   if (
@@ -115,54 +109,6 @@ async function loadEvidenceImage(
   }
 
   return { bytes, mimeType };
-}
-
-async function updateTriageTerminalState(
-  client: SupabaseClient,
-  reportId: string,
-  fields: {
-    triage_status: "completed" | "manual_review" | "failed" | "retry";
-    triage_error?: string | null;
-    triage_next_attempt_at?: string | null;
-    triage_attempt_count?: number;
-    analysis?: ReportAnalysis;
-    triaged_at?: string | null;
-  },
-): Promise<void> {
-  const payload: Record<string, unknown> = {
-    triage_status: fields.triage_status,
-    triage_claimed_at: null,
-  };
-
-  if (fields.triage_error !== undefined) {
-    payload.triage_error = fields.triage_error;
-  }
-  if (fields.triage_next_attempt_at !== undefined) {
-    payload.triage_next_attempt_at = fields.triage_next_attempt_at;
-  }
-  if (fields.triage_attempt_count !== undefined) {
-    payload.triage_attempt_count = fields.triage_attempt_count;
-  }
-  if (fields.triaged_at !== undefined) {
-    payload.triaged_at = fields.triaged_at;
-  }
-
-  if (fields.analysis) {
-    payload.category = fields.analysis.category;
-    payload.severity = fields.analysis.severity;
-    payload.confidence = fields.analysis.confidence;
-    payload.summary = fields.analysis.summary;
-    payload.recommendation = fields.analysis.recommendation;
-    payload.priority = fields.analysis.priority;
-    payload.estimated_impact = fields.analysis.estimated_impact;
-    payload.evidence = fields.analysis.evidence;
-    payload.uncertainty = fields.analysis.uncertainty;
-  }
-
-  const { error } = await client.from("reports").update(payload).eq("report_id", reportId);
-  if (error) {
-    throw error;
-  }
 }
 
 async function callProvider(
@@ -189,7 +135,7 @@ async function persistAttempt(
     structured?: StructuredAnalysisResult;
     validationErrors: PolicyViolation[];
     disposition: string;
-    analysis?: ReportAnalysis | null;
+    analysis?: HanoiAnalysis | Record<string, unknown> | null;
     finishRun?: boolean;
   },
 ): Promise<void> {
@@ -249,7 +195,7 @@ async function runShadowComparisonIfEnabled(
   input: {
     reportId: string;
     runId: string;
-    baseline: ReportAnalysis;
+    baseline: HanoiAnalysis;
     description: string;
     image?: { bytes: Uint8Array; mimeType: "image/jpeg" | "image/png" | "image/webp" };
   },
@@ -321,92 +267,72 @@ export async function runTriageForReport(
     );
   }
 
-  let retryInstruction: string | undefined;
-
-  for (let validationAttempt = 0; validationAttempt < 2; validationAttempt += 1) {
-    let structured: StructuredAnalysisResult;
-    try {
-      structured = await callProvider(deps, { description, image }, retryInstruction);
-    } catch (error) {
-      if (error instanceof AnalysisProviderError) {
-        attemptNumber += 1;
-        return handleInfraFailure(
-          deps.client,
-          reportId,
-          row.triage_attempt_count,
-          deps,
-          runId,
-          attemptNumber,
-        );
-      }
+  let structured: StructuredAnalysisResult;
+  try {
+    structured = await callProvider(deps, { description, image });
+  } catch (error) {
+    if (error instanceof AnalysisProviderError) {
       attemptNumber += 1;
-      await persistAttempt(deps, {
+      return handleInfraFailure(
+        deps.client,
         reportId,
+        row.triage_attempt_count,
+        deps,
         runId,
         attemptNumber,
-        validationErrors: [],
-        disposition: "failed",
-        finishRun: true,
-      });
-      await finishRun(deps.client, runId, "failed");
-      await applyTerminalRouting(deps, reportId, "failed");
-      return { reportId, disposition: "failed" };
+      );
     }
-
     attemptNumber += 1;
-    const policyResult = validateAnalysisPolicy(structured.analysis, { description });
-    if (policyResult.ok) {
-      await persistAttempt(deps, {
-        reportId,
-        runId,
-        attemptNumber,
-        structured,
-        validationErrors: [],
-        disposition: "completed",
-        analysis: structured.analysis,
-        finishRun: true,
-      });
-      await finishRun(deps.client, runId, "completed");
-      await applyTerminalRouting(deps, reportId, "completed", structured.analysis);
-      await runShadowComparisonIfEnabled(deps, {
-        reportId,
-        runId,
-        baseline: structured.analysis,
-        description,
-        image,
-      });
-      return { reportId, disposition: "completed" };
-    }
+    await persistAttempt(deps, {
+      reportId,
+      runId,
+      attemptNumber,
+      validationErrors: [],
+      disposition: "failed",
+      finishRun: true,
+    });
+    await finishRun(deps.client, runId, "failed");
+    await applyTerminalRouting(deps, reportId, "failed");
+    return { reportId, disposition: "failed" };
+  }
 
+  attemptNumber += 1;
+  const legacyAnalysis = structured.analysis;
+  const policyResult = validateHanoiPolicy(structured.hanoiAnalysis);
+  const rpcPayload = projectHanoiPayloadForRpc(structured.hanoiAnalysis);
+  if (policyResult.ok) {
     await persistAttempt(deps, {
       reportId,
       runId,
       attemptNumber,
       structured,
-      validationErrors: policyResult.violations,
-      disposition: "retry",
-    });
-
-    if (validationAttempt === 0) {
-      retryInstruction = buildValidationRetryInstruction(policyResult.violations);
-      continue;
-    }
-
-    await persistAttempt(deps, {
-      reportId,
-      runId,
-      attemptNumber: attemptNumber + 1,
-      structured,
-      validationErrors: policyResult.violations,
-      disposition: "manual_review",
+      validationErrors: [],
+      disposition: "completed",
+      analysis: rpcPayload,
       finishRun: true,
     });
-    await finishRun(deps.client, runId, "manual_review");
-    await applyTerminalRouting(deps, reportId, "manual_review", structured.analysis);
-    return { reportId, disposition: "manual_review" };
+    await finishRun(deps.client, runId, "completed");
+    await applyTerminalRouting(deps, reportId, "completed", legacyAnalysis);
+    await runShadowComparisonIfEnabled(deps, {
+      reportId,
+      runId,
+      baseline: structured.hanoiAnalysis,
+      description,
+      image,
+    });
+    return { reportId, disposition: "completed" };
   }
 
+  await persistAttempt(deps, {
+    reportId,
+    runId,
+    attemptNumber,
+    structured,
+    validationErrors: policyResult.violations,
+    disposition: "manual_review",
+    finishRun: true,
+  });
   await finishRun(deps.client, runId, "manual_review");
-  await applyTerminalRouting(deps, reportId, "manual_review");
+  await applyTerminalRouting(deps, reportId, "manual_review", legacyAnalysis);
   return { reportId, disposition: "manual_review" };
 }
