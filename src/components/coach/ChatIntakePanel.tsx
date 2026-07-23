@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 
 import type { CitizenTriageOutcomeData } from "@/components/coach/CitizenTriageOutcome";
+import ReportForm from "@/components/ReportForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,6 +49,41 @@ function synthesizeDescription(messages: IntakeMessage[]): string {
 }
 
 export default function ChatIntakePanel() {
+  const t = useTranslations("public.intake");
+  const [showClassicForm, setShowClassicForm] = useState(false);
+
+  if (showClassicForm) {
+    return (
+      <div>
+        <ReportForm />
+        <Button
+          type="button"
+          variant="link"
+          className="mt-4 min-h-11 px-0 text-sm"
+          onClick={() => setShowClassicForm(false)}
+        >
+          {t("chatFirstLink")}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <ChatIntakeConversation />
+      <Button
+        type="button"
+        variant="link"
+        className="mt-4 min-h-11 px-0 text-sm"
+        onClick={() => setShowClassicForm(true)}
+      >
+        {t("classicFormLink")}
+      </Button>
+    </div>
+  );
+}
+
+function ChatIntakeConversation() {
   const t = useTranslations("public.intake");
   const locale = useLocale();
   const router = useRouter();

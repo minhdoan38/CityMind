@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 
 import LocaleSwitcher from "@/components/LocaleSwitcher";
-import ReportIntakeShell from "@/components/coach/ReportIntakeShell";
+import ChatIntakePanel from "@/components/coach/ChatIntakePanel";
 import { Link } from "@/i18n/navigation";
 
 export default async function ReportPage() {
@@ -32,7 +32,7 @@ export default async function ReportPage() {
 
       <main className="mx-auto flex w-full max-w-xl flex-grow flex-col justify-center px-6 py-12">
         <h1 className="sr-only">{t("reportPageTitle")}</h1>
-        <ReportIntakeShell />
+        <ChatIntakePanel />
       </main>
 
       <footer className="w-full border-t border-border bg-muted/40 py-6 text-center text-sm text-muted-foreground">
