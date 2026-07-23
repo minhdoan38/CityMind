@@ -20,13 +20,15 @@
     "phase12:gate": "npm run test:unit -- src/server/repositories/officer-assistant-messages.test.ts src/server/services/officer-assistant.test.ts src/server/ai/officer-assistant.test.ts && npm run test:legacy -- tests/advisory-assistant-widget.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/12_phase12_contract.sql",
     "phase13:gate": "npm run test:unit -- src/server/services/report-service.test.ts src/server/triage/dispatch.test.ts && npm run test:legacy -- tests/citizen-success-triage.test.mjs tests/report-form.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/13_phase13_contract.sql",
     "phase14:gate": "npm run test:unit -- src/server/repositories/triage-console.test.ts src/server/services/officer-triage-console.test.ts && npm run test:legacy -- tests/agent-console-contract.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/14_phase14_contract.sql",
-    "phase15:gate": "npm run test:unit -- src/server/domain/guidance-resolver.test.ts src/server/services/citizen-chat-intake.test.ts src/server/validation/hanoi-policy.test.ts src/server/ai/openai-compatible.test.ts && npm run test:legacy -- tests/chat-intake-contract.test.mjs tests/citizen-success-triage.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/15_phase15_contract.sql"
+    "phase15:gate": "npm run test:unit -- src/server/domain/guidance-resolver.test.ts src/server/services/citizen-chat-intake.test.ts src/server/validation/hanoi-policy.test.ts src/server/ai/openai-compatible.test.ts && npm run test:legacy -- tests/chat-intake-contract.test.mjs tests/citizen-success-triage.test.mjs && node scripts/run-supabase-sql.mjs -f supabase/tests/15_phase15_contract.sql",
+    "phase16:gate": "npm run test:unit -- src/server/services/evidence-service.test.ts src/server/services/evidence-image-pipeline.test.ts src/server/services/clamav-client.test.ts src/server/health/clamav-readiness.test.ts src/server/health/readiness.test.ts src/server/services/report-service.test.ts src/server/services/citizen-chat-intake.test.ts && npm run test:legacy -- tests/report-form.test.mjs && node scripts/migrate-evidence-to-webp.mjs --dry-run && node scripts/run-supabase-sql.mjs -f supabase/tests/16_phase16_contract.sql"
   },
   "dependencies": {
     "@hookform/resolvers": "5.4.0",
     "@supabase/ssr": "0.12.3",
     "@supabase/supabase-js": "2.110.7",
     "@tanstack/react-table": "^8.21.3",
+    "clamscan": "^2.4.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "exceljs": "^4.4.0",
@@ -42,6 +44,7 @@
     "react-hook-form": "7.82.0",
     "react-map-gl": "^8.1.1",
     "recharts": "^3.8.0",
+    "sharp": "^0.35.3",
     "tailwind-merge": "3.6.0",
     "zod": "4.4.3"
   },

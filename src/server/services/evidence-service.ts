@@ -1,9 +1,16 @@
 import "server-only";
 
+import { randomUUID } from "node:crypto";
+
 import { fileTypeFromBuffer } from "file-type";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const DEFAULT_MAX_EVIDENCE_BYTES = 8 * 1024 * 1024;
+import {
+  DEFAULT_MAX_EVIDENCE_BYTES,
+  resolveMaxEvidenceBytesFromEnv,
+} from "@/lib/evidence-limits";
+
+export { DEFAULT_MAX_EVIDENCE_BYTES };
 
 export const ALLOWED_IMAGE_MIME_TYPES = new Set([
   "image/jpeg",
@@ -24,6 +31,87 @@ const EXT_TO_MIME: Record<string, string> = {
   webp: "image/webp",
 };
 
+const DECLARED_MIME_ALIASES: Record<string, string> = {
+  "image/jpg": "image/jpeg",
+  "image/pjpeg": "image/jpeg",
+  "image/x-png": "image/png",
+};
+
+function normalizeDeclaredMimeType(
+  mime: string | null | undefined,
+): string | null {
+  if (!mime) return null;
+  const trimmed = mime.trim().toLowerCase();
+  if (!trimmed) return null;
+  return DECLARED_MIME_ALIASES[trimmed] ?? trimmed;
+}
+
+function sniffImageMime(bytes: Uint8Array): string | null {
+  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+    return "image/jpeg";
+  }
+  if (
+    bytes.length >= 8 &&
+    bytes[0] === 0x89 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x4e &&
+    bytes[3] === 0x47 &&
+    bytes[4] === 0x0d &&
+    bytes[5] === 0x0a &&
+    bytes[6] === 0x1a &&
+    bytes[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+  if (
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46 &&
+    bytes[3] === 0x46 &&
+    bytes[8] === 0x57 &&
+    bytes[9] === 0x45 &&
+    bytes[10] === 0x42 &&
+    bytes[11] === 0x50
+  ) {
+    return "image/webp";
+  }
+  return null;
+}
+
+const REJECTED_IMAGE_MIME_TYPES = new Set(["image/gif", "image/svg+xml"]);
+
+function isRejectedImageMime(mime: string | undefined | null): boolean {
+  return Boolean(mime && REJECTED_IMAGE_MIME_TYPES.has(mime));
+}
+
+function sniffRejectedImageMime(bytes: Uint8Array): boolean {
+  if (
+    bytes.length >= 6 &&
+    bytes[0] === 0x47 &&
+    bytes[1] === 0x49 &&
+    bytes[2] === 0x46
+  ) {
+    return true;
+  }
+  const prefix = new TextDecoder()
+    .decode(bytes.slice(0, Math.min(bytes.length, 256)))
+    .trimStart()
+    .toLowerCase();
+  return prefix.startsWith("<svg") || prefix.startsWith("<?xml");
+}
+
+async function detectImageMime(bytes: Uint8Array): Promise<string | null> {
+  const detected = await fileTypeFromBuffer(bytes);
+  if (isRejectedImageMime(detected?.mime) || sniffRejectedImageMime(bytes)) {
+    return null;
+  }
+  if (detected?.mime && ALLOWED_IMAGE_MIME_TYPES.has(detected.mime)) {
+    return detected.mime;
+  }
+  return sniffImageMime(bytes);
+}
+
 export type EvidenceValidationErrorCode =
   | "empty"
   | "oversized"
@@ -35,7 +123,13 @@ export type EvidenceValidationResult =
   | { ok: false; code: EvidenceValidationErrorCode };
 
 export class EvidenceServiceError extends Error {
-  readonly code: EvidenceValidationErrorCode | "storage_failed" | "invalid_uri";
+  readonly code:
+    | EvidenceValidationErrorCode
+    | "storage_failed"
+    | "invalid_uri"
+    | "infected"
+    | "scanner_unavailable"
+    | "transform_failed";
 
   constructor(code: EvidenceServiceError["code"], message: string) {
     super(message);
@@ -47,17 +141,15 @@ export class EvidenceServiceError extends Error {
 export function resolveMaxEvidenceBytes(
   env: NodeJS.ProcessEnv = process.env,
 ): number {
-  const raw = env.MAX_IMAGE_BYTES?.trim();
-  if (!raw) return DEFAULT_MAX_EVIDENCE_BYTES;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    return DEFAULT_MAX_EVIDENCE_BYTES;
-  }
-  return parsed;
+  return resolveMaxEvidenceBytesFromEnv(env);
 }
 
-export function buildEvidenceObjectPath(reportId: string, ext: string): string {
-  return `reports/${reportId}/evidence.${ext}`;
+/** Legacy upload helper; prefer processAndStoreEvidence for new evidence paths. */
+export function buildEvidenceObjectPath(
+  reportId: string,
+  objectId?: string,
+): string {
+  return `reports/${reportId}/${objectId ?? randomUUID()}.webp`;
 }
 
 export function buildSupabaseEvidenceUri(bucket: string, objectPath: string): string {
@@ -143,24 +235,26 @@ export async function validateEvidenceBytes(
     return { ok: false, code: "oversized" };
   }
 
-  const detected = await fileTypeFromBuffer(normalized);
-  if (!detected || !ALLOWED_IMAGE_MIME_TYPES.has(detected.mime)) {
+  const detectedMime = await detectImageMime(normalized);
+  if (!detectedMime) {
     return { ok: false, code: "invalid_type" };
   }
 
-  const ext = MIME_TO_EXT[detected.mime];
+  const ext = MIME_TO_EXT[detectedMime];
   if (!ext) {
     return { ok: false, code: "invalid_type" };
   }
 
+  const normalizedDeclared = normalizeDeclaredMimeType(options.declaredMimeType);
   if (
-    options.declaredMimeType &&
-    options.declaredMimeType !== detected.mime
+    normalizedDeclared &&
+    ALLOWED_IMAGE_MIME_TYPES.has(normalizedDeclared) &&
+    normalizedDeclared !== detectedMime
   ) {
     return { ok: false, code: "spoofed_mime" };
   }
 
-  return { ok: true, mimeType: detected.mime, ext };
+  return { ok: true, mimeType: detectedMime, ext };
 }
 
 export async function uploadEvidence(options: {
@@ -182,7 +276,7 @@ export async function uploadEvidence(options: {
     throw new EvidenceServiceError(validation.code, "Evidence upload rejected");
   }
 
-  const objectPath = buildEvidenceObjectPath(options.reportId, validation.ext);
+  const objectPath = buildEvidenceObjectPath(options.reportId);
   const normalized = toUint8Array(options.bytes);
   const { error } = await options.client.storage
     .from(options.bucketName)
