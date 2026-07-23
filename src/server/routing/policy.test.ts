@@ -8,7 +8,7 @@ import {
 
 describe("evaluateRoutingPolicy", () => {
   it("exports semver ROUTING_POLICY_VERSION", () => {
-    expect(ROUTING_POLICY_VERSION).toBe("1.0.0");
+    expect(ROUTING_POLICY_VERSION).toBe("1.1.0");
   });
 
   it("routes manual_review to government with triage_manual_or_failed (D-23)", () => {
@@ -155,5 +155,101 @@ describe("evaluateRoutingPolicy", () => {
       confidence: 0.85,
     };
     expect(evaluateRoutingPolicy(input)).toEqual(evaluateRoutingPolicy(input));
+  });
+
+  describe("Hanoi handling_type routing (D-15-04)", () => {
+    it("routes handling_type 1 + script_ready to self_help", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "waste",
+        severity: 1,
+        priority: "low",
+        confidence: 0.9,
+        handling_type: 1,
+        guidance_status: "script_ready",
+      });
+      expect(decision).toEqual({
+        destination: "self_help",
+        reasonCode: "hanoi_self_guidance",
+        policyVersion: ROUTING_POLICY_VERSION,
+      });
+    });
+
+    it("routes handling_type 2 to government", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "pothole",
+        severity: 2,
+        priority: "low",
+        confidence: 0.9,
+        handling_type: 2,
+        guidance_status: "script_ready",
+      });
+      expect(decision.destination).toBe("government");
+      expect(decision.reasonCode).toBe("handling_type_government");
+    });
+
+    it("routes handling_type 3 to government", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "obstruction",
+        severity: 4,
+        priority: "high",
+        confidence: 0.9,
+        handling_type: 3,
+        guidance_status: "script_ready",
+      });
+      expect(decision).toEqual({
+        destination: "government",
+        reasonCode: "handling_type_government",
+        policyVersion: ROUTING_POLICY_VERSION,
+      });
+    });
+
+    it("routes guidance_status generate_later to government with guidance_pending", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "waste",
+        severity: 1,
+        priority: "low",
+        confidence: 0.9,
+        handling_type: 1,
+        guidance_status: "generate_later",
+      });
+      expect(decision).toEqual({
+        destination: "government",
+        reasonCode: "guidance_pending",
+        policyVersion: ROUTING_POLICY_VERSION,
+      });
+    });
+
+    it("routes critical_alert to government before handling_type self_help", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "waste",
+        severity: 1,
+        priority: "low",
+        confidence: 0.9,
+        handling_type: 1,
+        guidance_status: "script_ready",
+        critical_alert: true,
+      });
+      expect(decision).toEqual({
+        destination: "government",
+        reasonCode: "critical_alert",
+        policyVersion: ROUTING_POLICY_VERSION,
+      });
+    });
+
+    it("falls back to legacy rules when handling_type is absent", () => {
+      const decision = evaluateRoutingPolicy({
+        triageStatus: "completed",
+        category: "graffiti",
+        severity: 2,
+        priority: "low",
+        confidence: 0.8,
+      });
+      expect(decision.reasonCode).toBe("eligible_category_low_severity");
+    });
   });
 });

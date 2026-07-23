@@ -49,6 +49,11 @@ const PNG_BYTES = Uint8Array.from(
   (char) => char.charCodeAt(0),
 );
 
+const JPEG_BYTES = Uint8Array.from([
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00,
+  0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
+]);
+
 function createProvider(
   overrides: Partial<AnalysisProvider> = {},
 ): AnalysisProvider {
@@ -261,6 +266,19 @@ describe("submitReport", () => {
     resetServerEnvCache();
   });
 
+  it("accepts JPEG uploads declared as image/jpg", async () => {
+    const client = createClient();
+    const form = formWith(
+      { description: "Pothole with photo evidence attached." },
+      new File([JPEG_BYTES], "photo.jpg", { type: "image/jpg" }),
+    );
+
+    const result = await submitReport(form, { client: client as never });
+
+    expect(result.intake_status).toBe("received");
+    expect(client.bucketApi.upload).toHaveBeenCalled();
+  });
+
   it("returns government intake outcome with officer_review and no self-help coach fields", async () => {
     getCitizenStatus.mockResolvedValue({
       report_id: "rep-gov",
@@ -320,6 +338,10 @@ describe("submitReport", () => {
       recommendation: "Secure the lid and schedule pickup.",
       playbook_id: "waste",
       can_escalate: true,
+      guidance_script: null,
+      guidance_status: null,
+      allowed_actions: [],
+      prohibited_actions: [],
     });
     expect(dispatchTriageAndWait).toHaveBeenCalled();
     expect(client.rpc).toHaveBeenCalledWith(
