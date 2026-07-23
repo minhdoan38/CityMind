@@ -310,6 +310,7 @@
       "filterLabel": "Lọc theo mã báo cáo",
       "filterPlaceholder": "vd. 1ebf8a9a-013b-4b8c-84be-12a82f4d2a83",
       "refresh": "Làm mới",
+      "applyNow": "Áp dụng ngay",
       "clearFilter": "Xóa bộ lọc",
       "loading": "Đang tải hoạt động agent…",
       "loadError": "Không tải được nhật ký agent. Thử lại.",

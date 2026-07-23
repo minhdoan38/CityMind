@@ -1,0 +1,3 @@
+# Coolify/Nixpacks: Next.js 16 and Supabase require Node 22 (not the Node 18 default).
+[variables]
+NIXPACKS_NODE_VERSION = "22"

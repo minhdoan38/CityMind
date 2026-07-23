@@ -243,6 +243,15 @@ export default function AgentConsoleViewer({ initialReportId = "" }: Props) {
     };
   }, [filter, appliedFilter, load]);
 
+  useEffect(() => {
+    const active = document.activeElement;
+    const inCaseList = caseButtonRefs.current.some((button) => button === active);
+    if (!inCaseList || !cases[focusedCaseIndex]) {
+      return;
+    }
+    caseButtonRefs.current[focusedCaseIndex]?.focus();
+  }, [focusedCaseIndex, cases]);
+
   const totalAttempts = useMemo(
     () => cases.reduce((sum, item) => sum + caseAttemptCount(item), 0),
     [cases],
@@ -414,17 +423,17 @@ export default function AgentConsoleViewer({ initialReportId = "" }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant={filterPending ? "default" : "outline"}
               onClick={() => applyFilterNow()}
               disabled={loading}
-              aria-label={t("refresh")}
+              aria-label={filterPending ? t("applyNow") : t("refresh")}
             >
               {loading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" aria-hidden />
               ) : (
                 <RefreshCw className="mr-2 size-4" aria-hidden />
               )}
-              {t("refresh")}
+              {filterPending ? t("applyNow") : t("refresh")}
             </Button>
             {filter.trim() ? (
               <Button type="button" variant="ghost" onClick={clearFilter}>

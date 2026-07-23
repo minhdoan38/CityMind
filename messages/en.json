@@ -310,6 +310,7 @@
       "filterLabel": "Filter by report ID",
       "filterPlaceholder": "e.g. 1ebf8a9a-013b-4b8c-84be-12a82f4d2a83",
       "refresh": "Refresh",
+      "applyNow": "Apply now",
       "clearFilter": "Clear filter",
       "loading": "Loading agent activity…",
       "loadError": "Could not load agent console logs. Try again.",

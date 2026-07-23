@@ -92,8 +92,8 @@
   --console-surface: oklch(0.24 0.028 258);
   --console-surface-raised: oklch(0.29 0.03 258);
   --console-ink: oklch(0.93 0.012 258);
-  --console-muted: oklch(0.79 0.022 252);
-  --console-meta: oklch(0.8 0.045 248);
+  --console-muted: oklch(0.87 0.018 252);
+  --console-meta: oklch(0.88 0.04 248);
   --console-warn: oklch(0.86 0.11 88);
   --console-accent: oklch(0.78 0.11 252);
 
