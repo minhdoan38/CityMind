@@ -473,13 +473,35 @@ Plans:
 
 ### Phase 15: Citizen conversational support — chat-first intake and Hanoi guidance beyond one-shot report form
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Evolve public citizen intake from one-shot report form to conversational support — chat-guided field collection, Hanoi v5.2 triage classifier, bilingual pre-approved guidance script delivery, and government handoff when citizens cannot safely self-resolve — while preserving token-scoped privacy and officer decision authority.
+
+**Requirements:** PUB-07, SHELP-06, TRIAGE-15, TRIAGE-01, CIT-02, SHELP-01, SHELP-02, SHELP-04, SHELP-05 (regression)
+
 **Depends on:** Phase 14
-**Plans:** 0 plans
+
+**Plans:** 1/4 plans executed
+
+**Success criteria:**
+- `npm run phase15:gate` passes (unit + legacy contracts + SQL Hanoi column contract)
+- Chat-first `/report` flow creates report + token, persists chat, runs sync triage on submit
+- Self-help path delivers resolved guidance script; type 2/3 and `generate_later` route to government queue
+- Classic `ReportForm` submit still works (Phase 13 regression)
+- UAT-1..7 from 15-VALIDATION.md pass
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 15 to break down)
+
+**Wave 1**
+
+- [x] 15-01-PLAN.md — **Hanoi v5.2 classifier** — 16-key Zod, guidance resolver, hanoi-policy, triage wiring, DB migration
+
+**Wave 2** *(depends on 15-01)*
+
+- [ ] 15-02-PLAN.md — **Chat intake API** — intake/start, intake/messages, intake/submit, citizen-chat-intake service
+
+**Wave 3** *(depends on 15-01, 15-02)*
+
+- [ ] 15-03-PLAN.md — **Citizen UX + routing** — ChatIntakePanel, handling_type policy, GuidanceScriptCard on success/status
+- [ ] 15-04-PLAN.md — **Gate + traceability** — phase15:gate, SQL contract, legacy tests, UAT checkpoint
 
 ---
 *Roadmap created: 2026-07-20*
@@ -488,3 +510,4 @@ Plans:
 *Phase 11 added: 2026-07-22 — evaluator spec + guided self-help coach, AI health ping, dashboard quick triage*
 *Phase 13 traceability updated: 2026-07-22 — sync citizen intake docs; UAT-1..4 pending human verification*
 *Phase 14 traceability updated: 2026-07-22 — DASH-11 gates/tests/UI polish; UAT-1..6 pending human verification*
+*Phase 15 planned: 2026-07-23 — chat-first intake, Hanoi v5.2, guidance scripts; 4 plans in 3 waves*

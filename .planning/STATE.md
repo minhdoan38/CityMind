@@ -4,13 +4,13 @@ milestone: v2.0
 milestone_name: Platform
 status: executing
 stopped_at: Phase 14 context gathered
-last_updated: "2026-07-22T05:45:12.239Z"
-last_activity: 2026-07-22 -- Phase 14 planning complete
+last_updated: "2026-07-23T02:08:41.186Z"
+last_activity: 2026-07-23
 progress:
-  total_phases: 14
-  completed_phases: 13
-  total_plans: 67
-  completed_plans: 64
+  total_phases: 15
+  completed_phases: 14
+  total_plans: 71
+  completed_plans: 68
   percent: 93
 ---
 
@@ -21,13 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 13 — immediate citizen triage on submit (13-03 docs done; UAT-1..4 pending)
+**Current focus:** Phase 15 — Citizen conversational support
 
 ## Current Position
 
-Phase: 13 (immediate-citizen-triage) — **IN PROGRESS** (13-03 partial: docs complete, human UAT pending)
+Phase: 15 (Citizen conversational support) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-07-22 -- Phase 14 planning complete
+Last activity: 2026-07-23
 
 **Pre-production (optional):** `npm run eval:live`, shadow mode observation, model cutover after gate PASS
 
@@ -81,6 +82,9 @@ Last activity: 2026-07-22 -- Phase 14 planning complete
 
 Recent decisions affecting current work:
 
+- [Phase 15-01]: Triage classifier uses Hanoi v5.2 prompt (config_version 5.2.0) with 16-key schema per D-15-02
+- [Phase 15-01]: Empty/refusal provider content throws invalid_response before JSON.parse per T-15-03
+- [Phase 15-01]: resolveGuidanceScript delivers bilingual scripts; high/critical always generate_later per D-15-03
 - Milestone v2: Supabase Postgres primary; BigQuery analytics-only
 - Parallel tracks A/B/C per phase for backend, landing, dashboard
 - Citizen access: anonymous submit + access token (no accounts)
@@ -155,7 +159,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-22T05:33:41.323Z
+Last session: 2026-07-23T02:08:41.176Z
 Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-officer-agent-console-per-case-triage-run-and-attempt-log-vi/14-CONTEXT.md
+Resume file: None
 Notes: ai-logic.md sync docs + SHELP traceability closed; human UAT-1..4 not yet executed

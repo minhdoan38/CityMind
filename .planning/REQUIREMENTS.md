@@ -33,6 +33,7 @@
 - [x] **PUB-04**: Submit success shows report_id + access token + copyable status link
 - [ ] **PUB-05**: shadcn/ui component library installed and themed consistently
 - [x] **PUB-06**: Public pages are mobile-responsive and accessible (focus states, aria)
+- [ ] **PUB-07**: **Chat-first citizen intake** — conversational support is the primary `/report` flow (`ChatIntakePanel`); token-scoped intake APIs persist `chat_messages`; conversation culminates in `reports` row + access token; classic `ReportForm` remains as secondary fallback
 
 ### Citizen Status (CIT)
 
@@ -92,6 +93,7 @@
 - [x] **TRIAGE-12**: Push triage dispatch via authenticated **`POST /internal/triage/{report_id}`** on intake (self-hosted equivalent of Cloud Tasks + OIDC); poll worker not the default production path. **Phase 13 override (citizen):** `dispatchTriageAndWait` sync-primary on `POST /api/public/reports`; push dispatch is sync-failure fallback and officer/internal path only.
 - [x] **TRIAGE-13**: Verified UX contracts — citizen `failed` calm copy (no provider leakage); officer default queue elevates `failed`/`manual_review`; `triage_bucket` sort covered by automated tests
 - [ ] **TRIAGE-14**: Eval suite and shadow compare operate on **11-key** snapshots; `/analyze` compatibility documented (410 permanent) or behind feature-flag shim with sunset
+- [x] **TRIAGE-15**: Runtime triage uses **Hanoi v5.2** classifier from `prompt/citymind_ai_hanoi_triage_guidance_v5_2 (1).json` — 16-key schema, handling_type, guidance_code, critical_alert; Zod + policy validation; empty provider content gated; persists Hanoi columns on `reports`
 
 ### Guided Self-Help Coach (SHELP) — Phase 11 (build) + Phase 13 (verification)
 
@@ -102,6 +104,7 @@
 - [x] **SHELP-03**: Coach AI uses distinct conversational prompt/role from triage classifier; optional `AI_COACH_MODEL` / `AI_COACH_BASE_URL` — *Verified Phase 13 — sync success page (Phase 11 impl)*
 - [x] **SHELP-04**: Escalate-to-government CTA always available in coach and status flows; escalated reports leave self-help path — *Verified Phase 13 — sync success page*
 - [x] **SHELP-05**: Bilingual EN/VI coach UI, loading/error states, and triage-progress polling on success page — *Verified Phase 13 — sync success page (`formAnalyzing` + poll fallback)*
+- [ ] **SHELP-06**: **Hanoi guidance script delivery** — deterministic `resolveGuidanceScript` maps `guidance_code` to bilingual pre-approved script from `citymind_hanoi_guidance_scripts_v2_bilingual (1).json`; `generate_later` and handling types 2/3 show government queue messaging; citizens never see raw classifier JSON
 
 ### Operations (OPS) — Phase 11
 
@@ -119,6 +122,15 @@
   - **DASH-10c**: Persist officer assistant thread in Postgres (`officer_assistant_messages`); server loads history; survives refresh
   - **DASH-10d**: Optional report context attach — when `report_id` provided, ground reply in officer-visible triage fields via `getOfficerReport` + evaluator projection
   - **DASH-10e**: Automated tests — service auth/health/validation/rate limit; prompt context unit test; SQL contract for officer message table RLS
+
+### Dashboard (DASH) — Phase 14
+
+- [ ] **DASH-11**: Officer **agent console** — per-case triage run and attempt log viewer; read-only audit of `triage_runs` and `triage_attempts`; officer session gate; bilingual EN/VI; 50-run cap with truncation notice. Underlying audit data requirement: **TRIAGE-06** (viewer surface).
+  - **DASH-11a**: `GET /api/officer/triage-console` — `requireOfficerContext`, admin client reads, generic 502 on failure
+  - **DASH-11b**: `AgentConsoleViewer` — raw output primary, `validation_errors` warn block, 320-char expand preview, truncation notice on unfiltered feed
+  - **DASH-11c**: Entry points — sidebar nav + report detail deep link `?report_id=` only
+  - **DASH-11d**: SQL contract — `anon` and `authenticated` cannot read audit tables
+  - **DASH-11e**: Automated tests — service 401/502, repository grouping, legacy wiring contract via `phase14:gate`
 
 ### Routing (ROUT) — Phase 9
 
@@ -182,6 +194,7 @@ Deferred beyond Milestone v2.
 | PUB-03 | Phase 2 | Complete |
 | PUB-04 | Phase 2 + 13 | Complete |
 | PUB-06 | Phase 2 | Complete |
+| PUB-07 | Phase 15 | Pending |
 | AUTH-04 | Phase 2 | Complete |
 | DATA-04 | Phase 3 | Pending |
 | DATA-05 | Phase 3 | Pending |
@@ -224,14 +237,17 @@ Deferred beyond Milestone v2.
 | TRIAGE-12 | Phase 11 + 13 | Complete |
 | TRIAGE-13 | Phase 11 + 13 | Complete |
 | TRIAGE-14 | Phase 11 | Pending |
+| TRIAGE-15 | Phase 15 | Complete |
 | SHELP-01 | Phase 13 | Complete |
 | SHELP-02 | Phase 13 | Complete |
 | SHELP-03 | Phase 13 | Complete |
 | SHELP-04 | Phase 13 | Complete |
 | SHELP-05 | Phase 13 | Complete |
+| SHELP-06 | Phase 15 | Pending |
 | OPS-01 | Phase 11 | Pending |
 | DASH-09 | Phase 11 | Pending |
 | DASH-10 | Phase 12 | Complete |
+| DASH-11 | Phase 14 | Pending |
 | ROUT-01 | Phase 9 | Complete |
 | ROUT-02 | Phase 9 | Complete |
 | ROUT-03 | Phase 9 | Complete |
@@ -246,12 +262,12 @@ Deferred beyond Milestone v2.
 - v1 requirements: 55 total
 - Mapped to phases: 55
 - SELFHOST requirements: 6 (Phase 7)
-- TRIAGE requirements: 14 (Phases 8–11)
-- SHELP requirements: 5 (Phase 11 build, Phase 13 verification)
+- TRIAGE requirements: 15 (Phases 8–11, 15)
+- SHELP requirements: 6 (Phase 11 build, Phase 13 verification, Phase 15 script delivery)
 - OPS requirements: 1 (Phase 11)
 - ROUT requirements: 8 (Phase 9)
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-20*
-*Last updated: 2026-07-22 — Phase 13 planning: SHELP traceability → Phase 13; TRIAGE-12 citizen sync override*
+*Last updated: 2026-07-23 — Phase 15 planning: PUB-07 chat-first intake, SHELP-06 Hanoi scripts, TRIAGE-15 Hanoi v5.2*
