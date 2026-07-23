@@ -11,6 +11,8 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Check, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
 
+import CoachPanel from "@/components/coach/CoachPanel";
+import GuidanceScriptCard from "@/components/coach/GuidanceScriptCard";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import {
   Dialog,
@@ -57,6 +59,10 @@ type StatusResult = {
   history: HistoryItem[];
   playbook_id?: string | null;
   can_escalate?: boolean;
+  guidance_script?: string | null;
+  guidance_status?: "script_ready" | "generate_later" | null;
+  allowed_actions?: string[];
+  prohibited_actions?: string[];
 };
 
 type LookupErrorKind = "verify" | "rate" | "network";
@@ -168,6 +174,7 @@ function StatusLookupForm() {
   const tw = useTranslations("public.statusWorkflow");
   const tt = useTranslations("public.triage");
   const tr = useTranslations("public.routing");
+  const tg = useTranslations("public.guidance");
   const locale = useLocale();
   const searchParams = useSearchParams();
   const autoFetched = useRef(false);
@@ -467,6 +474,17 @@ function StatusLookupForm() {
 
             {isSelfHelp ? (
               <section className="space-y-4 rounded-lg border border-border bg-muted/40 p-4">
+                {result.guidance_status === "script_ready" && result.guidance_script ? (
+                  <GuidanceScriptCard
+                    script={result.guidance_script}
+                    allowedActions={result.allowed_actions}
+                    prohibitedActions={result.prohibited_actions}
+                  />
+                ) : result.guidance_status === "generate_later" ? (
+                  <Alert>
+                    <AlertDescription>{tg("generateLaterMessage")}</AlertDescription>
+                  </Alert>
+                ) : null}
                 <h2 className="text-xl font-semibold text-foreground">
                   {playbookTitle ?? tr("playbookPanelTitle")}
                 </h2>
@@ -499,6 +517,11 @@ function StatusLookupForm() {
                     ))}
                   </ul>
                 ) : null}
+                <CoachPanel
+                  reportId={reportId.trim()}
+                  accessToken={token.trim()}
+                  onEscalate={() => setEscalateOpen(true)}
+                />
               </section>
             ) : null}
 

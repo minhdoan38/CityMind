@@ -4,16 +4,22 @@ import { useEffect, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Check, Copy } from "lucide-react";
 
+import CitizenTriageOutcome, {
+  type CitizenTriageOutcomeData,
+} from "@/components/coach/CitizenTriageOutcome";
+import SuccessTriagePanel from "@/components/coach/SuccessTriagePanel";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
+import type { CitizenServiceStep } from "@/server/services/citizen-status";
 
 const FLASH_KEY = "citymind:report-success";
 
 type FlashPayload = {
   reportId: string;
   accessToken: string;
+  outcome?: CitizenTriageOutcomeData;
 };
 
 function consumeFlash(): FlashPayload | null {
@@ -21,9 +27,38 @@ function consumeFlash(): FlashPayload | null {
   sessionStorage.removeItem(FLASH_KEY);
   if (!raw) return null;
   try {
-    const data = JSON.parse(raw) as Partial<FlashPayload>;
+    const data = JSON.parse(raw) as Partial<FlashPayload> & {
+      service_step?: CitizenServiceStep;
+      triage_status?: string;
+    };
     if (!data.reportId || !data.accessToken) return null;
-    return { reportId: data.reportId, accessToken: data.accessToken };
+
+    const outcome: CitizenTriageOutcomeData | undefined =
+      data.outcome ??
+      (data.service_step && data.triage_status
+        ? {
+            service_step: data.service_step,
+            triage_status: data.triage_status,
+            routing_destination: data.routing_destination as string | null | undefined,
+            category: data.category as string | null | undefined,
+            severity: data.severity as number | null | undefined,
+            priority: data.priority as string | null | undefined,
+            summary: data.summary as string | null | undefined,
+            recommendation: data.recommendation as string | null | undefined,
+            playbook_id: data.playbook_id as string | null | undefined,
+            can_escalate: data.can_escalate as boolean | undefined,
+            guidance_script: data.guidance_script as string | null | undefined,
+            guidance_status: data.guidance_status as
+              | "script_ready"
+              | "generate_later"
+              | null
+              | undefined,
+            allowed_actions: data.allowed_actions as string[] | undefined,
+            prohibited_actions: data.prohibited_actions as string[] | undefined,
+          }
+        : undefined);
+
+    return { reportId: data.reportId, accessToken: data.accessToken, outcome };
   } catch {
     return null;
   }
@@ -89,7 +124,12 @@ export default function ReportSuccessPage() {
     );
   }
 
-  const { reportId, accessToken } = flash;
+  const { reportId, accessToken, outcome } = flash;
+  const showImmediateOutcome =
+    outcome &&
+    outcome.service_step !== "ai_review_pending" &&
+    outcome.triage_status !== "pending" &&
+    outcome.triage_status !== "processing";
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -105,14 +145,24 @@ export default function ReportSuccessPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-xl flex-grow flex-col justify-center px-6 py-12">
+      <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col justify-center px-6 py-12">
         <div className="w-full rounded-xl border border-border bg-card p-6 shadow-sm">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {t("successHeading")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("successBody")}</p>
 
-          <Alert className="mt-6 border-amber-500/40 bg-amber-50 text-amber-900">
+          {showImmediateOutcome ? (
+            <CitizenTriageOutcome
+              reportId={reportId}
+              accessToken={accessToken}
+              outcome={outcome}
+            />
+          ) : (
+            <SuccessTriagePanel reportId={reportId} accessToken={accessToken} />
+          )}
+
+          <Alert className="mt-6 border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
             <AlertDescription className="text-sm font-medium">
               {t("tokenWarning")}
             </AlertDescription>
