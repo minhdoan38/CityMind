@@ -461,15 +461,25 @@ Plans:
 
 **Wave 1 — Gates, tests, SQL contract**
 
-- [ ] 14-01-PLAN.md — **Gate foundation** — `phase14:gate`, service 401/200/502 tests, legacy wiring contract, `14_phase14_contract.sql`
+- [x] 14-01-PLAN.md — **Gate foundation** — `phase14:gate`, service 401/200/502 tests, legacy wiring contract, `14_phase14_contract.sql`
 
 **Wave 2** *(depends on 14-01)*
 
-- [ ] 14-02-PLAN.md — **UI-SPEC polish** — truncation notice, emptyFiltered/emptyRecent, keyboard case list
+- [x] 14-02-PLAN.md — **UI-SPEC polish** — truncation notice, emptyFiltered/emptyRecent, keyboard case list
 
 **Wave 3** *(depends on 14-02)*
 
-- [ ] 14-03-PLAN.md — **Traceability + UAT** — DASH-11 in REQUIREMENTS, ROADMAP finalization, human UAT UAT-1..6
+- [ ] 14-03-PLAN.md — **Traceability + UAT** — DASH-11 in REQUIREMENTS, ROADMAP finalization, human UAT UAT-1..6 *(docs done; UAT pending)*
+
+### Phase 15: Citizen conversational support — chat-first intake and Hanoi guidance beyond one-shot report form
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 15 to break down)
 
 ---
 *Roadmap created: 2026-07-20*
@@ -477,3 +487,4 @@ Plans:
 *Phase 7 inserted for Google-service removal; former Phases 7–9 shifted to 8–10: 2026-07-21*
 *Phase 11 added: 2026-07-22 — evaluator spec + guided self-help coach, AI health ping, dashboard quick triage*
 *Phase 13 traceability updated: 2026-07-22 — sync citizen intake docs; UAT-1..4 pending human verification*
+*Phase 14 traceability updated: 2026-07-22 — DASH-11 gates/tests/UI polish; UAT-1..6 pending human verification*

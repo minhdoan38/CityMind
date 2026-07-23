@@ -64,6 +64,7 @@ Last activity: 2026-07-22 -- Phase 14 planning complete
 
 ### Roadmap Evolution
 
+- Phase 15 added: Citizen conversational support — chat-first intake and Hanoi guidance beyond one-shot report form
 - Phase 14 added: Officer agent console — per-case triage run and attempt log viewer
 - Phase 13 added: Immediate citizen triage on submit with evaluator prompt and guided success page
 - Phase 11 discuss complete: coach on success+status, Postgres chat, push triage + poll fallback, dual-read 11-key schema, keep 410 analyze
