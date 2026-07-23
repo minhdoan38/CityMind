@@ -10,8 +10,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useRouter } from "@/i18n/navigation";
+import { writeReportSuccessFlash } from "@/lib/report-outcome-flash";
 
-const FLASH_KEY = "citymind:report-success";
 const MIN_DESCRIPTION_LENGTH = 5;
 
 type IntakeMessage = {
@@ -198,29 +198,26 @@ function ChatIntakeConversation() {
         return;
       }
 
-      sessionStorage.setItem(
-        FLASH_KEY,
-        JSON.stringify({
-          reportId: body.report_id,
-          accessToken: body.access_token,
-          outcome: {
-            service_step: body.service_step ?? "ai_review_pending",
-            triage_status: body.triage_status ?? "pending",
-            routing_destination: body.routing_destination ?? null,
-            category: body.category ?? null,
-            severity: body.severity ?? null,
-            priority: body.priority ?? null,
-            summary: body.summary ?? null,
-            recommendation: body.recommendation ?? null,
-            playbook_id: body.playbook_id ?? null,
-            can_escalate: body.can_escalate ?? false,
-            guidance_script: body.guidance_script ?? null,
-            guidance_status: body.guidance_status ?? null,
-            allowed_actions: body.allowed_actions ?? [],
-            prohibited_actions: body.prohibited_actions ?? [],
-          } satisfies CitizenTriageOutcomeData,
-        }),
-      );
+      writeReportSuccessFlash({
+        reportId: body.report_id,
+        accessToken: body.access_token,
+        outcome: {
+          service_step: body.service_step ?? "ai_review_pending",
+          triage_status: body.triage_status ?? "pending",
+          routing_destination: body.routing_destination ?? null,
+          category: body.category ?? null,
+          severity: body.severity ?? null,
+          priority: body.priority ?? null,
+          summary: body.summary ?? null,
+          recommendation: body.recommendation ?? null,
+          playbook_id: body.playbook_id ?? null,
+          can_escalate: body.can_escalate ?? false,
+          guidance_script: body.guidance_script ?? null,
+          guidance_status: body.guidance_status ?? null,
+          allowed_actions: body.allowed_actions ?? [],
+          prohibited_actions: body.prohibited_actions ?? [],
+        },
+      });
 
       router.push("/report/success");
     } catch {

@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import ExportButton from "@/components/reports/ExportButton";
 import DashboardInsightsRail from "@/components/dashboard/DashboardInsightsRail";
+import ReportsDateRangeFilter from "@/components/reports/ReportsDateRangeFilter";
 import ReportsFilters from "@/components/reports/ReportsFilters";
 import ReportsMetrics from "@/components/reports/ReportsMetrics";
 import ReportsTable from "@/components/reports/ReportsTable";
@@ -35,34 +36,26 @@ export default async function DashboardPage({ searchParams }: Props) {
   const focusExport = params.focus === "export";
 
   return (
-    <div className="w-full max-w-none space-y-6">
-      <div className="dash-rise flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">
+    <div className="reports-page w-full max-w-none space-y-4">
+      <header className="reports-page-header dash-rise flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="reports-page-title font-heading text-balance">
             {t("pageTitle")}
           </h1>
-          <p className="mt-1.5 max-w-2xl text-base text-muted-foreground">
+          <p className="reports-page-lead text-pretty">
             {isMapView ? tMap("pageSubtitle") : t("pageSubtitle")}
           </p>
         </div>
-        <div className="dash-rise dash-rise-delay-1 flex flex-col items-stretch gap-3 sm:items-end">
+        <div className="dash-rise dash-rise-delay-1 flex w-full flex-wrap items-center gap-2 sm:gap-2.5 lg:w-auto lg:justify-end">
+          <ReportsDateRangeFilter
+            params={normalized}
+            showPeriodPresets={false}
+            className="w-full sm:w-auto"
+          />
           <ReportsViewToggle />
           <ExportButton params={normalized} focusExport={focusExport} />
         </div>
-      </div>
-
-      <ReportsFilters params={normalized} />
-      <div className="dash-rise dash-rise-delay-2">
-        <ReportsMetrics metrics={result.metrics} />
-      </div>
-
-      {!result.error && (
-        <DashboardInsightsRail
-          metrics={result.metrics}
-          layout="grid"
-          className="2xl:hidden"
-        />
-      )}
+      </header>
 
       {result.error && (
         <Alert variant="destructive">
@@ -74,35 +67,42 @@ export default async function DashboardPage({ searchParams }: Props) {
       )}
 
       {!result.error && isMapView && (
-        <>
-          <ReportsMapViewLoader params={normalized} />
-          <DashboardInsightsRail
-            metrics={result.metrics}
-            layout="grid"
-            className="2xl:hidden"
-          />
-          <DashboardInsightsRail
-            metrics={result.metrics}
-            layout="rail"
-            className="hidden max-w-sm 2xl:grid"
-          />
-        </>
-      )}
-
-      {!result.error && !isMapView && (
-        <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]">
-          <div className="min-w-0">
-            <ReportsTable
-              rows={result.rows}
-              nextCursor={result.nextCursor}
-              params={normalized}
-              filtersActive={filtersActive}
-            />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start">
+          <div className="min-w-0 space-y-3">
+            <ReportsMetrics metrics={result.metrics} compact />
+            <div className="reports-queue surface-card overflow-hidden">
+              <ReportsFilters params={normalized} layout="toolbar" />
+              <ReportsMapViewLoader params={normalized} />
+            </div>
           </div>
           <DashboardInsightsRail
             metrics={result.metrics}
             layout="rail"
-            className="hidden 2xl:grid"
+            className="lg:sticky lg:top-[calc(4rem+1.5rem)] lg:self-start"
+          />
+        </div>
+      )}
+
+      {!result.error && !isMapView && (
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,300px)] lg:items-start">
+          <div className="min-w-0 space-y-3 dash-rise dash-rise-delay-1">
+            <ReportsMetrics metrics={result.metrics} compact />
+            <div className="reports-queue surface-card overflow-hidden">
+              <ReportsFilters params={normalized} layout="toolbar" />
+              <ReportsTable
+                embedded
+                rows={result.rows}
+                nextCursor={result.nextCursor}
+                params={normalized}
+                filtersActive={filtersActive}
+                totalCount={result.metrics?.total_reports ?? null}
+              />
+            </div>
+          </div>
+          <DashboardInsightsRail
+            metrics={result.metrics}
+            layout="rail"
+            className="lg:sticky lg:top-[calc(4rem+1.5rem)] lg:self-start"
           />
         </div>
       )}

@@ -37,6 +37,7 @@ type Props = {
   reportId: string;
   accessToken: string;
   outcome: CitizenTriageOutcomeData;
+  hideStatusLinks?: boolean;
 };
 
 function categoryLabel(
@@ -64,6 +65,7 @@ export default function CitizenTriageOutcome({
   reportId,
   accessToken,
   outcome,
+  hideStatusLinks = false,
 }: Props) {
   const t = useTranslations("public");
   const tt = useTranslations("public.triage");
@@ -198,21 +200,33 @@ export default function CitizenTriageOutcome({
               <AlertDescription>{tg("generateLaterMessage")}</AlertDescription>
             </Alert>
           ) : null}
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-foreground">{tw("chatHeading")}</h3>
+            <p className="text-sm text-muted-foreground">{tw("chatIntro")}</p>
+          </div>
           <CoachPanel reportId={reportId} accessToken={accessToken} />
-          <p className="text-sm text-muted-foreground">
-            <Link href={statusUrl} className="font-medium text-primary hover:underline">
-              {t("coach.resumeOnStatus")}
-            </Link>
-          </p>
+          {!hideStatusLinks ? (
+            <p className="text-sm text-muted-foreground">
+              <Link href={statusUrl} className="font-medium text-primary hover:underline">
+                {t("coach.resumeOnStatus")}
+              </Link>
+            </p>
+          ) : null}
         </div>
       ) : (
         <Alert>
           <AlertTitle>{tr("escalateTitle")}</AlertTitle>
           <AlertDescription>
-            {t("coach.governmentPathBody")}{" "}
-            <Link href={statusUrl} className="font-medium text-primary hover:underline">
-              {t("coach.openStatusPage")}
-            </Link>
+            {hideStatusLinks ? (
+              tw("governmentNext")
+            ) : (
+              <>
+                {t("coach.governmentPathBody")}{" "}
+                <Link href={statusUrl} className="font-medium text-primary hover:underline">
+                  {t("coach.openStatusPage")}
+                </Link>
+              </>
+            )}
           </AlertDescription>
         </Alert>
       )}

@@ -204,6 +204,43 @@ async function readBoundedBody(response) {
   return merged.toString("utf8");
 }
 
+function parseChatCompletionResponseBody(rawBody) {
+  const trimmed = rawBody.trim();
+  if (!trimmed) {
+    throw new Error(GENERIC_FAILURE);
+  }
+
+  if (trimmed.startsWith("{")) {
+    return JSON.parse(trimmed);
+  }
+
+  if (trimmed.includes("data:")) {
+    let lastPayload = null;
+    for (const line of trimmed.split(/\r?\n/)) {
+      if (!line.startsWith("data:")) {
+        continue;
+      }
+      const payload = line.slice(5).trim();
+      if (!payload || payload === "[DONE]") {
+        continue;
+      }
+      try {
+        const parsed = JSON.parse(payload);
+        if (parsed.choices) {
+          lastPayload = parsed;
+        }
+      } catch {
+        // Ignore malformed SSE chunks.
+      }
+    }
+    if (lastPayload) {
+      return lastPayload;
+    }
+  }
+
+  throw new Error(GENERIC_FAILURE);
+}
+
 function assertStructuredAnalysis(analysis) {
   const required = REPORT_ANALYSIS_JSON_SCHEMA.required;
   for (const key of required) {
@@ -271,7 +308,7 @@ async function analyzeCase(env, input) {
   const rawBody = await readBoundedBody(response);
   let payload;
   try {
-    payload = JSON.parse(rawBody);
+    payload = parseChatCompletionResponseBody(rawBody);
   } catch {
     throw new Error(GENERIC_FAILURE);
   }

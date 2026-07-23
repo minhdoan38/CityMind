@@ -35,7 +35,9 @@ describe("clamav-client", () => {
     delete process.env.CLAMAV_ENABLED;
   });
 
-  it("treats ClamAV as enabled unless CLAMAV_ENABLED is false", () => {
+  it("treats ClamAV as disabled unless CLAMAV_ENABLED is true", () => {
+    expect(isClamavEnabled()).toBe(false);
+    process.env.CLAMAV_ENABLED = "true";
     expect(isClamavEnabled()).toBe(true);
     process.env.CLAMAV_ENABLED = "false";
     expect(isClamavEnabled()).toBe(false);
@@ -48,6 +50,7 @@ describe("clamav-client", () => {
   });
 
   it("passes clean buffers when scanStream reports no infection", async () => {
+    process.env.CLAMAV_ENABLED = "true";
     await assertCleanBuffer(CLEAN_BYTES);
     expect(scanStream).toHaveBeenCalledTimes(1);
     expect(init).toHaveBeenCalledWith(
@@ -59,6 +62,7 @@ describe("clamav-client", () => {
   });
 
   it("throws infected when scanStream reports malware", async () => {
+    process.env.CLAMAV_ENABLED = "true";
     scanStream.mockResolvedValue({
       isInfected: true,
       viruses: ["Eicar-Test-Signature"],
@@ -70,6 +74,7 @@ describe("clamav-client", () => {
   });
 
   it("throws scanner_unavailable when scanStream rejects", async () => {
+    process.env.CLAMAV_ENABLED = "true";
     scanStream.mockRejectedValue(new Error("connection refused"));
 
     await expect(assertCleanBuffer(CLEAN_BYTES)).rejects.toMatchObject({
@@ -78,6 +83,7 @@ describe("clamav-client", () => {
   });
 
   it("throws scanner_unavailable when ping fails while enabled", async () => {
+    process.env.CLAMAV_ENABLED = "true";
     ping.mockRejectedValue(new Error("timeout"));
 
     await expect(pingClamav()).rejects.toBeInstanceOf(EvidenceScanError);

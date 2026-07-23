@@ -11,18 +11,25 @@ function read(rel) {
 
 test("dashboard list loading.tsx exists with table skeleton contract", () => {
   const loadingPath = "src/app/dashboard/loading.tsx";
+  const skeletonPath = "src/components/reports/ReportsTableSkeleton.tsx";
   assert.ok(
     fs.existsSync(path.resolve(root, loadingPath)),
     "dashboard/loading.tsx must exist",
   );
   const src = read(loadingPath);
+  const skeletonSrc = read(skeletonPath);
   assert.match(src, /export default function/);
   assert.match(src, /@\/components\/ui\/skeleton/);
   assert.match(src, /Skeleton/);
   assert.match(
-    src,
+    skeletonSrc,
     /Array\.from\(\{\s*length:\s*(8|9|10)\s*\}\)|length:\s*9/,
     "must render 8-10 table row skeletons",
   );
-  assert.match(src, /surface-card/);
+  assert.match(src, /surface-card|ReportsTableSkeleton/);
+  assert.match(
+    src,
+    /ReportsTableSkeleton/,
+    "dashboard loading must render dedicated table skeleton",
+  );
 });

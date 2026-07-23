@@ -1,47 +1,35 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-const TABLE_ROWS = Array.from({ length: 9 });
+import ReportsTableSkeleton from "@/components/reports/ReportsTableSkeleton";
 
 export default function DashboardLoading() {
   return (
-    <div className="w-full max-w-none space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="w-full max-w-none space-y-6" aria-busy="true" aria-live="polite">
+      <div className="dash-rise flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-5 w-full max-w-2xl" />
+          <Skeleton className="h-8 w-56 animate-none skeleton-shimmer" />
+          <Skeleton className="h-5 w-full max-w-2xl animate-none skeleton-shimmer" />
         </div>
-        <div className="flex flex-col items-stretch gap-3 sm:items-end">
-          <Skeleton className="h-11 w-52 rounded-xl" />
-          <Skeleton className="h-11 w-36 rounded-xl" />
+        <div className="dash-rise dash-rise-delay-1 flex w-full flex-wrap items-center gap-2 sm:gap-3 lg:w-auto lg:justify-end">
+          <Skeleton className="h-10 w-full animate-none skeleton-shimmer rounded-[var(--radius-control)] sm:w-52" />
+          <Skeleton className="h-10 w-28 animate-none skeleton-shimmer rounded-[var(--radius-control)]" />
+          <Skeleton className="h-10 w-36 animate-none skeleton-shimmer rounded-[var(--radius-control)]" />
         </div>
       </div>
 
-      <Skeleton className="h-11 w-full rounded-xl" />
+      <Skeleton className="h-10 w-full animate-none skeleton-shimmer rounded-[var(--radius-control)]" />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="dash-rise dash-rise-delay-2 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <div key={index} className="surface-card space-y-3 p-5">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-4 w-24 animate-none skeleton-shimmer" />
+            <Skeleton className="h-8 w-20 animate-none skeleton-shimmer" />
           </div>
         ))}
       </div>
 
-      <div className="surface-card overflow-hidden">
-        <div className="grid grid-cols-6 gap-3 border-b border-border bg-muted/50 px-4 py-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-4 w-full" />
-          ))}
-        </div>
-        <div className="divide-y divide-border">
-          {TABLE_ROWS.map((_, index) => (
-            <div key={index} className="grid grid-cols-6 gap-3 px-4 py-3">
-              {Array.from({ length: 6 }).map((__, cellIndex) => (
-                <Skeleton key={cellIndex} className="h-5 w-full" />
-              ))}
-            </div>
-          ))}
-        </div>
+      <div className="dash-rise dash-rise-delay-3">
+        <ReportsTableSkeleton />
       </div>
     </div>
   );

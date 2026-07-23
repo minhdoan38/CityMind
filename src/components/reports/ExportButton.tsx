@@ -89,7 +89,7 @@ export default function ExportButton({ params, focusExport = false }: Props) {
           <Button
             ref={triggerRef}
             type="button"
-            className="min-h-11 gap-2"
+            className="gap-2"
             disabled={preparing}
             aria-busy={preparing}
           >

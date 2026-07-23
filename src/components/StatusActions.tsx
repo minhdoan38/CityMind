@@ -19,11 +19,17 @@ import { Textarea } from "@/components/ui/textarea";
 type Props = {
   reportId: string;
   currentStatus?: string;
+  /** Full-width vertical stack for report detail aside */
+  stacked?: boolean;
 };
 
 type PendingStatus = "resolved" | "rejected";
 
-export default function StatusActions({ reportId, currentStatus }: Props) {
+export default function StatusActions({
+  reportId,
+  currentStatus,
+  stacked = false,
+}: Props) {
   const router = useRouter();
   const t = useTranslations("dashboard");
   const [loading, setLoading] = useState("");
@@ -96,12 +102,18 @@ export default function StatusActions({ reportId, currentStatus }: Props) {
   const isReject = pendingStatus === "rejected";
 
   return (
-    <div className="mt-4 space-y-3">
-      <div className="flex flex-wrap gap-2">
+    <div className={stacked ? "reports-detail-actions" : "mt-4 space-y-3"}>
+      <div
+        className={
+          stacked
+            ? "reports-detail-actions__buttons"
+            : "flex flex-wrap gap-2"
+        }
+      >
         <Button
           type="button"
           variant="default"
-          className="min-h-11 rounded-lg"
+          className={stacked ? "reports-detail-action-btn" : "min-h-11 rounded-lg"}
           disabled={Boolean(loading) || currentStatus === "reviewing"}
           onClick={() => void updateStatus("reviewing")}
         >
@@ -110,7 +122,9 @@ export default function StatusActions({ reportId, currentStatus }: Props) {
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 rounded-lg"
+          className={
+            stacked ? "reports-detail-action-btn" : "min-h-11 rounded-lg"
+          }
           disabled={Boolean(loading) || currentStatus === "resolved"}
           onClick={() => openConfirm("resolved")}
         >
@@ -119,7 +133,11 @@ export default function StatusActions({ reportId, currentStatus }: Props) {
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 rounded-lg text-destructive hover:text-destructive"
+          className={
+            stacked
+              ? "reports-detail-action-btn reports-detail-action-btn--destructive"
+              : "min-h-11 rounded-lg text-destructive hover:text-destructive"
+          }
           disabled={Boolean(loading) || currentStatus === "rejected"}
           onClick={() => openConfirm("rejected")}
         >

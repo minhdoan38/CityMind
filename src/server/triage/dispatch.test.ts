@@ -233,13 +233,51 @@ describe("dispatchTriageAndWait", () => {
     vi.restoreAllMocks();
   });
 
-  it("invokes dispatch with force:true and wait:true (bypasses retry backoff)", async () => {
+  it("invokes dispatch with force:true and wait:true until terminal triage status", async () => {
     const futureDate = new Date(Date.now() + 3_600_000).toISOString();
-    const client = createClient({
-      report_id: "report-retry",
-      triage_status: "retry",
-      triage_next_attempt_at: futureDate,
+    const selectMaybeSingle = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: {
+          report_id: "report-retry",
+          triage_status: "retry",
+          triage_next_attempt_at: futureDate,
+        },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: {
+          report_id: "report-retry",
+          triage_status: "retry",
+          triage_next_attempt_at: futureDate,
+        },
+        error: null,
+      })
+      .mockResolvedValue({
+        data: { triage_status: "completed" },
+        error: null,
+      });
+    const updateMaybeSingle = vi.fn().mockResolvedValue({
+      data: { report_id: "report-retry" },
+      error: null,
     });
+    const from = vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: selectMaybeSingle,
+        })),
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          in: vi.fn(() => ({
+            select: vi.fn(() => ({
+              maybeSingle: updateMaybeSingle,
+            })),
+          })),
+        })),
+      })),
+    }));
+    const client = { from };
     const runTriage = vi.fn(async () => ({ reportId: "report-retry", disposition: "completed" }));
 
     const blocked = await dispatchTriage("report-retry", {

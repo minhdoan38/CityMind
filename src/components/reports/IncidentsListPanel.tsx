@@ -26,7 +26,7 @@ export default function IncidentsListPanel({ pins }: Props) {
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 w-full justify-between rounded-b-none"
+          className="min-h-10 w-full justify-between rounded-b-none"
         >
           {t("listPanelToggle")}
           <span className="text-xs text-muted-foreground">{pins.length}</span>

@@ -24,6 +24,12 @@ const JPEG_BYTES = Uint8Array.from([
   0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
 ]);
 
+/** Minimal ISO BMFF ftyp/heic header (not a decodable image; magic-byte gate only). */
+const HEIC_HEADER_BYTES = Uint8Array.from([
+  0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63,
+  0x00, 0x00, 0x00, 0x00, 0x6d, 0x69, 0x66, 0x31, 0x6d, 0x69, 0x61, 0x66,
+]);
+
 function expectInvalid(
   result: EvidenceValidationResult,
   code: "empty" | "oversized" | "invalid_type" | "spoofed_mime",
@@ -118,6 +124,25 @@ describe("validateEvidenceBytes", () => {
     const result = await validateEvidenceBytes(JPEG_BYTES, {
       maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
       declaredMimeType: "application/octet-stream",
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("accepts HEIC ftyp magic bytes", async () => {
+    const result = await validateEvidenceBytes(HEIC_HEADER_BYTES, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+      declaredMimeType: "image/heic",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mimeType).toBe("image/heic");
+    expect(result.ext).toBe("heic");
+  });
+
+  it("accepts .heic extension with empty mime when ftyp/heic bytes present", async () => {
+    const result = await validateEvidenceBytes(HEIC_HEADER_BYTES, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+      declaredMimeType: "",
     });
     expect(result.ok).toBe(true);
   });

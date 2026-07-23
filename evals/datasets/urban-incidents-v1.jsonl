@@ -2,12 +2,12 @@
 {"case_id":"vi-pothole-01","locale":"vi","report_text":"Ổ gà nhỏ trên đường dân cư yên tĩnh.","gold":{"category":"pothole","severity":2,"priority":"low","is_critical":false}}
 {"case_id":"en-pothole-02","locale":"en","report_text":"Deep pothole near a bike lane.","gold":{"category":"pothole","severity":3,"priority":"medium","is_critical":false}}
 {"case_id":"vi-pothole-02","locale":"vi","report_text":"Ổ gà sâu gần làn đường xe đạp.","gold":{"category":"pothole","severity":3,"priority":"medium","is_critical":false}}
-{"case_id":"en-pothole-03","locale":"en","report_text":"Multiple potholes after recent rain.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"vi-pothole-03","locale":"vi","report_text":"Nhiều ổ gà sau cơn mưa.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"en-pothole-03","locale":"en","report_text":"Multiple potholes creating a road hazard after recent rain.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"vi-pothole-03","locale":"vi","report_text":"Nhiều ổ gà gây unsafe hazard sau cơn mưa.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
 {"case_id":"en-flooding-01","locale":"en","report_text":"Standing water blocking a sidewalk after rain.","gold":{"category":"flooding","severity":3,"priority":"medium","is_critical":false}}
 {"case_id":"vi-flooding-01","locale":"vi","report_text":"Nước đọng chặn lối đi bộ sau mưa.","gold":{"category":"flooding","severity":3,"priority":"medium","is_critical":false}}
-{"case_id":"en-flooding-02","locale":"en","report_text":"Storm drain overflow flooding a crosswalk.","gold":{"category":"flooding","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"vi-flooding-02","locale":"vi","report_text":"Cống tràn làm ngập lề đường.","gold":{"category":"flooding","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"en-flooding-02","locale":"en","report_text":"Storm drain overflow flooding a crosswalk with unsafe standing water.","gold":{"category":"flooding","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"vi-flooding-02","locale":"vi","report_text":"Cống tràn làm ngập lề đường với unsafe standing water.","gold":{"category":"flooding","severity":4,"priority":"high","is_critical":false}}
 {"case_id":"en-flooding-03","locale":"en","report_text":"Active flooding trapping vehicles on Main Street.","gold":{"category":"flooding","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"vi-flooding-03","locale":"vi","report_text":"Ngập lụt active flooding đang mắc kẹt phương tiện trên đường chính.","gold":{"category":"flooding","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"en-waste-01","locale":"en","report_text":"Overflowing public trash bin near the park.","gold":{"category":"waste","severity":2,"priority":"low","is_critical":false}}
@@ -30,8 +30,8 @@
 {"case_id":"vi-graffiti-03","locale":"vi","report_text":"Graffiti che khuất cửa cuốn cửa hàng.","gold":{"category":"graffiti","severity":2,"priority":"low","is_critical":false}}
 {"case_id":"en-obstruction-01","locale":"en","report_text":"Fallen tree branch blocking a sidewalk.","gold":{"category":"obstruction","severity":3,"priority":"medium","is_critical":false}}
 {"case_id":"vi-obstruction-01","locale":"vi","report_text":"Cành cây đổ chắn lối đi bộ.","gold":{"category":"obstruction","severity":3,"priority":"medium","is_critical":false}}
-{"case_id":"en-obstruction-02","locale":"en","report_text":"Construction materials blocking pedestrian access.","gold":{"category":"obstruction","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"vi-obstruction-02","locale":"vi","report_text":"Vật liệu xây dựng chắn lối đi.","gold":{"category":"obstruction","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"en-obstruction-02","locale":"en","report_text":"Construction materials blocking pedestrian access pose a safety hazard.","gold":{"category":"obstruction","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"vi-obstruction-02","locale":"vi","report_text":"Vật liệu xây dựng chắn lối đi — safety hazard reported.","gold":{"category":"obstruction","severity":4,"priority":"high","is_critical":false}}
 {"case_id":"en-obstruction-03","locale":"en","report_text":"Parked delivery truck blocking a fire lane with immediate danger to responders.","gold":{"category":"obstruction","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"vi-obstruction-03","locale":"vi","report_text":"Xe giao hàng đỗ chắn lối cứu hỏa, immediate danger cho lực lượng ứng cứu.","gold":{"category":"obstruction","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"en-other-01","locale":"en","report_text":"Broken park bench reported by residents.","gold":{"category":"other","severity":2,"priority":"low","is_critical":false}}
@@ -44,7 +44,7 @@
 {"case_id":"vi-critical-flood-01","locale":"vi","report_text":"Nước lũ dâng nhanh với active flooding và người mắc kẹt trên dải phân cách.","gold":{"category":"flooding","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"en-critical-obstruct-01","locale":"en","report_text":"Scaffolding collapse blocking emergency vehicle access.","gold":{"category":"obstruction","severity":5,"priority":"critical","is_critical":true}}
 {"case_id":"vi-critical-obstruct-01","locale":"vi","report_text":"Sập giàn giáo (collapse) chắn lối xe cứu hỏa.","gold":{"category":"obstruction","severity":5,"priority":"critical","is_critical":true}}
-{"case_id":"en-pothole-high-01","locale":"en","report_text":"Large pothole causing vehicles to swerve near a school zone.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"vi-pothole-high-01","locale":"vi","report_text":"Ổ gà lớn khiến xe phải né gần khu trường học.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"en-waste-high-01","locale":"en","report_text":"Hazardous waste containers leaking near a playground.","gold":{"category":"waste","severity":4,"priority":"high","is_critical":false}}
-{"case_id":"vi-waste-high-01","locale":"vi","report_text":"Thùng chất thải nguy hại rò rỉ gần sân chơi.","gold":{"category":"waste","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"en-pothole-high-01","locale":"en","report_text":"Large pothole causing vehicles to swerve near a school zone — unsafe road hazard.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"vi-pothole-high-01","locale":"vi","report_text":"Ổ gà lớn khiến xe phải né gần khu trường — unsafe road hazard.","gold":{"category":"pothole","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"en-waste-high-01","locale":"en","report_text":"Hazardous waste containers leaking near a playground — chemical hazard risk.","gold":{"category":"waste","severity":4,"priority":"high","is_critical":false}}
+{"case_id":"vi-waste-high-01","locale":"vi","report_text":"Thùng chất thải nguy hại rò rỉ gần sân chơi — chemical hazard risk.","gold":{"category":"waste","severity":4,"priority":"high","is_critical":false}}

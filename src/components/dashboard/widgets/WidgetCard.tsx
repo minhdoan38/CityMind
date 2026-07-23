@@ -22,7 +22,7 @@ export default function WidgetCard({
   return (
     <section
       className={cn(
-        "surface-card flex flex-col overflow-hidden rounded-2xl",
+        "surface-card flex flex-col overflow-hidden",
         delayClass,
         className,
       )}
@@ -36,7 +36,7 @@ export default function WidgetCard({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 text-muted-foreground"
+            className="size-10 shrink-0 text-muted-foreground"
             aria-label={title}
           >
             <MoreHorizontal className="size-4" />

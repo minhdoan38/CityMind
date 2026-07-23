@@ -55,14 +55,14 @@ completed: 2026-07-22
 
 # Phase 10 Plan 02: Shadow Rollout Summary
 
-**Non-mutating shadow dual-run behind TRIAGE_SHADOW_MODE, officer disagreement badge/filter/panel, and eval-gated cutover protocol — SQL migration blocked pending SUPABASE_DB_URL**
+**Non-mutating shadow dual-run behind TRIAGE_SHADOW_MODE, officer disagreement badge/filter/panel, and eval-gated cutover protocol — SQL verified via Supabase SQL Editor**
 
 ## Performance
 
-- **Duration:** 6 min
+- **Duration:** 6 min (+ SQL verify 2026-07-22)
 - **Started:** 2026-07-22T00:58:00Z
 - **Completed:** 2026-07-22T01:04:00Z
-- **Tasks:** 3 (Task 2 checkpoint — DB URL missing)
+- **Tasks:** 3 (all complete)
 - **Files modified:** 18
 
 ## Accomplishments
@@ -77,7 +77,7 @@ completed: 2026-07-22
 ## Task Commits
 
 1. **Task 1: Shadow table migration, shadow-service, SQL contract** - `b139c11` (feat)
-2. **Task 2: [BLOCKING] Push shadow migration** - CHECKPOINT (SUPABASE_DB_URL missing)
+2. **Task 2: Push shadow migration + contract** - Applied via Supabase SQL Editor (2026-07-22)
 3. **Task 3: Shadow worker hook, env flags, officer UX** - `e25a7f7` (feat)
 
 ## Verification Results
@@ -88,23 +88,19 @@ completed: 2026-07-22
 | `npm run test:unit -- src/server/triage/service.test.ts` | PASS (7 tests) |
 | `npm run test:legacy -- tests/dashboard-table.test.mjs` | PASS (shadow badge + filter gates) |
 | `npm run test` | PASS (197 unit + 87 legacy) |
-| `node scripts/run-supabase-sql.mjs supabase/migrations/20260722140001_triage_shadow.sql` | BLOCKED — missing `SUPABASE_DB_URL` |
-| `node scripts/run-supabase-sql.mjs supabase/tests/10_shadow_eval_contract.sql` | BLOCKED — missing `SUPABASE_DB_URL` |
+| `supabase/migrations/20260722140001_triage_shadow.sql` | PASS (SQL Editor) |
+| `supabase/tests/10_shadow_eval_contract.sql` | PASS (SQL Editor) |
 
-## Checkpoint: Task 2 (SUPABASE_DB_URL)
+## SQL verification (Task 2)
 
-**Status:** BLOCKED — awaiting operator action
+**Status:** PASS — applied via Supabase SQL Editor after Phase 9 routing migration and corrective intake/grant migrations.
 
-**What was built:** Migration `20260722140001_triage_shadow.sql` and contract `10_shadow_eval_contract.sql` committed; not applied to live Postgres.
+**Related corrective migrations (same session):**
 
-**How to unblock:**
+- `20260722140002_fix_intake_rpc_evidence_path.sql`
+- `20260722140003_restrict_escalate_rpc_grants.sql`
 
-1. Set `SUPABASE_DB_URL` in `.env.local` (see `.env.example` template locally)
-2. Ensure Phase 8–9 migrations applied
-3. `node scripts/run-supabase-sql.mjs supabase/migrations/20260722140001_triage_shadow.sql`
-4. `node scripts/run-supabase-sql.mjs supabase/tests/10_shadow_eval_contract.sql`
-
-Until Task 2 passes, shadow rows will not persist in production DB (unit tests and code paths are ready).
+Contract tests updated for SQL Editor (no psql `\set`); routing test 4 uses `has_function_privilege()` catalog checks.
 
 ## Deviations from Plan
 

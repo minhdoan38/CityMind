@@ -7,7 +7,6 @@ import { z } from "zod";
 
 import { getAdminClient } from "@/lib/supabase/admin";
 import { generateFacilitatorReply } from "@/server/ai/intake-facilitator";
-import type { SupportedImageMimeType } from "@/server/ai/provider";
 import { checkAiHealth } from "@/server/health/ai-readiness";
 import {
   citizenStatusUnauthorized,
@@ -342,7 +341,7 @@ async function parseIntakeSubmitFormData(formData: FormData): Promise<{
   latitude: number | null;
   longitude: number | null;
   imageBytes: Uint8Array | null;
-  imageMime: SupportedImageMimeType | null;
+  imageMime: string | null;
 }> {
   const reportId = String(formData.get("report_id") ?? "").trim();
   const token = String(formData.get("token") ?? "").trim();
@@ -365,7 +364,7 @@ async function parseIntakeSubmitFormData(formData: FormData): Promise<{
 
   const imageField = formData.get("image");
   let imageBytes: Uint8Array | null = null;
-  let imageMime: SupportedImageMimeType | null = null;
+  let imageMime: string | null = null;
 
   if (isUploadFile(imageField)) {
     const buffer = new Uint8Array(await imageField.arrayBuffer());
@@ -378,7 +377,7 @@ async function parseIntakeSubmitFormData(formData: FormData): Promise<{
       throw mapEvidenceValidationError(validation.code);
     }
     imageBytes = buffer;
-    imageMime = validation.mimeType as SupportedImageMimeType;
+    imageMime = validation.mimeType;
   }
 
   return {
@@ -398,7 +397,7 @@ export async function finalizeIntakeSubmit(
     latitude?: number | null;
     longitude?: number | null;
     imageBytes?: Uint8Array | null;
-    imageMime?: SupportedImageMimeType | null;
+    imageMime?: string | null;
   },
   client: SupabaseClient = getAdminClient(),
   deps: {

@@ -27,7 +27,7 @@ export default function GeoFilterBar({
       <Button
         type="button"
         variant={drawMode ? "default" : "outline"}
-        className="min-h-11"
+        className="min-h-10"
         aria-pressed={drawMode}
         onClick={onToggleDraw}
       >
@@ -37,7 +37,7 @@ export default function GeoFilterBar({
         <Button
           type="button"
           variant="ghost"
-          className="min-h-11"
+          className="min-h-10"
           onClick={onClear}
         >
           {t("clearAreaFilter")}

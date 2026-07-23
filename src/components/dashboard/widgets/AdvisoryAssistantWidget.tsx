@@ -6,6 +6,7 @@ import { ArrowUp, Loader2, Mic, Paperclip, X } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { Bubble, BubbleContent, BubbleGroup } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +25,37 @@ type ChatMessage = {
 };
 
 type AiHealthStatus = "up" | "degraded" | "down" | "unknown";
+
+function groupMessagesByRole(
+  items: ChatMessage[],
+): Array<{ role: ChatMessage["role"]; messages: ChatMessage[] }> {
+  const groups: Array<{ role: ChatMessage["role"]; messages: ChatMessage[] }> = [];
+
+  for (const message of items) {
+    const last = groups[groups.length - 1];
+    if (last && last.role === message.role) {
+      last.messages.push(message);
+      continue;
+    }
+    groups.push({ role: message.role, messages: [message] });
+  }
+
+  return groups;
+}
+
+function bubbleVariantForRole(role: ChatMessage["role"]) {
+  if (role === "user") {
+    return "default" as const;
+  }
+  if (role === "assistant") {
+    return "ghost" as const;
+  }
+  return "muted" as const;
+}
+
+function bubbleAlignForRole(role: ChatMessage["role"]) {
+  return role === "user" ? ("end" as const) : ("start" as const);
+}
 
 type Props = {
   delayClass?: string;
@@ -209,28 +241,44 @@ export default function AdvisoryAssistantWidget({
         ) : (
           <div
             ref={threadRef}
-            className="flex max-h-40 min-h-24 flex-col gap-2 overflow-y-auto pr-1"
+            className="flex max-h-48 min-h-24 flex-col gap-3 overflow-y-auto pr-1"
             aria-live="polite"
             aria-relevant="additions"
           >
-            {messages.map((turn) => (
-              <div
-                key={turn.message_id}
+            {groupMessagesByRole(messages).map((group) => (
+              <BubbleGroup
+                key={`${group.role}-${group.messages.map((item) => item.message_id).join("-")}`}
                 className={cn(
-                  "rounded-xl px-3 py-2 text-xs leading-relaxed",
-                  turn.role === "user"
-                    ? "ml-6 bg-primary/10 text-foreground"
-                    : "mr-4 bg-muted text-muted-foreground",
+                  group.role === "user" ? "items-end" : "items-start",
                 )}
               >
-                {turn.content}
-              </div>
+                {group.messages.map((turn) => (
+                  <Bubble
+                    key={turn.message_id}
+                    variant={bubbleVariantForRole(turn.role)}
+                    align={bubbleAlignForRole(turn.role)}
+                  >
+                    <BubbleContent
+                      className={cn(
+                        "text-xs",
+                        turn.role === "assistant"
+                          ? "text-muted-foreground"
+                          : "text-inherit",
+                      )}
+                    >
+                      {turn.content}
+                    </BubbleContent>
+                  </Bubble>
+                ))}
+              </BubbleGroup>
             ))}
             {isSending ? (
-              <div className="mr-4 flex items-center gap-2 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
-                <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                {t("assistantThinking")}
-              </div>
+              <Bubble variant="muted" align="start" className="self-start">
+                <BubbleContent className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  {t("assistantThinking")}
+                </BubbleContent>
+              </Bubble>
             ) : null}
           </div>
         )}
@@ -255,9 +303,11 @@ export default function AdvisoryAssistantWidget({
         ) : null}
 
         {error ? (
-          <p className="text-center text-xs text-destructive" role="alert">
-            {error}
-          </p>
+          <Bubble variant="destructive" align="start" className="self-center">
+            <BubbleContent className="text-xs" role="alert">
+              {error}
+            </BubbleContent>
+          </Bubble>
         ) : null}
 
         {attachedReportId ? (
@@ -279,7 +329,7 @@ export default function AdvisoryAssistantWidget({
         ) : null}
 
         <form
-          className="mt-auto flex w-full items-center gap-2 rounded-full border border-border bg-muted/50 p-1.5 pl-3"
+          className="mt-auto flex w-full items-center gap-2 rounded-[var(--radius-control)] border border-border bg-muted/50 p-1.5 pl-3"
           onSubmit={handleSubmit}
         >
           <Popover open={attachOpen} onOpenChange={setAttachOpen}>
@@ -288,7 +338,7 @@ export default function AdvisoryAssistantWidget({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-9 shrink-0 rounded-full text-muted-foreground"
+                className="size-10 shrink-0 rounded-[var(--radius-control)] text-muted-foreground"
                 aria-label={t("assistantAttach")}
                 disabled={isSending || aiUnavailable}
               >
@@ -319,7 +369,7 @@ export default function AdvisoryAssistantWidget({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-9 shrink-0 rounded-full text-muted-foreground"
+            className="size-10 shrink-0 rounded-[var(--radius-control)] text-muted-foreground"
             aria-label={t("assistantVoice")}
             disabled
             title={t("assistantVoiceSoon")}
@@ -329,7 +379,7 @@ export default function AdvisoryAssistantWidget({
           <Button
             type="submit"
             size="icon"
-            className="size-10 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+            className="size-10 shrink-0 rounded-[var(--radius-control)] bg-primary text-primary-foreground hover:bg-primary/90"
             aria-label={t("assistantSend")}
             disabled={!canSend}
           >

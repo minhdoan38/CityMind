@@ -65,4 +65,6 @@ test("AdvisoryAssistantWidget shows degraded warning", () => {
 test("AdvisoryAssistantWidget exposes live thread region", () => {
   const src = read(widgetPath);
   assert.ok(src.includes('aria-live="polite"'), "thread container must use aria-live");
+  assert.ok(src.includes("BubbleContent"), "widget must render chat with Bubble components");
+  assert.ok(src.includes("BubbleGroup"), "widget must group consecutive bubbles");
 });

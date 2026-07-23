@@ -146,7 +146,7 @@
 ### Secure Evidence Image Pipeline (SEC-IMG) — Phase 16
 
 - [x] **SEC-IMG-01**: Server accepts only JPEG/PNG/WebP detected by magic bytes; rejects SVG, GIF, spoofed `Content-Type`, and non-image payloads before Storage/AI
-- [x] **SEC-IMG-02**: Every evidence upload scanned via ClamAV `INSTREAM` before persist; **fail closed** on infection or scanner error when scanning is enabled (`CLAMAV_ENABLED` not `false`)
+- [x] **SEC-IMG-02**: Every evidence upload scanned via ClamAV `INSTREAM` before persist; **fail closed** on infection or scanner error when scanning is enabled (`CLAMAV_ENABLED=true`)
 - [x] **SEC-IMG-03**: Sharp sanitization: decode with `limitInputPixels`, auto-orient, WebP re-encode at quality 88 (configurable), strip metadata
 - [x] **SEC-IMG-04**: Process inbound bytes in-memory for ≤10MB uploads; final object in private bucket only under UUID key (`reports/{reportId}/{uuid}.webp`)
 - [x] **SEC-IMG-05**: Configurable max upload size (default **10MB**, aligned with Supabase `file_size_limit` 10485760)

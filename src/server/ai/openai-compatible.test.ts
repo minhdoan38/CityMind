@@ -247,6 +247,32 @@ describe("createOpenAiCompatibleProvider", () => {
     ).rejects.toMatchObject({ code: "schema_invalid" });
   });
 
+  it("accepts Hanoi payloads with prompt-only metadata keys stripped", async () => {
+    const result = await analyzeStructured(
+      {
+        env: testEnv(),
+        fetchImpl: mockFetchJson(
+          completionResponse({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    ...validHanoiAnalysis,
+                    output_language: "vi-VN",
+                    priority: "medium",
+                  }),
+                },
+              },
+            ],
+          }),
+        ),
+      },
+      { description: "Valid incident report" },
+    );
+
+    expect(result.hanoiAnalysis.category).toBe("pothole");
+  });
+
   it("rejects oversized responses", async () => {
     const hugePayload = "x".repeat(MAX_RESPONSE_BYTES + 1);
     const fetchImpl = vi.fn(async () => {

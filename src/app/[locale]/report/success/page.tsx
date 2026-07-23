@@ -1,83 +1,23 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { CheckCircle2 } from "lucide-react";
 
-import CitizenTriageOutcome, {
-  type CitizenTriageOutcomeData,
-} from "@/components/coach/CitizenTriageOutcome";
 import SuccessTriagePanel from "@/components/coach/SuccessTriagePanel";
-import LocaleSwitcher from "@/components/LocaleSwitcher";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+import ReportOutcomeLayout from "@/components/report/ReportOutcomeLayout";
 import { Link, useRouter } from "@/i18n/navigation";
-import type { CitizenServiceStep } from "@/server/services/citizen-status";
-
-const FLASH_KEY = "citymind:report-success";
-
-type FlashPayload = {
-  reportId: string;
-  accessToken: string;
-  outcome?: CitizenTriageOutcomeData;
-};
-
-function consumeFlash(): FlashPayload | null {
-  const raw = sessionStorage.getItem(FLASH_KEY);
-  sessionStorage.removeItem(FLASH_KEY);
-  if (!raw) return null;
-  try {
-    const data = JSON.parse(raw) as Partial<FlashPayload> & {
-      service_step?: CitizenServiceStep;
-      triage_status?: string;
-    };
-    if (!data.reportId || !data.accessToken) return null;
-
-    const outcome: CitizenTriageOutcomeData | undefined =
-      data.outcome ??
-      (data.service_step && data.triage_status
-        ? {
-            service_step: data.service_step,
-            triage_status: data.triage_status,
-            routing_destination: data.routing_destination as string | null | undefined,
-            category: data.category as string | null | undefined,
-            severity: data.severity as number | null | undefined,
-            priority: data.priority as string | null | undefined,
-            summary: data.summary as string | null | undefined,
-            recommendation: data.recommendation as string | null | undefined,
-            playbook_id: data.playbook_id as string | null | undefined,
-            can_escalate: data.can_escalate as boolean | undefined,
-            guidance_script: data.guidance_script as string | null | undefined,
-            guidance_status: data.guidance_status as
-              | "script_ready"
-              | "generate_later"
-              | null
-              | undefined,
-            allowed_actions: data.allowed_actions as string[] | undefined,
-            prohibited_actions: data.prohibited_actions as string[] | undefined,
-          }
-        : undefined);
-
-    return { reportId: data.reportId, accessToken: data.accessToken, outcome };
-  } catch {
-    return null;
-  }
-}
+import { readReportSuccessFlash, type ReportSuccessFlash } from "@/lib/report-outcome-flash";
 
 export default function ReportSuccessPage() {
   const t = useTranslations("public");
-  const locale = useLocale();
   const router = useRouter();
   const [, startTransition] = useTransition();
-  const [flash, setFlash] = useState<FlashPayload | null>(null);
+  const [flash, setFlash] = useState<ReportSuccessFlash | null>(null);
   const [ready, setReady] = useState(false);
-  const [copiedId, setCopiedId] = useState(false);
-  const [copiedToken, setCopiedToken] = useState(false);
-  const [copiedStatus, setCopiedStatus] = useState(false);
-  const [liveMessage, setLiveMessage] = useState("");
 
   useEffect(() => {
-    const payload = consumeFlash();
+    const payload = readReportSuccessFlash();
     if (!payload) {
       router.replace("/report");
       return;
@@ -88,186 +28,49 @@ export default function ReportSuccessPage() {
     });
   }, [router, startTransition]);
 
-  const statusPrepValue = flash
-    ? `/${locale}/status?reportId=${encodeURIComponent(flash.reportId)}&token=${encodeURIComponent(flash.accessToken)}`
-    : "";
-
-  async function copyText(
-    value: string,
-    which: "id" | "token" | "status",
-  ) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setLiveMessage(t("copied"));
-      if (which === "id") {
-        setCopiedId(true);
-        setTimeout(() => setCopiedId(false), 2000);
-      } else if (which === "token") {
-        setCopiedToken(true);
-        setTimeout(() => setCopiedToken(false), 2000);
-      } else {
-        setCopiedStatus(true);
-        setTimeout(() => setCopiedStatus(false), 2000);
-      }
-    } catch {
-      setLiveMessage("");
-    }
-  }
-
   if (!ready || !flash) {
     return (
-      <div
-        className="min-h-screen bg-background"
-        aria-busy="true"
-        aria-live="polite"
-      />
+      <div className="min-h-screen bg-background" aria-busy="true" aria-live="polite" />
     );
   }
 
   const { reportId, accessToken, outcome } = flash;
-  const showImmediateOutcome =
-    outcome &&
-    outcome.service_step !== "ai_review_pending" &&
-    outcome.triage_status !== "pending" &&
-    outcome.triage_status !== "processing";
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="w-full border-b border-border bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+    <ReportOutcomeLayout>
+      <article className="report-form-shell surface-card-elevated w-full">
+        <div className="flex items-start gap-4 border-b border-border pb-6">
+          <div
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-success/15 text-success"
+            aria-hidden
+          >
+            <CheckCircle2 className="size-6" strokeWidth={2} />
+          </div>
+          <div className="min-w-0 space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-success">
+              {t("successEyebrow")}
+            </p>
+            <h1 className="report-form-title font-heading text-balance">{t("successHeading")}</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{t("successBody")}</p>
+          </div>
+        </div>
+
+        <SuccessTriagePanel
+          reportId={reportId}
+          accessToken={accessToken}
+          initialOutcome={outcome}
+          hideStatusLinks
+        />
+
+        <div className="mt-8 border-t border-border pt-6">
           <Link
             href="/"
-            className="inline-flex min-h-11 items-center text-2xl font-bold tracking-tight text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 text-center text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            {t("title")}
+            {t("backToHome")}
           </Link>
-          <LocaleSwitcher />
         </div>
-      </header>
-
-      <main className="mx-auto flex w-full max-w-2xl flex-grow flex-col justify-center px-6 py-12">
-        <div className="w-full rounded-xl border border-border bg-card p-6 shadow-sm">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            {t("successHeading")}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t("successBody")}</p>
-
-          {showImmediateOutcome ? (
-            <CitizenTriageOutcome
-              reportId={reportId}
-              accessToken={accessToken}
-              outcome={outcome}
-            />
-          ) : (
-            <SuccessTriagePanel reportId={reportId} accessToken={accessToken} />
-          )}
-
-          <Alert className="mt-6 border-amber-500/40 bg-amber-50 text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
-            <AlertDescription className="text-sm font-medium">
-              {t("tokenWarning")}
-            </AlertDescription>
-          </Alert>
-
-          <div className="mt-6 space-y-4">
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                {t("reportIdLabel")}
-              </span>
-              <div className="flex items-center gap-2">
-                <code className="min-h-11 flex-grow truncate rounded-md border border-border bg-muted/50 px-3 py-2.5 font-mono text-sm select-all">
-                  {reportId}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="min-h-11 min-w-11"
-                  aria-label={t("copyReportId")}
-                  onClick={() => copyText(reportId, "id")}
-                >
-                  {copiedId ? (
-                    <Check className="h-4 w-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                {t("accessTokenLabel")}
-              </span>
-              <div className="flex items-center gap-2">
-                <code className="min-h-11 flex-grow truncate rounded-md border border-border bg-muted/50 px-3 py-2.5 font-mono text-sm select-all">
-                  {accessToken}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="min-h-11 min-w-11"
-                  aria-label={t("copyAccessToken")}
-                  onClick={() => copyText(accessToken, "token")}
-                >
-                  {copiedToken ? (
-                    <Check className="h-4 w-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <span className="text-sm font-semibold text-muted-foreground">
-                {t("statusLinkPrep")}
-              </span>
-              <div className="flex items-center gap-2">
-                <code className="min-h-11 flex-grow truncate rounded-md border border-border bg-muted/50 px-3 py-2.5 font-mono text-xs select-all">
-                  {statusPrepValue}
-                </code>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="min-h-11 min-w-11"
-                  aria-label={t("statusLinkPrep")}
-                  onClick={() => copyText(statusPrepValue, "status")}
-                >
-                  {copiedStatus ? (
-                    <Check className="h-4 w-4 text-emerald-600" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="sr-only"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {liveMessage}
-          </div>
-
-          <div className="mt-8">
-            <Link
-              href="/"
-              className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-5 text-center text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-              {t("backToHome")}
-            </Link>
-          </div>
-        </div>
-      </main>
-
-      <footer className="w-full border-t border-border bg-muted/40 py-6 text-center text-sm text-muted-foreground">
-        <p>{t("footer")}</p>
-      </footer>
-    </div>
+      </article>
+    </ReportOutcomeLayout>
   );
 }

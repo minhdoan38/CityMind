@@ -17,9 +17,9 @@ $$;
 
 DO $$
 DECLARE
-    v_bucket public.storage.buckets%ROWTYPE;
+    v_bucket record;
 BEGIN
-    SELECT *
+    SELECT id, public, file_size_limit, allowed_mime_types
     INTO v_bucket
     FROM storage.buckets
     WHERE id = 'evidence';

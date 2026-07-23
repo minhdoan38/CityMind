@@ -57,7 +57,7 @@ export default function GeoFilterPanel({
             type="number"
             inputMode="decimal"
             step="any"
-            className="min-h-11"
+            className="min-h-10"
             value={west}
             onChange={(event) => setWest(event.target.value)}
           />
@@ -69,7 +69,7 @@ export default function GeoFilterPanel({
             type="number"
             inputMode="decimal"
             step="any"
-            className="min-h-11"
+            className="min-h-10"
             value={south}
             onChange={(event) => setSouth(event.target.value)}
           />
@@ -81,7 +81,7 @@ export default function GeoFilterPanel({
             type="number"
             inputMode="decimal"
             step="any"
-            className="min-h-11"
+            className="min-h-10"
             value={east}
             onChange={(event) => setEast(event.target.value)}
           />
@@ -93,7 +93,7 @@ export default function GeoFilterPanel({
             type="number"
             inputMode="decimal"
             step="any"
-            className="min-h-11"
+            className="min-h-10"
             value={north}
             onChange={(event) => setNorth(event.target.value)}
           />
@@ -107,13 +107,13 @@ export default function GeoFilterPanel({
       ) : null}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" className="min-h-11" onClick={handleApply}>
+        <Button type="button" className="min-h-10" onClick={handleApply}>
           {t("applyAreaFilter")}
         </Button>
         <Button
           type="button"
           variant="ghost"
-          className="min-h-11"
+          className="min-h-10"
           onClick={onClear}
         >
           {t("clearAreaFilter")}

@@ -9,19 +9,20 @@ import {
   DEFAULT_MAX_EVIDENCE_BYTES,
   resolveMaxEvidenceBytesFromEnv,
 } from "@/lib/evidence-limits";
+import { EVIDENCE_INPUT_MIME_SET } from "@/lib/evidence-input-types";
 
 export { DEFAULT_MAX_EVIDENCE_BYTES };
 
-export const ALLOWED_IMAGE_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+/** Input MIME types accepted before WebP re-encode (see evidence-input-types). */
+export const ALLOWED_IMAGE_MIME_TYPES = EVIDENCE_INPUT_MIME_SET;
 
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+  "image/heic": "heic",
+  "image/heif": "heif",
+  "image/tiff": "tiff",
 };
 
 const EXT_TO_MIME: Record<string, string> = {
@@ -29,12 +30,17 @@ const EXT_TO_MIME: Record<string, string> = {
   jpeg: "image/jpeg",
   png: "image/png",
   webp: "image/webp",
+  heic: "image/heic",
+  heif: "image/heif",
+  tif: "image/tiff",
+  tiff: "image/tiff",
 };
 
 const DECLARED_MIME_ALIASES: Record<string, string> = {
   "image/jpg": "image/jpeg",
   "image/pjpeg": "image/jpeg",
   "image/x-png": "image/png",
+  "image/tif": "image/tiff",
 };
 
 function normalizeDeclaredMimeType(
@@ -76,6 +82,52 @@ function sniffImageMime(bytes: Uint8Array): string | null {
   ) {
     return "image/webp";
   }
+  const heifMime = sniffHeifMime(bytes);
+  if (heifMime) {
+    return heifMime;
+  }
+  if (
+    bytes.length >= 4 &&
+    ((bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) ||
+      (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a))
+  ) {
+    return "image/tiff";
+  }
+  return null;
+}
+
+const HEIF_BRANDS = new Set([
+  "heic",
+  "heix",
+  "hevc",
+  "hevx",
+  "heim",
+  "heis",
+  "mif1",
+  "msf1",
+]);
+
+function readIsoBrand(bytes: Uint8Array, offset: number): string | null {
+  if (offset + 4 > bytes.length) return null;
+  return String.fromCharCode(bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]);
+}
+
+function sniffHeifMime(bytes: Uint8Array): string | null {
+  if (bytes.length < 12) return null;
+  if (readIsoBrand(bytes, 4) !== "ftyp") return null;
+
+  const majorBrand = readIsoBrand(bytes, 8);
+  if (majorBrand && HEIF_BRANDS.has(majorBrand)) {
+    return majorBrand === "mif1" || majorBrand === "msf1" ? "image/heif" : "image/heic";
+  }
+
+  for (let offset = 16; offset + 4 <= Math.min(bytes.length, 64); offset += 4) {
+    const brand = readIsoBrand(bytes, offset);
+    if (brand && HEIF_BRANDS.has(brand)) {
+      return brand === "mif1" || brand === "msf1" ? "image/heif" : "image/heic";
+    }
+  }
+
   return null;
 }
 
@@ -105,6 +157,12 @@ async function detectImageMime(bytes: Uint8Array): Promise<string | null> {
   const detected = await fileTypeFromBuffer(bytes);
   if (isRejectedImageMime(detected?.mime) || sniffRejectedImageMime(bytes)) {
     return null;
+  }
+  if (detected?.mime === "image/heif") {
+    return "image/heif";
+  }
+  if (detected?.mime === "image/heic") {
+    return "image/heic";
   }
   if (detected?.mime && ALLOWED_IMAGE_MIME_TYPES.has(detected.mime)) {
     return detected.mime;
@@ -249,12 +307,24 @@ export async function validateEvidenceBytes(
   if (
     normalizedDeclared &&
     ALLOWED_IMAGE_MIME_TYPES.has(normalizedDeclared) &&
-    normalizedDeclared !== detectedMime
+    normalizedDeclared !== detectedMime &&
+    !areCompatibleEvidenceMimes(normalizedDeclared, detectedMime)
   ) {
     return { ok: false, code: "spoofed_mime" };
   }
 
   return { ok: true, mimeType: detectedMime, ext };
+}
+
+function areCompatibleEvidenceMimes(declared: string, detected: string): boolean {
+  if (declared === detected) return true;
+  if (
+    (declared === "image/heic" && detected === "image/heif") ||
+    (declared === "image/heif" && detected === "image/heic")
+  ) {
+    return true;
+  }
+  return false;
 }
 
 export async function uploadEvidence(options: {

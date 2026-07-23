@@ -105,11 +105,11 @@ test('public routing self-help workflow and escalate catalog keys exist (Phase 9
   assert.match(statusPage, /\/api\/public\/reports\/escalate/);
 });
 
-test('success page builds locale-prefixed status prep URL (D-03 / D-09)', () => {
-  const page = read(src('app', '[locale]', 'report', 'success', 'page.tsx'));
-  assert.match(page, /useLocale/);
-  assert.match(page, /\/\$\{locale\}\/status\?reportId=/);
-  assert.doesNotMatch(page, /`\/status\?reportId=/);
+test('CitizenTriageOutcome builds status URL for status-page resume link (D-03 / D-09)', () => {
+  const outcome = read(src('components', 'coach', 'CitizenTriageOutcome.tsx'));
+  assert.match(outcome, /\/status\?reportId=/);
+  assert.match(outcome, /encodeURIComponent\(reportId\)/);
+  assert.match(outcome, /encodeURIComponent\(accessToken\)/);
 });
 
 const DASHBOARD_COPY_KEYS = [

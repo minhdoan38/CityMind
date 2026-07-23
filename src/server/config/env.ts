@@ -58,6 +58,8 @@ const ServerEnvSchema = z.object({
       return normalizeAiBaseUrl(value);
     }),
   EVAL_MANIFEST_PATH: z.string().optional(),
+  INTERNAL_TRIAGE_SECRET: z.string().min(32).optional(),
+  APP_URL: z.string().url().optional(),
 });
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;
@@ -114,4 +116,12 @@ export function getShadowConfig(env: NodeJS.ProcessEnv = process.env): ShadowCon
 
 export function buildChatCompletionsUrl(baseUrl: string): string {
   return new URL("chat/completions", `${baseUrl}/`).toString();
+}
+
+export function getInternalBaseUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const appUrl = env.APP_URL?.trim();
+  if (appUrl) {
+    return appUrl.replace(/\/+$/, "");
+  }
+  return "http://127.0.0.1:3000";
 }

@@ -25,8 +25,10 @@ test('exact RHF stack pins are installed (Task 1 approved)', () => {
 
 test('report form + success pages and shadcn form pieces exist', () => {
   assert.ok(fs.existsSync(src('components', 'ReportForm.tsx')));
+  assert.ok(fs.existsSync(src('components', 'ReportAnalyzingState.tsx')));
   assert.ok(fs.existsSync(src('app', '[locale]', 'report', 'page.tsx')));
   assert.ok(fs.existsSync(src('app', '[locale]', 'report', 'success', 'page.tsx')));
+  assert.ok(fs.existsSync(src('app', '[locale]', 'report', 'failed', 'page.tsx')));
   assert.ok(fs.existsSync(src('components', 'ui', 'form.tsx')));
   assert.ok(fs.existsSync(src('components', 'ui', 'textarea.tsx')));
   assert.ok(fs.existsSync(src('components', 'ui', 'badge.tsx')));
@@ -42,17 +44,23 @@ test('ReportForm uses RHF+Zod, analyzing state, and sessionStorage flash (PUB-03
   assert.match(form, /evidence-limits/);
   assert.match(form, /DEFAULT_MAX_EVIDENCE_BYTES/);
   assert.doesNotMatch(form, /8\s*\*\s*1024\s*\*\s*1024/);
-  assert.match(form, /image\/jpeg|image\/png|image\/webp/);
+  assert.match(form, /evidence-input-types/);
+  assert.match(form, /EVIDENCE_FILE_ACCEPT/);
+  assert.match(form, /HEIC \(iPhone\)/);
   assert.match(form, /\/api\/public\/reports/);
   assert.doesNotMatch(form, /\/api\/public\/reports\/analyze/);
   assert.match(form, /FormData/);
-  assert.match(form, /citymind:report-success/);
+  assert.match(form, /writeReportSuccessFlash/);
   assert.match(form, /reportId/);
   assert.match(form, /accessToken/);
   assert.match(form, /access_token/);
   assert.match(form, /report\/success/);
+  assert.match(form, /report\/failed/);
+  assert.match(form, /writeReportFailedFlash/);
+  assert.match(form, /ReportAnalyzingState/);
+  assert.match(form, /isAnalyzing/);
+  assert.match(form, /analyzeStep/);
   assert.match(form, /formAnalyzing/);
-  assert.match(form, /isSubmitting \? t\("formAnalyzing"\)/);
   assert.match(form, /outcome:\s*\{/);
   assert.match(form, /service_step:/);
   assert.match(form, /disabled=\{.*(?:isSubmitting|loading)/);
@@ -61,16 +69,25 @@ test('ReportForm uses RHF+Zod, analyzing state, and sessionStorage flash (PUB-03
   assert.match(form, /geolocation|useMyLocation/);
 });
 
-test('success page one-shot flash, redirect, copy live region, status prep (D-11/D-18)', () => {
-  const success = read(src('app', '[locale]', 'report', 'success', 'page.tsx'));
+test('failed page one-shot flash and retry actions (PUB-06)', () => {
+  const failed = read(src('app', '[locale]', 'report', 'failed', 'page.tsx'));
 
-  assert.match(success, /citymind:report-success/);
-  assert.match(success, /sessionStorage/);
-  assert.match(success, /removeItem/);
-  assert.match(success, /reportId|report_id/);
-  assert.match(success, /accessToken|access_token/);
-  assert.match(success, /aria-live|live/);
-  assert.match(success, /statusLinkPrep|coming soon|\/status/);
+  assert.match(failed, /readReportFailedFlash/);
+  assert.match(failed, /replace\(|redirect\(/);
+  assert.match(failed, /\/report/);
+  assert.match(failed, /failedTryAgain/);
+});
+
+test('success page one-shot flash, redirect, and guidance panel (D-11/D-18)', () => {
+  const success = read(src('app', '[locale]', 'report', 'success', 'page.tsx'));
+  const flashLib = read(src('lib', 'report-outcome-flash.ts'));
+
+  assert.match(success, /readReportSuccessFlash/);
+  assert.match(flashLib, /sessionStorage/);
+  assert.match(flashLib, /removeItem/);
+  assert.match(success, /SuccessTriagePanel/);
+  assert.match(success, /hideStatusLinks/);
+  assert.doesNotMatch(success, /accessTokenLabel|copyAccessToken|statusLinkPrep/);
   assert.match(success, /replace\(|redirect\(/);
   assert.match(success, /\/report/);
   assert.doesNotMatch(success, /useSearchParams|searchParams\.get/);
@@ -88,12 +105,12 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
     submitReport: 'Submit report',
     analyzing: 'Analyzing your report…',
     locationHelper: 'Location helps officers respond faster. You can still submit without it.',
-    imageHelper: 'Optional photo — JPEG, PNG, or WebP. Keep it under the size limit shown.',
+    imageHelper: 'Optional photo — JPEG, PNG, WebP, HEIC (iPhone), or TIFF. We optimize it to WebP on upload.',
     formErrorClient: 'Fix the highlighted fields, then try again.',
     formErrorNetwork: 'Could not send your report. Check your connection and try again.',
-    successHeading: 'Report received',
+    successHeading: "Here's what you can do",
     successBody:
-      'Your report is saved. Read the guidance below, then chat for step-by-step help. Keep your ID and token to check status later.',
+      'We reviewed what you reported. Follow the steps below, then use chat if you need more help.',
     copyReportId: 'Copy report ID',
     copyAccessToken: 'Copy access token',
     tokenWarning: 'This token is shown once. We can’t show it again.',
@@ -128,6 +145,6 @@ test('Report/Success catalog strings match UI-SPEC (PUB-06)', () => {
 test('locale report page wires classic ReportForm without dashboard chrome', () => {
   const page = read(src('app', '[locale]', 'report', 'page.tsx'));
   assert.match(page, /ReportForm/);
-  assert.match(page, /reportPageTitle|reportCTA/);
+  assert.match(page, /reportPageTitle|CityMindLogo/);
   assert.doesNotMatch(page, /slate-950/);
 });

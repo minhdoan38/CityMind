@@ -1,3 +1,5 @@
+import { resolveSeverityPresetKey } from "@/lib/severity-filter-presets";
+
 export type ReportRow = {
   report_id: string;
   created_at: string;
@@ -8,7 +10,24 @@ export type ReportRow = {
   routing_destination?: string | null;
   has_shadow_disagreement?: boolean;
   severity?: number | null;
+  confidence?: number | null;
   summary: string;
+  evidence_path?: string | null;
+};
+
+export type VolumeDayCount = {
+  day: string;
+  count: number;
+};
+
+export type StatusWorkloadCount = {
+  status: "new" | "reviewing" | "resolved" | "rejected";
+  count: number;
+};
+
+export type CategoryWorkloadCount = {
+  category: string;
+  count: number;
 };
 
 export type DayOfWeekKey = "sun" | "mon" | "tue" | "wed" | "thu" | "fri" | "sat";
@@ -20,12 +39,16 @@ export type DayOfWeekCount = {
 
 export type SummaryMetrics = {
   total_reports: number;
+  needs_review_reports: number;
   critical_reports: number;
-  avg_severity: number | null;
-  top_category: string | null;
+  sla_overdue_reports: number;
+  ai_failed_reports: number;
+  avg_triage_seconds: number | null;
   resolved_reports?: number;
   resolution_rate?: number;
-  reports_by_dow?: DayOfWeekCount[];
+  volume_7d?: VolumeDayCount[];
+  workload_by_status?: StatusWorkloadCount[];
+  top_categories?: CategoryWorkloadCount[];
 };
 
 export type DashboardSearchParams = {
@@ -77,11 +100,39 @@ export const FILTER_PARAM_KEYS = [
   "shadow_disagreement",
 ] as const;
 
+function isActiveRoutingFilter(value: string | undefined): boolean {
+  const routing = value?.trim();
+  return routing === "government_default" || routing === "self_help";
+}
+
+function isActiveSeverityFilter(
+  min: string | undefined,
+  max: string | undefined,
+): boolean {
+  if (!min?.trim() && !max?.trim()) return false;
+  const key = resolveSeverityPresetKey(min, max);
+  if (key === "any") return false;
+  return true;
+}
+
+/** Counts logical filter dimensions currently applied (excludes pagination/sort). */
+export function countActiveFilters(params: DashboardSearchParams): number {
+  let count = 0;
+
+  if (params.triage_status?.trim()) count += 1;
+  if (isActiveRoutingFilter(params.routing_destination)) count += 1;
+  if (params.status?.trim()) count += 1;
+  if (params.category?.trim()) count += 1;
+  if (params.priority?.trim()) count += 1;
+  if (params.shadow_disagreement?.trim()) count += 1;
+  if (isActiveSeverityFilter(params.min_severity, params.max_severity)) count += 1;
+  if (params.created_after?.trim() || params.created_before?.trim()) count += 1;
+
+  return count;
+}
+
 export function hasActiveFilters(params: DashboardSearchParams): boolean {
-  return FILTER_PARAM_KEYS.some((key) => {
-    const value = params[key];
-    return typeof value === "string" && value.trim().length > 0;
-  });
+  return countActiveFilters(params) > 0;
 }
 
 export function parseBbox(value: string | undefined): Bbox | null {

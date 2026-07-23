@@ -246,7 +246,13 @@ CI must use --mock only.`);
         ? process.env.AI_MODEL_CANDIDATE
         : undefined;
       const evalEnv = modelOverride ? { ...env, AI_MODEL: modelOverride } : env;
-      analyzeStructured = async (input) => analyze({ env: evalEnv }, input);
+      analyzeStructured = async (input) => {
+        const result = await analyze({ env: evalEnv }, input);
+        return {
+          evaluatorAnalysis: result.evaluatorAnalysis,
+          rawContent: result.rawContent,
+        };
+      };
     }
 
     const result = await runEvalSuite({

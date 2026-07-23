@@ -1,15 +1,20 @@
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import type { CSSProperties, ReactNode } from "react";
 
 import CopyStatusLink from "@/components/CopyStatusLink";
 import RoutingOverrideActions from "@/components/RoutingOverrideActions";
 import RoutingDestinationBadge from "@/components/reports/RoutingDestinationBadge";
 import TriageStatusBadge from "@/components/reports/TriageStatusBadge";
+import { formatReportIdForList } from "@/components/reports/triage-field-display";
 import StatusActions from "@/components/StatusActions";
 import { requireOfficerSession } from "@/lib/auth";
+import { formatDashboardWhenFull } from "@/lib/dashboard-datetime";
+import { cn } from "@/lib/utils";
 import { loadOfficerReportDetail } from "@/server/services/officer-dashboard";
 import type { ShadowComparisonRow } from "@/server/evals/shadow-service";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 type Props = { params: Promise<{ reportId: string }> };
@@ -44,6 +49,14 @@ type StatusEvent = {
   created_at: string;
 };
 
+const DASH_RISE_DELAYS = [
+  "",
+  "dash-rise-delay-1",
+  "dash-rise-delay-2",
+  "dash-rise-delay-3",
+  "dash-rise-delay-4",
+] as const;
+
 function parseUrbanContext(
   value: Report["urban_context"],
 ): Record<string, unknown> | null {
@@ -57,12 +70,6 @@ function parseUrbanContext(
   } catch {
     return { context: value };
   }
-}
-
-function formatDate(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("en-GB");
 }
 
 function truncateActor(actorId: string) {
@@ -80,6 +87,34 @@ function confidenceBand(
   return labels.high;
 }
 
+function DetailSection({
+  title,
+  children,
+  variant = "default",
+  delayIndex = 0,
+  className,
+}: {
+  title: string;
+  children: ReactNode;
+  variant?: "default" | "ai";
+  delayIndex?: number;
+  className?: string;
+}) {
+  return (
+    <section
+      className={cn(
+        "reports-detail-section surface-card dash-rise",
+        DASH_RISE_DELAYS[Math.min(delayIndex, DASH_RISE_DELAYS.length - 1)],
+        variant === "ai" && "reports-detail-section--ai",
+        className,
+      )}
+    >
+      <h2 className="reports-detail-section-title">{title}</h2>
+      <div className="reports-detail-section-body">{children}</div>
+    </section>
+  );
+}
+
 function SignalList({
   items,
   emptyLabel,
@@ -88,10 +123,10 @@ function SignalList({
   emptyLabel: string;
 }) {
   if (!items?.length) {
-    return <p className="mt-2 text-sm text-muted-foreground">{emptyLabel}</p>;
+    return <p className="reports-detail-muted">{emptyLabel}</p>;
   }
   return (
-    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground">
+    <ul className="reports-detail-list">
       {items.map((item) => (
         <li key={item}>{item}</li>
       ))}
@@ -109,55 +144,156 @@ function shadowFieldValue(
   return String(value);
 }
 
+type ShadowComparisonLabels = {
+  title: string;
+  intro: string;
+  fieldColumn: string;
+  baselineColumn: string;
+  candidateColumn: string;
+  fieldNames: Record<"category" | "severity" | "priority", string>;
+};
+
 function ShadowComparisonPanel({
   comparison,
+  delayIndex,
+  labels,
 }: {
   comparison: ShadowComparisonRow;
+  delayIndex: number;
+  labels: ShadowComparisonLabels;
 }) {
   const baseline = comparison.baseline_snapshot as Record<string, unknown>;
   const candidate = comparison.candidate_snapshot as Record<string, unknown> | null;
   const fields = ["category", "severity", "priority"] as const;
 
   return (
-    <details className="rounded-lg border border-border p-6">
-      <summary className="cursor-pointer text-xl font-semibold text-foreground">
-        Shadow comparison
+    <details
+      className={cn(
+        "reports-detail-section surface-card dash-rise",
+        DASH_RISE_DELAYS[Math.min(delayIndex, DASH_RISE_DELAYS.length - 1)],
+      )}
+    >
+      <summary className="reports-detail-section-title cursor-pointer">
+        {labels.title}
       </summary>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Baseline production triage vs candidate model ({comparison.candidate_model}).
-        Advisory only — citizen disposition stays on baseline.
-      </p>
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-muted-foreground">
-              <th className="pb-2 pr-4 font-normal">Field</th>
-              <th className="pb-2 pr-4 font-normal">Baseline</th>
-              <th className="pb-2 font-normal">Candidate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fields.map((field) => {
-              const disagrees = Boolean(
-                (comparison.disagreement as Record<string, unknown> | undefined)?.[field],
-              );
-              return (
-                <tr key={field} className={disagrees ? "bg-amber-50" : undefined}>
-                  <td className="py-2 pr-4 capitalize font-medium">{field}</td>
-                  <td className="py-2 pr-4">{shadowFieldValue(baseline, field)}</td>
-                  <td className="py-2">{shadowFieldValue(candidate, field)}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="reports-detail-section-body">
+        <p className="reports-detail-muted">{labels.intro}</p>
+        <div className="reports-detail-table-wrap">
+          <table className="reports-detail-table">
+            <thead>
+              <tr>
+                <th scope="col">{labels.fieldColumn}</th>
+                <th scope="col">{labels.baselineColumn}</th>
+                <th scope="col">{labels.candidateColumn}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map((field) => {
+                const disagrees = Boolean(
+                  (comparison.disagreement as Record<string, unknown> | undefined)?.[
+                    field
+                  ],
+                );
+                return (
+                  <tr
+                    key={field}
+                    className={disagrees ? "reports-detail-table-row--warn" : undefined}
+                  >
+                    <th scope="row" className="font-medium">
+                      {labels.fieldNames[field]}
+                    </th>
+                    <td>{shadowFieldValue(baseline, field)}</td>
+                    <td>{shadowFieldValue(candidate, field)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     </details>
   );
 }
 
+function resolveStatusLabel(
+  status: string,
+  translate: Awaited<ReturnType<typeof getTranslations>>,
+): string {
+  const statusKey = `status_${status}` as
+    | "status_new"
+    | "status_reviewing"
+    | "status_resolved"
+    | "status_rejected";
+  return translate.has(statusKey) ? translate(statusKey) : status;
+}
+
+function formatImpactDisplay(raw: string): string {
+  return raw
+    .split(/\s*[—–-]\s*/)
+    .map((segment) =>
+      segment
+        .split(/[_\s]+/)
+        .filter(Boolean)
+        .map(
+          (word) =>
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+        )
+        .join(" "),
+    )
+    .join(" · ");
+}
+
+type MetricItem = {
+  key: string;
+  label: string;
+  labelTitle?: string;
+  value: string;
+  tone?: "default" | "impact";
+};
+
+function MetricStrip({ items }: { items: MetricItem[] }) {
+  const core = items.filter((item) => item.tone !== "impact");
+  const impact = items.find((item) => item.tone === "impact");
+
+  return (
+    <div className="reports-detail-metrics-wrap dash-rise dash-rise-delay-2">
+      <div className="reports-detail-metrics surface-card">
+        {core.map((item) => (
+          <div key={item.key} className="reports-detail-metric">
+            <dl className="reports-detail-metric-dl">
+              <dt
+                className="reports-detail-metric-label"
+                title={item.labelTitle}
+              >
+                {item.label}
+              </dt>
+              <dd className="reports-detail-metric-value">{item.value}</dd>
+            </dl>
+          </div>
+        ))}
+      </div>
+      {impact ? (
+        <div className="reports-detail-impact surface-card">
+          <dl className="reports-detail-metric-dl">
+            <dt
+              className="reports-detail-metric-label"
+              title={impact.labelTitle ?? impact.label}
+            >
+              {impact.label}
+            </dt>
+            <dd className="reports-detail-impact-value text-pretty">
+              {impact.value}
+            </dd>
+          </dl>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default async function ReportDetail({ params }: Props) {
   await requireOfficerSession();
+  const locale = await getLocale();
   const t = await getTranslations("dashboard");
   const tt = await getTranslations("dashboard.triage");
   const tr = await getTranslations("dashboard.routing");
@@ -176,19 +312,16 @@ export default async function ReportDetail({ params }: Props) {
 
   if (!reportResult.data) {
     return (
-      <Card className="border border-border p-6 max-w-4xl mx-auto">
-        <h1 className="text-xl font-semibold">
+      <Card className="reports-detail-error surface-card mx-auto max-w-4xl p-6">
+        <h1 className="reports-detail-title">
           {reportResult.notFound ? t("detailNotFound") : t("detailUnavailable")}
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="reports-detail-muted mt-2">
           {reportResult.error === "api_error"
             ? terror("apiConnection")
             : t("detailLoadError")}
         </p>
-        <Link
-          href="/dashboard"
-          className="mt-5 inline-block text-primary hover:underline"
-        >
+        <Link href="/dashboard" className="reports-detail-back mt-5 inline-flex">
           ← {t("detailBack")}
         </Link>
       </Card>
@@ -199,14 +332,7 @@ export default async function ReportDetail({ params }: Props) {
   const history = historyResult.data ?? [];
   const urbanContext = parseUrbanContext(report.urban_context);
   const triageComplete = report.triage_status === "completed";
-  const statusKey = `status_${report.status ?? "new"}` as
-    | "status_new"
-    | "status_reviewing"
-    | "status_resolved"
-    | "status_rejected";
-  const statusLabel = t.has(statusKey)
-    ? t(statusKey)
-    : (report.status ?? "new");
+  const statusLabel = resolveStatusLabel(report.status ?? "new", t);
   const detailTitle = triageComplete
     ? report.category || t("detailNotAvailable")
     : tt("detailPendingTitle");
@@ -221,246 +347,296 @@ export default async function ReportDetail({ params }: Props) {
     report.status !== "resolved" &&
     report.status !== "rejected";
 
+  let sectionIndex = 2;
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <Link
-        href="/dashboard"
-        className="text-sm font-semibold text-primary hover:underline"
-      >
+    <div className="reports-detail">
+      <Link href="/dashboard" className="reports-detail-back dash-rise">
         ← {t("detailBack")}
       </Link>
+      <a href="#officer-decision" className="reports-detail-skip">
+        {t("detailSkipToDecision")}
+      </a>
 
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <header className="reports-detail-hero dash-rise dash-rise-delay-1">
+        <div className="reports-detail-hero-head">
           <h1
-            className={
-              triageComplete
-                ? "text-[1.75rem] font-semibold capitalize tracking-tight text-foreground"
-                : "text-xl font-semibold tracking-tight text-foreground"
-            }
+            className={cn(
+              "reports-detail-title text-balance capitalize",
+              triageComplete && "reports-detail-title--complete",
+            )}
           >
             {detailTitle}
           </h1>
-          <p className="mt-2 break-all text-xs text-muted-foreground">
-            ID: {report.report_id}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t("detailSubmitted", { date: formatDate(report.created_at) })}
-          </p>
-          <CopyStatusLink reportId={report.report_id} />
+          <div className="reports-detail-meta">
+            <span className="reports-detail-id font-mono" title={report.report_id}>
+              {formatReportIdForList(report.report_id).display}
+            </span>
+            <span className="reports-detail-meta-sep" aria-hidden>
+              ·
+            </span>
+            <time dateTime={report.created_at}>
+              {t("detailSubmitted", {
+                date: formatDashboardWhenFull(report.created_at, locale),
+              })}
+            </time>
+          </div>
         </div>
-        <span className="inline-flex items-center rounded-md bg-secondary px-3 py-1 text-sm font-normal capitalize text-foreground">
-          {t("detailStatus", { status: statusLabel })}
-        </span>
-      </header>
 
-      {report.description ? (
-        <section className="space-y-2 rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t("detailCitizen")}
-          </h2>
-          <p className="whitespace-pre-wrap text-base text-foreground">
-            {report.description}
-          </p>
-        </section>
-      ) : null}
-
-      {report.evidence_path ? (
-        <section className="space-y-2 rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t("detailEvidenceImage")}
-          </h2>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/api/officer/reports/${report.report_id}/image`}
-            alt="Citizen-provided report evidence"
-            className="max-h-96 rounded-md border border-border object-contain"
-          />
-        </section>
-      ) : null}
-
-      <section className="space-y-2 rounded-lg border border-border p-6">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="reports-detail-badges">
           <TriageStatusBadge triageStatus={report.triage_status} />
           <RoutingDestinationBadge
             destination={report.routing_destination ?? null}
           />
+          <Badge variant="secondary" className="reports-detail-status-badge capitalize">
+            {statusLabel}
+          </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">{tt("detailHelper")}</p>
+
+        <p className="reports-detail-advisory">{tt("detailHelper")}</p>
         {report.routing_destination === "self_help" ? (
-          <Alert role="status">
+          <Alert role="status" className="reports-detail-self-help-alert">
             <AlertDescription>{tr("detailSelfHelpNotice")}</AlertDescription>
           </Alert>
         ) : null}
-      </section>
-
-      {isSelfHelp ? <RoutingOverrideActions reportId={report.report_id} /> : null}
-
-      {triageComplete && report.evidence?.length ? (
-        <section className="space-y-2 rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {tt("observedFacts")}
-          </h2>
-          <SignalList
-            items={report.evidence}
-            emptyLabel={t("detailNoneRecorded")}
-          />
-        </section>
-      ) : null}
-
-      {triageComplete && report.uncertainty?.length ? (
-        <section className="space-y-2 rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {tt("unknowns")}
-          </h2>
-          <SignalList
-            items={report.uncertainty}
-            emptyLabel={t("detailNoneRecorded")}
-          />
-        </section>
-      ) : null}
+      </header>
 
       {triageComplete ? (
-        <section className="space-y-4 rounded-lg border border-border bg-[#EFF6FF] p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t("detailAiTitle")}
-          </h2>
-          <Alert className="border border-border bg-background/80">
-            <AlertDescription className="text-sm text-foreground">
-              {t("detailAiDisclaimer")}
-            </AlertDescription>
-          </Alert>
-          {report.summary ? (
-            <div className="space-y-2">
-              <h3 className="text-sm font-normal text-muted-foreground">
-                {t("detailSummary")}
-              </h3>
-              <p className="text-base text-foreground">{report.summary}</p>
-            </div>
-          ) : null}
-          {report.recommendation ? (
-            <div className="space-y-2">
-              <h3 className="text-sm font-normal text-muted-foreground">
-                {t("detailRecommendation")}
-              </h3>
-              <p className="text-base text-foreground">{report.recommendation}</p>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {detail.shadowComparison ? (
-        <ShadowComparisonPanel comparison={detail.shadowComparison} />
-      ) : null}
-
-      {triageComplete ? (
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 rounded-lg border border-border bg-secondary/40 p-4">
-          {[
-            [t("detailPriority"), report.priority ?? t("detailNotAvailable")],
-            [
-              t("detailSeverity"),
-              report.severity != null ? `${report.severity}/5` : t("detailNotAvailable"),
-            ],
-            [
-              tt("confidenceLabel"),
-              confidenceBand(report.confidence, confidenceLabels),
-            ],
-            [
-              t("detailImpact"),
-              report.estimated_impact || t("detailNotAvailable"),
-            ],
-          ].map(([label, value]) => (
-            <div key={String(label)}>
-              <p className="text-xs uppercase text-muted-foreground font-normal">
-                {label}
-              </p>
-              <p className="mt-1 font-semibold capitalize text-foreground">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      ) : null}
-
-      {(report.latitude != null || report.longitude != null) && (
-        <section className="space-y-1 rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-foreground">
-            {t("detailLocation")}
-          </h2>
-          <p className="text-sm text-foreground">
-            Latitude: {report.latitude ?? t("detailNotAvailable")} · Longitude:{" "}
-            {report.longitude ?? t("detailNotAvailable")}
-          </p>
-        </section>
-      )}
-
-      <section className="space-y-3 rounded-lg border border-border p-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {t("detailUrban")}
-        </h2>
-        <p className="text-sm text-muted-foreground">{t("detailUrbanHelper")}</p>
-        {urbanContext && Object.keys(urbanContext).length > 0 ? (
-          <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-secondary p-4 text-xs font-mono text-foreground border border-border">
-            {JSON.stringify(urbanContext, null, 2)}
-          </pre>
-        ) : (
-          <p className="text-sm text-muted-foreground">{t("detailNoUrban")}</p>
-        )}
-      </section>
-
-      <section className="space-y-4 rounded-lg border border-border p-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {t("detailTimeline")}
-        </h2>
-        {historyResult.error && (
-          <Alert variant="destructive">
-            <AlertDescription>{t("detailHistoryError")}</AlertDescription>
-          </Alert>
-        )}
-        {!historyResult.error && history.length === 0 && (
-          <p className="text-sm text-muted-foreground">
-            {t("detailTimelineEmpty")}
-          </p>
-        )}
-        <ol className="grid gap-3">
-          {history.map((item) => {
-            const actorLabel = item.actor_id
-              ? truncateActor(item.actor_id)
-              : t("detailActor");
-            return (
-              <li
-                key={`${item.status}-${item.created_at}-${item.actor_id ?? ""}`}
-                className="rounded-md border border-border bg-secondary/50 p-4 space-y-1"
-              >
-                <p className="font-semibold capitalize text-foreground">
-                  {item.status}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(item.created_at)} · {actorLabel}
-                </p>
-                {item.note ? (
-                  <p className="mt-2 text-sm text-foreground">{item.note}</p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <section className="space-y-3 rounded-lg border border-border p-6">
-        <h2 className="text-xl font-semibold text-foreground">
-          {t("detailActions")}
-        </h2>
-        {report.status_note ? (
-          <p className="text-sm text-muted-foreground">
-            {t("detailLatestNote", { note: report.status_note })}
-          </p>
-        ) : null}
-        <StatusActions
-          reportId={report.report_id}
-          currentStatus={report.status}
+        <MetricStrip
+          items={[
+            {
+              key: "priority",
+              label: t("detailPriority"),
+              value:
+                report.priority != null
+                  ? report.priority.charAt(0).toUpperCase() +
+                    report.priority.slice(1).toLowerCase()
+                  : t("detailNotAvailable"),
+            },
+            {
+              key: "severity",
+              label: t("detailSeverity"),
+              value:
+                report.severity != null
+                  ? `${report.severity}/5`
+                  : t("detailNotAvailable"),
+            },
+            {
+              key: "confidence",
+              label: tt("confidenceLabelShort"),
+              labelTitle: tt("confidenceLabel"),
+              value: confidenceBand(report.confidence, confidenceLabels),
+            },
+            {
+              key: "impact",
+              label: t("detailImpact"),
+              value: report.estimated_impact
+                ? formatImpactDisplay(report.estimated_impact)
+                : t("detailNotAvailable"),
+              tone: "impact",
+            },
+          ]}
         />
-      </section>
+      ) : null}
+
+      <div className="reports-detail-grid">
+        <aside
+          id="officer-decision"
+          className="reports-detail-aside dash-rise dash-rise-delay-3"
+          aria-labelledby="officer-decision-title"
+        >
+          <div className="reports-detail-aside-card surface-card">
+            <h2 id="officer-decision-title" className="reports-detail-aside-title">
+              {t("detailActions")}
+            </h2>
+            {report.status_note ? (
+              <p className="reports-detail-muted">
+                {t("detailLatestNote", { note: report.status_note })}
+              </p>
+            ) : null}
+            <StatusActions
+              reportId={report.report_id}
+              currentStatus={report.status}
+              stacked
+            />
+            <div className="reports-detail-aside-tools">
+              <h3 className="reports-detail-aside-tools-title">
+                {t("detailAsideShare")}
+              </h3>
+              <CopyStatusLink reportId={report.report_id} embedded />
+              <Link
+                href={`/dashboard/agent-console?report_id=${encodeURIComponent(report.report_id)}`}
+                className="reports-detail-link reports-detail-aside-console-link"
+              >
+                {tt("detailAgentConsoleLink")}
+              </Link>
+            </div>
+          </div>
+        </aside>
+
+        <div className="reports-detail-main">
+          {report.description ? (
+            <DetailSection
+              title={t("detailCitizen")}
+              delayIndex={sectionIndex++}
+            >
+              <p className="reports-detail-prose whitespace-pre-wrap">
+                {report.description}
+              </p>
+            </DetailSection>
+          ) : null}
+
+          {report.evidence_path ? (
+            <DetailSection
+              title={t("detailEvidenceImage")}
+              delayIndex={sectionIndex++}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/officer/reports/${report.report_id}/image`}
+                alt={
+                  report.category
+                    ? t("detailEvidenceAlt", { category: report.category })
+                    : t("detailEvidenceAltGeneric")
+                }
+                className="reports-detail-evidence"
+              />
+            </DetailSection>
+          ) : null}
+
+          {isSelfHelp ? (
+            <div className="dash-rise" style={{ animationDelay: `${sectionIndex * 40}ms` }}>
+              <RoutingOverrideActions reportId={report.report_id} />
+            </div>
+          ) : null}
+
+          {triageComplete && report.evidence?.length ? (
+            <DetailSection
+              title={tt("observedFacts")}
+              delayIndex={sectionIndex++}
+            >
+              <SignalList
+                items={report.evidence}
+                emptyLabel={t("detailNoneRecorded")}
+              />
+            </DetailSection>
+          ) : null}
+
+          {triageComplete && report.uncertainty?.length ? (
+            <DetailSection title={tt("unknowns")} delayIndex={sectionIndex++}>
+              <SignalList
+                items={report.uncertainty}
+                emptyLabel={t("detailNoneRecorded")}
+              />
+            </DetailSection>
+          ) : null}
+
+          {triageComplete ? (
+            <DetailSection
+              title={t("detailAiTitle")}
+              variant="ai"
+              delayIndex={sectionIndex++}
+            >
+              <Alert className="reports-detail-ai-alert">
+                <AlertDescription>{t("detailAiDisclaimer")}</AlertDescription>
+              </Alert>
+              {report.summary ? (
+                <div className="reports-detail-field">
+                  <h3 className="reports-detail-field-label">{t("detailSummary")}</h3>
+                  <p className="reports-detail-prose">{report.summary}</p>
+                </div>
+              ) : null}
+              {report.recommendation ? (
+                <div className="reports-detail-field">
+                  <h3 className="reports-detail-field-label">
+                    {t("detailRecommendation")}
+                  </h3>
+                  <p className="reports-detail-prose">{report.recommendation}</p>
+                </div>
+              ) : null}
+            </DetailSection>
+          ) : null}
+
+          {detail.shadowComparison ? (
+            <ShadowComparisonPanel
+              comparison={detail.shadowComparison}
+              delayIndex={sectionIndex++}
+              labels={{
+                title: tt("shadowComparisonTitle"),
+                intro: tt("shadowComparisonIntro", {
+                  model: detail.shadowComparison.candidate_model,
+                }),
+                fieldColumn: tt("shadowColumnField"),
+                baselineColumn: tt("shadowColumnBaseline"),
+                candidateColumn: tt("shadowColumnCandidate"),
+                fieldNames: {
+                  category: tt("shadowFieldCategory"),
+                  severity: tt("shadowFieldSeverity"),
+                  priority: tt("shadowFieldPriority"),
+                },
+              }}
+            />
+          ) : null}
+
+          {(report.latitude != null || report.longitude != null) && (
+            <DetailSection
+              title={t("detailLocation")}
+              delayIndex={sectionIndex++}
+            >
+              <p className="reports-detail-prose tabular-nums">
+                {report.latitude ?? t("detailNotAvailable")},{" "}
+                {report.longitude ?? t("detailNotAvailable")}
+              </p>
+            </DetailSection>
+          )}
+
+          {urbanContext && Object.keys(urbanContext).length > 0 ? (
+          <DetailSection title={t("detailUrban")} delayIndex={sectionIndex++}>
+            <p className="reports-detail-muted">{t("detailUrbanHelper")}</p>
+            <pre className="reports-detail-code">
+              {JSON.stringify(urbanContext, null, 2)}
+            </pre>
+          </DetailSection>
+          ) : null}
+
+          {historyResult.error || history.length > 0 ? (
+          <DetailSection title={t("detailTimeline")} delayIndex={sectionIndex++}>
+            {historyResult.error ? (
+              <Alert variant="destructive">
+                <AlertDescription>{t("detailHistoryError")}</AlertDescription>
+              </Alert>
+            ) : (
+            <ol className="reports-detail-timeline">
+              {history.map((item, index) => {
+                const actorLabel = item.actor_id
+                  ? truncateActor(item.actor_id)
+                  : t("detailActor");
+                const eventStatusLabel = resolveStatusLabel(item.status, t);
+                return (
+                  <li
+                    key={`${item.status}-${item.created_at}-${item.actor_id ?? ""}`}
+                    className="reports-detail-timeline-item preview-section-rise"
+                    style={{ "--preview-i": index } as CSSProperties}
+                  >
+                    <p className="reports-detail-timeline-status">
+                      {eventStatusLabel}
+                    </p>
+                    <p className="reports-detail-timeline-meta tabular-nums">
+                      {formatDashboardWhenFull(item.created_at, locale)} ·{" "}
+                      {actorLabel}
+                    </p>
+                    {item.note ? (
+                      <p className="reports-detail-timeline-note">{item.note}</p>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ol>
+            )}
+          </DetailSection>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }

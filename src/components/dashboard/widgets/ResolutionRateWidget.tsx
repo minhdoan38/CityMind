@@ -9,6 +9,10 @@ import WidgetCard from "./WidgetCard";
 const TARGET_RATE = 80;
 const TICK_COUNT = 36;
 
+function roundSvgCoord(value: number): number {
+  return Math.round(value * 1_000_000) / 1_000_000;
+}
+
 type Props = {
   rate: number;
   resolved: number;
@@ -61,10 +65,10 @@ export default function ResolutionRateWidget({
               const rad = (angle * Math.PI) / 180;
               const inner = 68;
               const outer = 88;
-              const x1 = 100 + inner * Math.cos(rad);
-              const y1 = 100 + inner * Math.sin(rad);
-              const x2 = 100 + outer * Math.cos(rad);
-              const y2 = 100 + outer * Math.sin(rad);
+              const x1 = roundSvgCoord(100 + inner * Math.cos(rad));
+              const y1 = roundSvgCoord(100 + inner * Math.sin(rad));
+              const x2 = roundSvgCoord(100 + outer * Math.cos(rad));
+              const y2 = roundSvgCoord(100 + outer * Math.sin(rad));
               const active = index < activeTicks;
               return (
                 <line
@@ -104,7 +108,7 @@ export default function ResolutionRateWidget({
         <Button
           type="button"
           variant="outline"
-          className="mt-2 min-h-10 rounded-full px-5 text-sm"
+          className="mt-2 px-5 text-sm"
         >
           {t("resolutionDetails")}
         </Button>

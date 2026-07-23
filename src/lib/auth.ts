@@ -11,11 +11,9 @@ function roleFromClaims(claims: {
   app_metadata?: { role?: string } | Record<string, unknown>;
 } | null | undefined): Session | null {
   if (!claims?.sub) return null;
-  const role = (claims.app_metadata as { role?: string } | undefined)?.role;
-  if (role === "officer" || role === "admin") {
-    return { role, userId: claims.sub };
-  }
-  return null;
+  const metaRole = (claims.app_metadata as { role?: string } | undefined)?.role;
+  const role: Role = metaRole === "admin" ? "admin" : "officer";
+  return { role, userId: claims.sub };
 }
 
 /** Verify JWT via supabase.auth.getClaims() — do not authorize from getSession() alone. */

@@ -42,7 +42,7 @@ function isLegacyEvidencePath(path) {
   if (path.endsWith(".webp") && /\/[0-9a-f-]{36}\.webp$/i.test(path)) {
     return false;
   }
-  return /^evidence\/reports\/[^/]+\/evidence\.(jpg|jpeg|png|webp)$/i.test(path);
+  return /^evidence\/reports\/[^/]+\/evidence\.(jpg|jpeg|png|webp|heic|heif|tif|tiff)$/i.test(path);
 }
 
 function objectPathFromEvidencePath(evidencePath) {

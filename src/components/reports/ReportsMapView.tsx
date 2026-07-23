@@ -300,7 +300,7 @@ export default function ReportsMapView({ params }: Props) {
               type="button"
               variant="outline"
               size="icon"
-              className="min-h-11 min-w-11 bg-card"
+              className="min-h-10 min-w-10 bg-card"
               aria-label={t("zoomIn")}
               onClick={() => mapRef.current?.zoomIn()}
             >
@@ -310,7 +310,7 @@ export default function ReportsMapView({ params }: Props) {
               type="button"
               variant="outline"
               size="icon"
-              className="min-h-11 min-w-11 bg-card"
+              className="min-h-10 min-w-10 bg-card"
               aria-label={t("zoomOut")}
               onClick={() => mapRef.current?.zoomOut()}
             >
@@ -466,7 +466,7 @@ export default function ReportsMapView({ params }: Props) {
             <Button
               type="button"
               variant="outline"
-              className="min-h-11"
+              className="min-h-10"
               onClick={() => void fetchPins()}
             >
               {t("retry")}

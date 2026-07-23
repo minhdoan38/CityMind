@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { getAdminClient } from "@/lib/supabase/admin";
 import { HttpError, jsonErrorResponse } from "@/server/http/errors";
 import { VALID_STATUSES, parseBbox, parseReportFilters, validateReportFilters } from "@/server/officer/filters";
 import { requireOfficerContext } from "@/server/officer/guard";
@@ -10,10 +11,16 @@ import {
   buildXlsxExport,
 } from "@/server/exports/reports";
 import {
+  deleteOfficerReport,
+  getOfficerEvidenceReference,
   getOfficerReport,
   updateOfficerReportRouting,
   updateReportStatus,
 } from "@/server/repositories/reports";
+import {
+  deleteEvidenceObject,
+  parseEvidencePath,
+} from "@/server/services/evidence-service";
 
 const OfficerRoutingActionSchema = z.object({
   action: z.enum(["escalate_to_government", "mark_resolved"]),
@@ -193,5 +200,44 @@ export async function handleOfficerRoutingOverrideRequest(
   } catch (error) {
     if (error instanceof HttpError) return jsonErrorResponse(error);
     return queryErrorResponse("Routing update failed");
+  }
+}
+
+export async function handleDeleteReportRequest(
+  reportId: string,
+): Promise<Response> {
+  const auth = await requireOfficerContext();
+  if (!auth.ok) return auth.response;
+
+  try {
+    const report = await getOfficerReport(auth.context.client, reportId);
+    if (!report) {
+      return Response.json({ detail: "Report not found" }, { status: 404 });
+    }
+
+    const evidenceRef = await getOfficerEvidenceReference(
+      auth.context.client,
+      reportId,
+    );
+    const admin = getAdminClient();
+    await deleteOfficerReport(admin, reportId);
+
+    if (evidenceRef?.evidencePath) {
+      try {
+        const location = parseEvidencePath(evidenceRef.evidencePath);
+        await deleteEvidenceObject({
+          client: admin,
+          bucketName: location.bucket,
+          objectPath: location.objectPath,
+        });
+      } catch {
+        /* best-effort storage cleanup */
+      }
+    }
+
+    return Response.json({ ok: true, report_id: reportId });
+  } catch (error) {
+    if (error instanceof HttpError) return jsonErrorResponse(error);
+    return queryErrorResponse("Report delete failed");
   }
 }

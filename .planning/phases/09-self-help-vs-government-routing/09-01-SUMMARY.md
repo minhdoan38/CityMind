@@ -32,13 +32,13 @@ completed: 2026-07-22
 
 # Phase 9 Plan 01: Routing Schema and Policy Summary
 
-**Deterministic routing policy module with routing audit columns migration and SQL contract — live DB push blocked on SUPABASE_DB_URL.**
+**Deterministic routing policy module with routing audit columns migration and SQL contract — live DB verified 2026-07-22.**
 
 ## Performance
 
-- **Duration:** ~25 min (Tasks 1 and 3)
-- **Tasks:** 2 of 3 complete (Task 2 blocked)
-- **Files modified:** 6
+- **Duration:** ~25 min (+ operator SQL apply)
+- **Tasks:** 3/3 complete
+- **Files modified:** 6 (+ corrective migrations 40002/40003)
 
 ## Accomplishments
 
@@ -49,28 +49,25 @@ completed: 2026-07-22
 ## Task Commits
 
 1. **Task 1: Routing schema migration and SQL contract** - `74d8a67` (test)
-2. **Task 2: Push routing schema** - BLOCKED — requires `SUPABASE_DB_URL` in `.env.local`
+2. **Task 2: Push routing schema** - applied via Supabase SQL Editor (2026-07-22); corrective `20260722140002`, `20260722140003`
 3. **Task 3: Routing policy module and unit tests** - `ed3b1bb` (feat)
 
 ## Auth Gates / User Setup
 
-**Task 2 (blocking checkpoint):** Operator must set `SUPABASE_DB_URL` (direct Postgres URL) in `frontend/.env.local`, then run:
+**Task 2:** Applied via Supabase SQL Editor (2026-07-22). Follow-up corrective migrations:
 
-```bash
-node scripts/run-supabase-sql.mjs supabase/migrations/20260722130001_routing_columns.sql
-node scripts/run-supabase-sql.mjs supabase/tests/09_routing_contract.sql
-```
+- `20260722140002_fix_intake_rpc_evidence_path.sql` — drop `image_gcs_uri` from intake RPC (Phase 7 schema)
+- `20260722140003_restrict_escalate_rpc_grants.sql` — revoke escalate RPC from anon/authenticated
 
-Downstream integration against live DB remains blocked until this passes.
+Contract: `supabase/tests/09_routing_contract.sql` — PASS
 
 ## Deviations from Plan
 
-None for completed tasks — Task 2 deferred per human-action checkpoint.
+Corrective migrations added after live apply exposed `image_gcs_uri` drift and SQL Editor grant-check behavior.
 
 ## Next Phase Readiness
 
-- Policy module and migration files ready for worker hook (09-02) and APIs (09-03/09-04)
-- Live schema push still required before SQL contract gate and production routing columns
+- Live routing columns and escalate RPC verified; downstream plans unblocked
 
 ## Self-Check: PASSED
 

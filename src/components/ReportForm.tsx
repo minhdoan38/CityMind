@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
+import ReportAnalyzingState from "@/components/ReportAnalyzingState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,34 +23,20 @@ import {
 } from "@/components/ui/form";
 import ReportLocationMiniMap from "@/components/ReportLocationMiniMap";
 import { DEFAULT_MAX_EVIDENCE_BYTES } from "@/lib/evidence-limits";
+import {
+  EVIDENCE_FILE_ACCEPT,
+  isAcceptedEvidenceClientFile,
+} from "@/lib/evidence-input-types";
 
-const FLASH_KEY = "citymind:report-success";
-const ACCEPTED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/png",
-  "image/webp",
-] as const;
+import {
+  failedReasonFromStatus,
+  writeReportFailedFlash,
+  writeReportSuccessFlash,
+} from "@/lib/report-outcome-flash";
+const ANALYZE_STEP_MS = 1600;
+const ANALYZE_DONE_MS = 480;
 
-const ACCEPTED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
-
-function isAcceptedImageFile(file: File): boolean {
-  if (
-    ACCEPTED_IMAGE_TYPES.includes(
-      file.type as (typeof ACCEPTED_IMAGE_TYPES)[number],
-    )
-  ) {
-    return true;
-  }
-
-  if (!file.type || file.type === "application/octet-stream") {
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-    return ACCEPTED_IMAGE_EXTENSIONS.has(ext);
-  }
-
-  return false;
-}
+type AnalyzeStep = 0 | 1 | 2 | 3;
 
 const reportSchema = z.object({
   description: z.string().min(5).max(3000),
@@ -83,8 +71,8 @@ const reportSchema = z.object({
     }, "Max image size is 10MB.")
     .refine((files) => {
       if (!files || files.length === 0) return true;
-      return isAcceptedImageFile(files[0]);
-    }, "Only .jpg, .png and .webp formats are supported."),
+      return isAcceptedEvidenceClientFile(files[0]);
+    }, "Supported formats: JPEG, PNG, WebP, HEIC (iPhone), or TIFF."),
 });
 
 type ReportFormValues = z.infer<typeof reportSchema>;
@@ -95,6 +83,8 @@ export default function ReportForm() {
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState("");
   const [locationError, setLocationError] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzeStep, setAnalyzeStep] = useState<AnalyzeStep>(0);
 
   const form = useForm<ReportFormValues>({
     resolver: zodResolver(reportSchema),
@@ -109,6 +99,21 @@ export default function ReportForm() {
   const { isSubmitting } = form.formState;
   const latitude = useWatch({ control: form.control, name: "latitude" }) ?? "";
   const longitude = useWatch({ control: form.control, name: "longitude" }) ?? "";
+
+  useEffect(() => {
+    if (!isAnalyzing || analyzeStep >= 2) return;
+
+    const timer = window.setTimeout(() => {
+      setAnalyzeStep((current) => (current < 2 ? ((current + 1) as AnalyzeStep) : current));
+    }, ANALYZE_STEP_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [isAnalyzing, analyzeStep]);
+
+  function resetAnalyzing() {
+    setIsAnalyzing(false);
+    setAnalyzeStep(0);
+  }
 
   function useMyLocation() {
     setLocationError("");
@@ -137,7 +142,11 @@ export default function ReportForm() {
   }
 
   async function onSubmit(data: ReportFormValues) {
-    setError("");
+    flushSync(() => {
+      setError("");
+      setIsAnalyzing(true);
+      setAnalyzeStep(0);
+    });
 
     const formData = new FormData();
     formData.append("description", data.description);
@@ -155,11 +164,15 @@ export default function ReportForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        setError(
-          typeof body?.detail === "string"
-            ? body.detail
-            : t("formErrorNetwork"),
-        );
+        const message =
+          typeof body?.detail === "string" ? body.detail : t("formErrorNetwork");
+        writeReportFailedFlash({
+          message,
+          reason: failedReasonFromStatus(res.status),
+          status: res.status,
+        });
+        resetAnalyzing();
+        router.push("/report/failed");
         return;
       }
 
@@ -167,55 +180,74 @@ export default function ReportForm() {
       const reportId = body?.report_id;
       const accessToken = body?.access_token;
 
-      // Soft A→B contract: prefer Plan 02-01 access_token; surface network copy if absent
       if (!reportId || !accessToken) {
-        setError(t("formErrorNetwork"));
+        writeReportFailedFlash({
+          message: t("formErrorNetwork"),
+          reason: "server",
+        });
+        resetAnalyzing();
+        router.push("/report/failed");
         return;
       }
 
-      sessionStorage.setItem(
-        FLASH_KEY,
-        JSON.stringify({
-          reportId,
-          accessToken,
-          outcome: {
-            service_step: body.service_step ?? "ai_review_pending",
-            triage_status: body.triage_status ?? "pending",
-            routing_destination: body.routing_destination ?? null,
-            category: body.category ?? null,
-            severity: body.severity ?? null,
-            priority: body.priority ?? null,
-            summary: body.summary ?? null,
-            recommendation: body.recommendation ?? null,
-            playbook_id: body.playbook_id ?? null,
-            can_escalate: body.can_escalate ?? false,
-            guidance_script: body.guidance_script ?? null,
-            guidance_status: body.guidance_status ?? null,
-            allowed_actions: body.allowed_actions ?? [],
-            prohibited_actions: body.prohibited_actions ?? [],
-          },
-        }),
-      );
+      writeReportSuccessFlash({
+        reportId,
+        accessToken,
+        outcome: {
+          service_step: body.service_step ?? "ai_review_pending",
+          triage_status: body.triage_status ?? "pending",
+          routing_destination: body.routing_destination ?? null,
+          category: body.category ?? null,
+          severity: body.severity ?? null,
+          priority: body.priority ?? null,
+          summary: body.summary ?? null,
+          recommendation: body.recommendation ?? null,
+          playbook_id: body.playbook_id ?? null,
+          can_escalate: body.can_escalate ?? false,
+          guidance_script: body.guidance_script ?? null,
+          guidance_status: body.guidance_status ?? null,
+          allowed_actions: body.allowed_actions ?? [],
+          prohibited_actions: body.prohibited_actions ?? [],
+        },
+      });
 
+      setAnalyzeStep(3);
+      await new Promise((resolve) => window.setTimeout(resolve, ANALYZE_DONE_MS));
       router.push("/report/success");
     } catch {
-      setError(t("formErrorNetwork"));
+      writeReportFailedFlash({
+        message: t("formErrorNetwork"),
+        reason: "network",
+      });
+      resetAnalyzing();
+      router.push("/report/failed");
     }
   }
 
+  if (isAnalyzing) {
+    return (
+      <div className="report-form-shell surface-card-elevated report-form-shell-analyzing">
+        <ReportAnalyzingState step={analyzeStep} />
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm md:p-6">
-      <h2 className="text-xl font-semibold tracking-tight text-foreground">
-        {t("reportPageTitle")}
-      </h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t("heroAdvisory")}</p>
+    <div className="report-form-shell surface-card-elevated">
+      <header className="report-form-header hero-rise">
+        <h2 className="report-form-title font-heading text-balance">
+          {t("reportPageTitle")}
+        </h2>
+        <p className="report-form-lead text-pretty">{t("reportPageLead")}</p>
+        <p className="report-form-advisory">{t("heroAdvisory")}</p>
+      </header>
 
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit, () => {
             setError(t("formErrorClient"));
           })}
-          className="mt-6 space-y-5"
+          className="report-form-body hero-rise hero-rise-delay-1 space-y-5"
           noValidate
         >
           <FormField
@@ -223,15 +255,15 @@ export default function ReportForm() {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t("descriptionLabel")}</FormLabel>
+                <FormLabel className="report-form-label">{t("descriptionLabel")}</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}
                     maxLength={3000}
-                    rows={4}
+                    rows={5}
                     placeholder={t("descriptionPlaceholder")}
                     disabled={isSubmitting}
-                    className="min-h-28 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+                    className="report-form-textarea min-h-32 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
                   />
                 </FormControl>
                 <FormMessage />
@@ -251,7 +283,7 @@ export default function ReportForm() {
                     ref={field.ref}
                     onBlur={field.onBlur}
                     type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                    accept={EVIDENCE_FILE_ACCEPT}
                     disabled={isSubmitting}
                     className="min-h-11 w-full text-sm"
                     onChange={(event) => field.onChange(event.target.files)}
@@ -263,15 +295,11 @@ export default function ReportForm() {
             )}
           />
 
-          <div className="space-y-4 border-t border-border pt-4">
+          <div className="report-form-location space-y-4 border-t border-border pt-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  {t("locationLabel")}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {t("locationHelper")}
-                </p>
+                <p className="report-form-label">{t("locationLabel")}</p>
+                <p className="report-form-helper">{t("locationHelper")}</p>
               </div>
               <Button
                 type="button"
@@ -355,7 +383,7 @@ export default function ReportForm() {
 
           <Button
             type="submit"
-            className="min-h-11 w-full font-semibold"
+            className="report-form-submit hero-cta min-h-12 w-full text-base font-semibold"
             disabled={isSubmitting}
           >
             {isSubmitting ? t("formAnalyzing") : t("submitReport")}

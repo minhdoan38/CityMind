@@ -92,17 +92,20 @@ describe("projectCitizenTriageView", () => {
     expect(payload.service_step).toBe("officer_review");
   });
 
-  it("returns self_help_guidance with null AI fields when routing_destination is self_help", () => {
+  it("returns self_help_guidance with AI fields when routing_destination is self_help", () => {
     const payload = projectCitizenTriageView({
       ...base,
       triage_status: "completed",
       status: "new",
       routing_destination: "self_help",
       category: "pothole",
+      summary: "Small pothole on the sidewalk.",
+      recommendation: "Mark the area and monitor.",
     });
     expect(payload.service_step).toBe("self_help_guidance");
-    expect(payload.summary).toBeNull();
-    expect(payload.category).toBeNull();
+    expect(payload.summary).toBe("Small pothole on the sidewalk.");
+    expect(payload.category).toBe("pothole");
+    expect(payload.recommendation).toBe("Mark the area and monitor.");
     expect(payload.playbook_id).toBe("pothole");
     expect(payload.can_escalate).toBe(true);
     expect(payload).not.toHaveProperty("routing_reason");

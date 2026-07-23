@@ -152,7 +152,7 @@ export function parseTriageStatusFilter(value: string | null): string[] | null {
 export function parseRoutingDestinationFilter(
   value: string | null,
 ): RoutingDestinationFilter {
-  if (value == null || value.trim() === "") return "government_default";
+  if (value == null || value.trim() === "") return "all";
   if (value === "self_help" || value === "all") return value;
   if (value === "government_default") return "government_default";
   return "government_default";

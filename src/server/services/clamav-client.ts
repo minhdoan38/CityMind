@@ -26,7 +26,7 @@ export function resetClamavClientForTests(): void {
 }
 
 export function isClamavEnabled(): boolean {
-  return process.env.CLAMAV_ENABLED !== "false";
+  return process.env.CLAMAV_ENABLED === "true";
 }
 
 async function getClient(): Promise<ClamClient> {

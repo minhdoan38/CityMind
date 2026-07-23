@@ -1,68 +1,91 @@
-import type { ReportAnalysis } from "../domain/report-analysis";
+import type { EvaluatorAnalysis } from "../domain/evaluator-analysis";
+import type { AnalysisInput } from "../ai/provider";
+import { validateEvaluatorPolicy } from "../validation/evaluator-policy";
 
-import { validateReportAnalysis } from "./aggregate";
+import { validateEvaluatorAnalysis } from "./aggregate";
 import type { EvalCase } from "./types";
 
-export type AnalyzeStructuredFn = (input: {
-  description: string;
-  image?: { bytes: Buffer; mimeType: string };
-}) => Promise<{ analysis: ReportAnalysis; rawContent: string }>;
+export type AnalyzeStructuredFn = (
+  input: AnalysisInput,
+) => Promise<{ evaluatorAnalysis: EvaluatorAnalysis; rawContent?: string }>;
 
-function goldToAnalysis(gold: EvalCase["gold"], reportText: string): ReportAnalysis {
-  const severity = gold.severity;
-  const priority = gold.priority;
-  const category = gold.category;
+function goldToEvaluatorAnalysis(
+  gold: EvalCase["gold"],
+  reportText: string,
+  tags: EvalCase["tags"] = [],
+): EvaluatorAnalysis {
+  const text = reportText.trim();
+  const isInjection = tags.includes("injection");
+  const primaryFact = isInjection
+    ? `Citizen submitted a ${gold.category} report for review.`
+    : text.slice(0, 200) || "Citizen reported an incident.";
+  const observed_facts = [primaryFact];
 
-  const groundedEvidence = reportText.trim().slice(0, 120);
-
-  const analysis: ReportAnalysis = {
-    category,
-    severity,
-    confidence: 0.86,
-    summary: `Synthetic triage summary for ${category} incident.`,
-    recommendation: "Officer review recommended before dispatch.",
-    priority,
-    estimated_impact: "Localized public-space impact reported by citizen.",
-    evidence: [groundedEvidence],
-    uncertainty: severity >= 4 ? [] : ["Impact extent not fully verified."],
-  };
-
-  if (severity === 5) {
-    analysis.evidence = [groundedEvidence];
-    analysis.uncertainty = [];
+  const hazardMatch = text.match(/\b(hazard|danger|unsafe|risk|exposed)\b/i);
+  if (hazardMatch) {
+    observed_facts.push(hazardMatch[0]);
   }
 
-  return analysis;
+  const dangerMatch = text.match(
+    /\b(immediate danger|imminent|active fire|live electrical|entrapment|collision risk|active flooding|collapse|life[- ]safety)\b/i,
+  );
+  if (dangerMatch) {
+    observed_facts.push(dangerMatch[0]);
+  }
+
+  const severity = gold.severity;
+  const priority = gold.priority;
+  const severity_reason = primaryFact;
+  const priority_reason = primaryFact;
+
+  return {
+    category: gold.category,
+    observed_facts: [...new Set(observed_facts)],
+    inferences: [`Incident may affect local ${gold.category} infrastructure.`],
+    unknowns: severity >= 4 ? [] : ["Impact extent not fully verified."],
+    severity,
+    severity_reason,
+    priority,
+    priority_reason,
+    confidence: 0.86,
+    recommended_action: "Officer review recommended before dispatch.",
+    requires_human_review: true,
+  };
 }
 
-const MOCK_FIXTURE_OVERRIDES: Record<string, Partial<ReportAnalysis>> = {
+const MOCK_FIXTURE_OVERRIDES: Record<string, Partial<EvaluatorAnalysis>> = {
   "inj-grounding-001": {
     category: "pothole",
     severity: 1,
     priority: "low",
-    summary: "Minor sidewalk crack reported; cosmetic issue only.",
-    recommendation: "Monitor during routine sidewalk inspection.",
-    evidence: ["Small crack in sidewalk pavement."],
-    uncertainty: [],
+    observed_facts: ["Small crack in sidewalk pavement."],
+    severity_reason: "Small crack in sidewalk pavement.",
+    priority_reason: "Small crack in sidewalk pavement. Severity 1 supports low priority.",
+    recommended_action: "Monitor during routine sidewalk inspection.",
+    unknowns: [],
   },
 };
 
 export async function runCaseMock(
   evalCase: EvalCase,
-): Promise<Array<{ analysis: ReportAnalysis | null; schema_valid: boolean; policy_ok: boolean }>> {
+): Promise<
+  Array<{ analysis: EvaluatorAnalysis | null; schema_valid: boolean; policy_ok: boolean }>
+> {
   const override = MOCK_FIXTURE_OVERRIDES[evalCase.case_id];
-  const analysis = { ...goldToAnalysis(evalCase.gold, evalCase.report_text), ...override };
-  const schema = validateReportAnalysis(analysis);
+  const analysis = {
+    ...goldToEvaluatorAnalysis(evalCase.gold, evalCase.report_text, evalCase.tags),
+    ...override,
+  };
+  const schema = validateEvaluatorAnalysis(analysis);
+  const policyOk = schema.ok
+    ? validateEvaluatorPolicy(analysis, { description: evalCase.report_text }).ok
+    : false;
 
   return [
     {
       analysis: schema.ok ? schema.analysis! : null,
       schema_valid: schema.ok,
-      policy_ok: schema.ok
-        ? (await import("../validation/analysis-policy")).validateAnalysisPolicy(analysis, {
-            description: evalCase.report_text,
-          }).ok
-        : false,
+      policy_ok: policyOk,
     },
   ];
 }
@@ -71,22 +94,28 @@ export async function runCaseLive(
   evalCase: EvalCase,
   repetitions: number,
   analyzeStructured: AnalyzeStructuredFn,
-): Promise<Array<{ analysis: ReportAnalysis | null; schema_valid: boolean; policy_ok: boolean; error_type?: string }>> {
+): Promise<
+  Array<{
+    analysis: EvaluatorAnalysis | null;
+    schema_valid: boolean;
+    policy_ok: boolean;
+    error_type?: string;
+  }>
+> {
   const results = [];
 
   for (let index = 0; index < repetitions; index += 1) {
     try {
       const result = await analyzeStructured({ description: evalCase.report_text });
-      const schema = validateReportAnalysis(result.analysis);
+      const schema = validateEvaluatorAnalysis(result.evaluatorAnalysis);
       const policyOk = schema.ok
-        ? (await import("../validation/analysis-policy")).validateAnalysisPolicy(
-            result.analysis,
-            { description: evalCase.report_text },
-          ).ok
+        ? validateEvaluatorPolicy(result.evaluatorAnalysis, {
+            description: evalCase.report_text,
+          }).ok
         : false;
 
       results.push({
-        analysis: schema.ok ? result.analysis : null,
+        analysis: schema.ok ? result.evaluatorAnalysis : null,
         schema_valid: schema.ok,
         policy_ok: policyOk,
       });
@@ -110,7 +139,14 @@ export async function runCase(
     repetitions: number;
     analyzeStructured?: AnalyzeStructuredFn;
   },
-): Promise<Array<{ analysis: ReportAnalysis | null; schema_valid: boolean; policy_ok: boolean; error_type?: string }>> {
+): Promise<
+  Array<{
+    analysis: EvaluatorAnalysis | null;
+    schema_valid: boolean;
+    policy_ok: boolean;
+    error_type?: string;
+  }>
+> {
   if (options.mode === "mock") {
     return runCaseMock(evalCase);
   }

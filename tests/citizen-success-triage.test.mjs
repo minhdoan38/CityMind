@@ -10,23 +10,16 @@ const read = (filePath) => fs.readFileSync(filePath, 'utf8');
 // Branch table: 13-UI-SPEC.md — CitizenTriageOutcome service_step branches (SHELP-01)
 // self_help_guidance → CoachPanel embed; officer_review → government Alert, no CoachPanel
 
-test('success page imports outcome components and showImmediateOutcome guard (D-13-02)', () => {
+test('success page imports SuccessTriagePanel for guidance and chat (D-13-02)', () => {
   const success = read(src('app', '[locale]', 'report', 'success', 'page.tsx'));
+  const panel = read(src('components', 'coach', 'SuccessTriagePanel.tsx'));
 
-  assert.match(success, /import CitizenTriageOutcome/);
   assert.match(success, /import SuccessTriagePanel/);
-  assert.match(
-    success,
-    /showImmediateOutcome\s*=\s*\n?\s*outcome\s*&&[\s\S]*service_step !== "ai_review_pending"/,
-    'must exclude ai_review_pending from immediate path',
-  );
-  assert.match(success, /triage_status !== "pending"/);
-  assert.match(success, /triage_status !== "processing"/);
-  assert.match(
-    success,
-    /showImmediateOutcome\s*\?\s*\([\s\S]*<CitizenTriageOutcome[\s\S]*\)\s*:\s*\([\s\S]*<SuccessTriagePanel/,
-    'CitizenTriageOutcome primary; SuccessTriagePanel poll fallback (D-13-02)',
-  );
+  assert.match(success, /initialOutcome=\{outcome\}/);
+  assert.match(panel, /CitizenTriageOutcome/);
+  assert.match(panel, /isOutcomeReady/);
+  assert.match(panel, /\/api\/public\/reports\/status/);
+  assert.match(panel, /60_000/);
 });
 
 test('CitizenTriageOutcome embeds CoachPanel only on self_help_guidance (SHELP-01)', () => {
@@ -77,18 +70,19 @@ test('calm copy paths forbid provider name leakage (T-13-01)', () => {
 test('ReportForm flash stores nested outcome with service_step and triage_status (PUB-04)', () => {
   const form = read(src('components', 'ReportForm.tsx'));
 
-  assert.match(form, /citymind:report-success/);
+  assert.match(form, /writeReportSuccessFlash/);
   assert.match(form, /outcome:\s*\{/);
   assert.match(form, /service_step:/);
   assert.match(form, /triage_status:/);
   assert.match(form, /can_escalate:/);
 });
 
-test('SuccessTriagePanel polls status endpoint with 120s timeout (D-13-02 fallback)', () => {
+test('SuccessTriagePanel polls status endpoint and renders CitizenTriageOutcome (D-13-02)', () => {
   const panel = read(src('components', 'coach', 'SuccessTriagePanel.tsx'));
 
   assert.match(panel, /\/api\/public\/reports\/status/);
-  assert.match(panel, /120_000/);
+  assert.match(panel, /60_000/);
   assert.match(panel, /method:\s*"POST"/);
   assert.match(panel, /coach\.pollTimeout/);
+  assert.match(panel, /<CitizenTriageOutcome/);
 });

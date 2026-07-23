@@ -70,7 +70,6 @@ BEGIN
         evidence,
         uncertainty,
         urban_context,
-        image_gcs_uri,
         evidence_path,
         current_status,
         triage_status
@@ -88,7 +87,6 @@ BEGIN
         NULL,
         '[]'::jsonb,
         '[]'::jsonb,
-        NULL,
         NULL,
         p_evidence_path,
         'new',

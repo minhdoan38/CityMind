@@ -226,6 +226,28 @@ function parseAssistantContent(payload: ChatCompletionResponse): string {
   return content;
 }
 
+function stripHanoiProviderMetadata(value: unknown): unknown {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+
+  const metadataKeys = new Set([
+    "output_language",
+    "citizen_guidance_script",
+    "script_id",
+    "priority",
+    "priority_reason",
+  ]);
+
+  const out: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (!metadataKeys.has(key)) {
+      out[key] = entry;
+    }
+  }
+  return out;
+}
+
 function parseAndValidateSchema(content: string): HanoiAnalysis {
   let parsedJson: unknown;
   try {
@@ -234,7 +256,7 @@ function parseAndValidateSchema(content: string): HanoiAnalysis {
     throw new AnalysisProviderError("invalid_response");
   }
 
-  const schemaResult = HanoiAnalysisSchema.safeParse(parsedJson);
+  const schemaResult = HanoiAnalysisSchema.safeParse(stripHanoiProviderMetadata(parsedJson));
   if (!schemaResult.success) {
     throw new AnalysisProviderError("schema_invalid");
   }

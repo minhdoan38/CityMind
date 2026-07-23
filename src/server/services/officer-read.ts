@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { HttpError, jsonErrorResponse } from "@/server/http/errors";
 import { requireOfficerContext } from "@/server/officer/guard";
 import {
@@ -24,6 +26,14 @@ import {
 
 function queryErrorResponse(message: string, status = 502): Response {
   return Response.json({ detail: message }, { status });
+}
+
+const EVIDENCE_IMAGE_CACHE_CONTROL =
+  "private, max-age=86400, stale-while-revalidate=604800";
+
+export function evidenceImageETag(evidencePath: string): string {
+  const digest = createHash("sha256").update(evidencePath).digest("hex").slice(0, 16);
+  return `"${digest}"`;
 }
 
 export async function handleRecentReportsRequest(request: Request): Promise<Response> {
@@ -198,7 +208,7 @@ export async function handleStatusHistoryRequest(
 }
 
 export async function handleReportImageRequest(
-  _request: Request,
+  request: Request,
   reportId: string,
 ): Promise<Response> {
   const auth = await requireOfficerContext();
@@ -217,11 +227,23 @@ export async function handleReportImageRequest(
       client: auth.context.client,
       evidencePath: reference.evidencePath,
     });
-  return new Response(Buffer.from(bytes), {
+    const etag = evidenceImageETag(reference.evidencePath);
+    const ifNoneMatch = request.headers.get("if-none-match");
+    if (ifNoneMatch === etag) {
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          "Cache-Control": EVIDENCE_IMAGE_CACHE_CONTROL,
+        },
+      });
+    }
+    return new Response(Buffer.from(bytes), {
       status: 200,
       headers: {
         "Content-Type": mimeType,
-        "Cache-Control": "private, no-store",
+        ETag: etag,
+        "Cache-Control": EVIDENCE_IMAGE_CACHE_CONTROL,
       },
     });
   } catch (error) {

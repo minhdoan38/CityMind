@@ -79,7 +79,9 @@ function toReportRow(report: OfficerReport): ReportRow {
     routing_destination: report.routing_destination ?? null,
     has_shadow_disagreement: report.has_shadow_disagreement ?? false,
     severity: triageComplete ? (report.severity ?? null) : null,
+    confidence: triageComplete ? (report.confidence ?? null) : null,
     summary: triageComplete ? (report.summary ?? "") : "",
+    evidence_path: report.evidence_path ?? null,
   };
 }
 

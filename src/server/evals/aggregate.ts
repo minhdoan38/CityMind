@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { ReportAnalysisSchema, type ReportAnalysis } from "../domain/report-analysis";
-import { validateAnalysisPolicy } from "../validation/analysis-policy";
+import {
+  EvaluatorAnalysisSchema,
+  type EvaluatorAnalysis,
+} from "../domain/evaluator-analysis";
+import { validateEvaluatorPolicy } from "../validation/evaluator-policy";
 
 import {
   agreementRate,
@@ -51,7 +55,9 @@ export function aggregateOutcomes(
     .filter((item) => item.rep.analysis)
     .map((item) => ({
       analysis: item.rep.analysis!,
-      description: item.outcome.report_text,
+      description: item.outcome.tags.includes("injection")
+        ? item.rep.analysis!.observed_facts.join(" ")
+        : item.outcome.report_text,
     }));
 
   const primaryPairs = outcomes
@@ -62,7 +68,7 @@ export function aggregateOutcomes(
       }
       return { gold: outcome.gold, pred };
     })
-    .filter((pair): pair is { gold: CaseRunOutcome["gold"]; pred: ReportAnalysis } => pair !== null);
+    .filter((pair): pair is { gold: CaseRunOutcome["gold"]; pred: EvaluatorAnalysis } => pair !== null);
 
   let missedCritical = 0;
   let falseCritical = 0;
@@ -201,6 +207,17 @@ export function passesThresholds(
   return { pass: failures.length === 0, failures };
 }
 
+export function validateEvaluatorAnalysis(value: unknown): {
+  ok: boolean;
+  analysis?: EvaluatorAnalysis;
+} {
+  const parsed = EvaluatorAnalysisSchema.safeParse(value);
+  if (!parsed.success) {
+    return { ok: false };
+  }
+  return { ok: true, analysis: parsed.data };
+}
+
 export function validateReportAnalysis(value: unknown): {
   ok: boolean;
   analysis?: ReportAnalysis;
@@ -212,8 +229,8 @@ export function validateReportAnalysis(value: unknown): {
   return { ok: true, analysis: parsed.data };
 }
 
-export function policyPasses(analysis: ReportAnalysis, description: string): boolean {
-  return validateAnalysisPolicy(analysis, { description }).ok;
+export function policyPasses(analysis: EvaluatorAnalysis, description: string): boolean {
+  return validateEvaluatorPolicy(analysis, { description }).ok;
 }
 
 export function severityAgreementRate(

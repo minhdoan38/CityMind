@@ -5,10 +5,6 @@ import { routing } from './i18n/routing';
 
 const intlMiddleware = createMiddleware(routing);
 
-function isOfficerRole(role: unknown): role is 'officer' | 'admin' {
-  return role === 'officer' || role === 'admin';
-}
-
 /**
  * Compose next-intl locale negotiation with Supabase dashboard gate (AUTH-04 / D-15 / D-17).
  * Protects /dashboard/:path* only — never public Home or [locale] report routes.
@@ -54,9 +50,8 @@ export async function proxy(request: NextRequest) {
 
     const { data } = await supabase.auth.getClaims();
     const claims = data?.claims;
-    const role = (claims?.app_metadata as { role?: string } | undefined)?.role;
 
-    if (!claims || !isOfficerRole(role)) {
+    if (!claims?.sub) {
       const login = new URL('/login', request.url);
       login.searchParams.set(
         'returnUrl',

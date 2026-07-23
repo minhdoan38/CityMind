@@ -10,12 +10,12 @@ const read = (filePath) => fs.readFileSync(filePath, 'utf8');
 // Phase 15 contract: chat-first intake (PUB-07), guidance scripts (SHELP-06),
 // SHELP-04/SHELP-05 regression wiring. Officer/agent-console scope excluded.
 
-test('report page imports ChatIntakePanel as primary surface (PUB-07)', () => {
+test('report page uses ReportForm as primary submit surface (PUB-07)', () => {
   const page = read(src('app', '[locale]', 'report', 'page.tsx'));
 
-  assert.match(page, /import ChatIntakePanel/);
-  assert.match(page, /<ChatIntakePanel\s*\/>/);
-  assert.doesNotMatch(page, /import ReportForm/, 'classic form is owned by ChatIntakePanel toggle');
+  assert.match(page, /import ReportForm/);
+  assert.match(page, /<ReportForm\s*\/>/);
+  assert.doesNotMatch(page, /ChatIntakePanel/, 'intake chat is not the primary report surface');
 });
 
 test('ChatIntakePanel wires intake start, messages, and submit APIs (PUB-07)', () => {
@@ -24,17 +24,20 @@ test('ChatIntakePanel wires intake start, messages, and submit APIs (PUB-07)', (
   assert.match(panel, /\/api\/public\/reports\/intake\/start/);
   assert.match(panel, /\/api\/public\/reports\/intake\/messages/);
   assert.match(panel, /\/api\/public\/reports\/intake\/submit/);
-  assert.match(panel, /citymind:report-success/);
+  assert.match(panel, /writeReportSuccessFlash/);
   assert.match(panel, /router\.push\("\/report\/success"\)/);
 });
 
-test('ChatIntakePanel exposes classic form fallback (PUB-07 / UAT-1)', () => {
-  const panel = read(src('components', 'coach', 'ChatIntakePanel.tsx'));
+test('success page self_help path promotes post-submit chat for next steps (PUB-07)', () => {
+  const outcome = read(src('components', 'coach', 'CitizenTriageOutcome.tsx'));
 
-  assert.match(panel, /import ReportForm/);
-  assert.match(panel, /showClassicForm/);
-  assert.match(panel, /classicFormLink/);
-  assert.match(panel, /chatFirstLink/);
+  assert.match(outcome, /tw\("chatHeading"\)/);
+  assert.match(outcome, /tw\("chatIntro"\)/);
+  assert.match(
+    outcome,
+    /isSelfHelp\s*\?\s*\([\s\S]*<CoachPanel/,
+    'CoachPanel renders on self_help success path after guidance',
+  );
 });
 
 test('CitizenTriageOutcome imports GuidanceScriptCard on self_help path (SHELP-06)', () => {

@@ -74,7 +74,7 @@ export type CaseRunOutcome = {
   tags: EvalCase["tags"];
   report_text: string;
   repetitions: Array<{
-    analysis: import("../domain/report-analysis").ReportAnalysis | null;
+    analysis: import("../domain/evaluator-analysis").EvaluatorAnalysis | null;
     schema_valid: boolean;
     policy_ok: boolean;
     error_type?: string;

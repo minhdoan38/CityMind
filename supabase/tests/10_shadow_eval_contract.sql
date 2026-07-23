@@ -1,5 +1,6 @@
 -- Phase 10: shadow comparison storage contract (insert-only; reports analysis unchanged).
-\set ON_ERROR_STOP on
+-- Pure PostgreSQL (no psql meta-commands). Run in Supabase SQL Editor or:
+--   node scripts/run-supabase-sql.mjs supabase/tests/10_shadow_eval_contract.sql
 
 CREATE OR REPLACE FUNCTION _test_assert(condition boolean, message text)
 RETURNS void

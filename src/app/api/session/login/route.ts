@@ -33,20 +33,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const role = user.app_metadata?.role;
-    if (role !== "officer" && role !== "admin") {
-      await supabase.auth.signOut();
-      const login = new URL("/login", request.url);
-      login.searchParams.set("error", "role");
-      if (returnUrl !== "/dashboard") {
-        login.searchParams.set("returnUrl", returnUrl);
-      }
-      return new NextResponse(null, {
-        status: 303,
-        headers: { Location: `${login.pathname}${login.search}` },
-      });
-    }
-
     return new NextResponse(null, {
       status: 303,
       headers: { Location: returnUrl },

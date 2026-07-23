@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useTransition } from "react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ReportsViewToggle() {
   const t = useTranslations("dashboard.map");
@@ -31,30 +31,33 @@ export default function ReportsViewToggle() {
 
   return (
     <div
-      className="inline-flex rounded-xl border border-border bg-muted/60 p-1"
+      className="dash-segmented"
       role="group"
       aria-label={t("tableView")}
     >
-      <Button
-        type="button"
-        variant={activeView === "table" ? "default" : "ghost"}
-        className="min-h-11 px-4"
-        aria-pressed={activeView === "table"}
-        disabled={pending}
-        onClick={() => setView("table")}
-      >
-        {t("tableView")}
-      </Button>
-      <Button
-        type="button"
-        variant={activeView === "map" ? "default" : "ghost"}
-        className="min-h-11 px-4"
-        aria-pressed={activeView === "map"}
-        disabled={pending}
-        onClick={() => setView("map")}
-      >
-        {t("mapView")}
-      </Button>
+      {(["table", "map"] as const).map((view) => {
+        const active = activeView === view;
+        const label = view === "table" ? t("tableView") : t("mapView");
+        return (
+          <button
+            key={view}
+            type="button"
+            className={cn(
+              "inline-flex h-10 min-h-10 items-center rounded-[calc(var(--radius-control)-2px)] px-4 text-sm font-semibold transition-colors duration-150 ease-[var(--ease-out-expo)]",
+              "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+              "disabled:pointer-events-none disabled:opacity-50",
+              active
+                ? "dash-selected border-transparent"
+                : "border border-transparent text-muted-foreground hover:text-foreground",
+            )}
+            aria-pressed={active}
+            disabled={pending}
+            onClick={() => setView(view)}
+          >
+            {label}
+          </button>
+        );
+      })}
     </div>
   );
 }

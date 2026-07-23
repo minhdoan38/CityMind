@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Platform
-status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-07-23T02:21:35.080Z"
+status: verifying
+stopped_at: Phase 16 executed — SQL gate pending SUPABASE_DB_URL
+last_updated: "2026-07-23T03:35:00.000Z"
 last_activity: 2026-07-23
 progress:
-  total_phases: 15
-  completed_phases: 15
-  total_plans: 71
-  completed_plans: 71
+  total_phases: 16
+  completed_phases: 16
+  total_plans: 76
+  completed_plans: 76
   percent: 100
 ---
 
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-20)
 
 **Core value:** Citizens report issues; officers review AI-structured, prioritized, auditable reports — AI advisory only.
-**Current focus:** Phase 15 — Citizen conversational support
+**Current focus:** Phase 16 — Secure evidence image pipeline
 
 ## Current Position
 
-Phase: 15 (Citizen conversational support) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
+Phase: 16 (Secure evidence image pipeline) — COMPLETE
+Plan: 5 of 5
+Status: Ready for verification — `npm run phase16:gate` (SQL segment needs SUPABASE_DB_URL in .env.local)
 Last activity: 2026-07-23
 
 **Pre-production (optional):** `npm run eval:live`, shadow mode observation, model cutover after gate PASS
@@ -65,6 +65,8 @@ Last activity: 2026-07-23
 
 ### Roadmap Evolution
 
+- Phase 16 added: Secure evidence image pipeline — JPEG/PNG/WebP magic-byte intake, ClamAV scan, Sharp WebP re-encode, quarantine + batch conversion script
+- Phase 16 executed: secure evidence pipeline (5/5 plans) — unit/legacy/migration dry-run green; SQL contract pending `SUPABASE_DB_URL`
 - Phase 15 added: Citizen conversational support — chat-first intake and Hanoi guidance beyond one-shot report form
 - Phase 14 added: Officer agent console — per-case triage run and attempt log viewer
 - Phase 13 added: Immediate citizen triage on submit with evaluator prompt and guided success page
@@ -137,6 +139,12 @@ Recent decisions affecting current work:
 - [Phase 05]: Public stats k≥3 enforced server-side; stats:{ip} rate limiter separate from status/analyze (05-02)
 - [Phase 05]: PublicStatsStrip SSR hides on failure — Home render never blocked (D-12)
 
+### Quick Tasks Completed
+
+| ID | Description | Date |
+|----|-------------|------|
+| 260723-tzh | Accessible, persistent dashboard table column resizing | 2026-07-23 |
+
 ### Pending Todos
 
 - Phase 5 planned — next `$gsd-execute-phase 5` (depends on Phase 4 UAT for execute gate)
@@ -159,7 +167,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-07-23T02:21:35.072Z
+Last session: 2026-07-23T03:34:10.675Z
 Stopped at: Phase 14 context gathered
 Resume file: None
 Notes: ai-logic.md sync docs + SHELP traceability closed; human UAT-1..4 not yet executed

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { HttpError } from "@/server/http/errors";
 
 import { decodeCursor, encodeCursor } from "@/server/officer/cursor";
+import { parseTriageBucketOffset } from "@/lib/report-pagination";
 import {
   parseReportFilters,
   validateReportFilters,
@@ -47,7 +48,7 @@ describe("officer filter validation", () => {
       category: null,
       priority: null,
       triage_status: null,
-      routing_destination: "government_default",
+      routing_destination: "all",
       shadow_disagreement: false,
       min_severity: 3,
       max_severity: 5,
@@ -65,7 +66,7 @@ describe("officer filter validation", () => {
       category: null,
       priority: null,
       triage_status: ["pending", "processing"],
-      routing_destination: "government_default",
+      routing_destination: "all",
       shadow_disagreement: false,
       min_severity: null,
       max_severity: null,
@@ -142,7 +143,41 @@ describe("listRecentReports", () => {
     expect(client.from).toHaveBeenCalledWith("reports");
   });
 
-  it("applies default government routing filter including NULL destinations", async () => {
+  it("does not apply routing filter when destination is all", async () => {
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      lte: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      or: vi.fn(),
+      limit: vi.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.gte.mockReturnValue(chain);
+    chain.lte.mockReturnValue(chain);
+    chain.in.mockReturnValue(chain);
+    chain.order.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
+    chain.limit.mockResolvedValue({ data: [], error: null });
+    const client = { from: vi.fn(() => chain) };
+
+    await listRecentReports(client as never, {
+      limit: 25,
+      sort: "created_at",
+      order: "desc",
+      filters: { routing_destination: "all" },
+    });
+
+    expect(chain.or).not.toHaveBeenCalledWith(
+      "routing_destination.is.null,routing_destination.eq.government",
+    );
+    expect(chain.eq).not.toHaveBeenCalledWith("routing_destination", "self_help");
+  });
+
+  it("applies government routing filter including NULL destinations", async () => {
     const chain = {
       select: vi.fn(),
       eq: vi.fn(),
@@ -233,7 +268,78 @@ describe("listRecentReports", () => {
     ]);
   });
 
-  it("applies default government routing filter with OR clause", async () => {
+  it("paginates triage_bucket results with offset cursor", async () => {
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      lte: vi.fn(),
+      in: vi.fn(),
+      order: vi.fn(),
+      or: vi.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.eq.mockReturnValue(chain);
+    chain.gte.mockReturnValue(chain);
+    chain.lte.mockReturnValue(chain);
+    chain.in.mockReturnValue(chain);
+    chain.or.mockReturnValue(chain);
+    chain.order.mockResolvedValue({
+      data: [
+        {
+          report_id: "rep-a",
+          created_at: "2026-07-21T09:00:00.000Z",
+          current_status: "new",
+          triage_status: "pending",
+          status_events: [],
+        },
+        {
+          report_id: "rep-b",
+          created_at: "2026-07-21T10:00:00.000Z",
+          current_status: "new",
+          triage_status: "manual_review",
+          status_events: [],
+        },
+        {
+          report_id: "rep-c",
+          created_at: "2026-07-21T11:00:00.000Z",
+          current_status: "new",
+          triage_status: "completed",
+          status_events: [],
+        },
+      ],
+      error: null,
+    });
+    const client = { from: vi.fn(() => chain) };
+
+    const page1 = await listRecentReports(client as never, {
+      limit: 2,
+      sort: "triage_bucket",
+      order: "asc",
+      filters: {},
+    });
+
+    expect(page1.items.map((item) => item.report_id)).toEqual([
+      "rep-b",
+      "rep-a",
+    ]);
+    expect(page1.nextCursor).toBeTruthy();
+    expect(page1.nextCursor).not.toBe("triage_bucket:more");
+    expect(parseTriageBucketOffset(page1.nextCursor)).toBe(2);
+
+    const page2 = await listRecentReports(client as never, {
+      limit: 2,
+      sort: "triage_bucket",
+      order: "asc",
+      cursor: page1.nextCursor,
+      filters: {},
+    });
+
+    expect(page2.items.map((item) => item.report_id)).toEqual(["rep-c"]);
+    expect(page2.nextCursor).toBeNull();
+  });
+
+  it("applies government routing filter with OR clause", async () => {
     const chain = {
       select: vi.fn(),
       eq: vi.fn(),

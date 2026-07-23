@@ -66,8 +66,10 @@ describe("officer-assistant AI", () => {
     );
 
     const body = JSON.parse(String(fetchImpl.mock.calls[0]?.[1]?.body)) as {
+      stream?: boolean;
       messages: Array<{ role: string; content: string }>;
     };
+    expect(body.stream).toBe(false);
     const system = body.messages.find((message) => message.role === "system")?.content ?? "";
     expect(system).toContain(OFFICER_ASSISTANT_SYSTEM_PROMPT);
     expect(system).toContain("report_id: rep-1");

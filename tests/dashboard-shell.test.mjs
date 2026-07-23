@@ -24,7 +24,11 @@ test('dashboard components import correctly', () => {
   assert.ok(layoutContent.includes('DashboardSidebar'), 'layout must import DashboardSidebar');
 
   const sidebarContent = fs.readFileSync(path.resolve('src/components/DashboardSidebar.tsx'), 'utf8');
+  const navbarContent = fs.readFileSync(path.resolve('src/components/dashboard/DashboardNavbar.tsx'), 'utf8');
   assert.ok(sidebarContent.includes('Export'), 'sidebar must contain Export menu option');
-  assert.ok(sidebarContent.includes('Settings'), 'sidebar must contain Settings menu option');
-  assert.ok(sidebarContent.includes('Sign out of the officer dashboard?'), 'sidebar must contain logout warning string');
+  assert.ok(sidebarContent.includes('helpSupport'), 'sidebar footer must contain Help & Support i18n key');
+  assert.ok(sidebarContent.includes('settings'), 'sidebar footer must contain Settings i18n key');
+  assert.ok(sidebarContent.includes('collapsible="icon"'), 'sidebar must collapse to icon rail on desktop');
+  assert.doesNotMatch(sidebarContent, /Sign out of the officer dashboard\?/);
+  assert.ok(navbarContent.includes('/api/session/logout'), 'navbar account menu must handle logout');
 });

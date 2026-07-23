@@ -1,8 +1,18 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { DayOfWeekKey } from "@/components/reports/types";
+import type {
+  CategoryWorkloadCount,
+  StatusWorkloadCount,
+  VolumeDayCount,
+} from "@/components/reports/types";
+import { computeOperationalMetrics } from "@/lib/dashboard-operational-metrics";
+import { computeSummaryInsights } from "@/lib/dashboard-summary-insights";
 import type { ReportAnalysis } from "../domain/report-analysis";
 import { decodeCursor, encodeCursor } from "../officer/cursor";
+import {
+  encodeTriageBucketCursor,
+  parseTriageBucketOffset,
+} from "@/lib/report-pagination";
 import {
   coordsInBbox,
   SORT_COLUMNS,
@@ -256,12 +266,16 @@ export type OfficerStatusHistoryItem = {
 
 export type OfficerSummary = {
   total_reports: number;
+  needs_review_reports: number;
   critical_reports: number;
-  avg_severity: number;
-  top_category: string;
+  sla_overdue_reports: number;
+  ai_failed_reports: number;
+  avg_triage_seconds: number | null;
   resolved_reports: number;
   resolution_rate: number;
-  reports_by_dow: Array<{ day: DayOfWeekKey; count: number }>;
+  volume_7d: VolumeDayCount[];
+  workload_by_status: StatusWorkloadCount[];
+  top_categories: CategoryWorkloadCount[];
 };
 
 export type OfficerGeoPin = {
@@ -349,7 +363,7 @@ function applyReportFilters(query: any, filters: ReportFilters) {
   } else if (filters.restrict_report_ids) {
     query = query.eq("report_id", "__no_shadow_matches__");
   }
-  const routingFilter = filters.routing_destination ?? "government_default";
+  const routingFilter = filters.routing_destination ?? "all";
   if (routingFilter === "government_default") {
     query = query.or("routing_destination.is.null,routing_destination.eq.government");
   } else if (routingFilter === "self_help") {
@@ -414,13 +428,20 @@ export async function listRecentReports(
       compareTriageBucket(left.mapped, right.mapped),
     );
 
-    const pageRows = rows.slice(0, options.limit);
+    const offset = parseTriageBucketOffset(options.cursor);
+    const pageRows = rows.slice(offset, offset + options.limit);
     const items = pageRows.map((entry) => entry.mapped);
-    const hasMore = rows.length > options.limit;
-    return {
-      items,
-      nextCursor: hasMore ? "triage_bucket:more" : null,
-    };
+    const hasMore = rows.length > offset + options.limit;
+    let nextCursor: string | null = null;
+    if (hasMore && pageRows.length > 0) {
+      const lastItem = items[items.length - 1]!;
+      nextCursor = encodeTriageBucketCursor(
+        offset + options.limit,
+        options.order,
+        String(lastItem.report_id ?? ""),
+      );
+    }
+    return { items, nextCursor };
   }
 
   let query = client
@@ -468,25 +489,28 @@ export async function getReportsSummary(
 ): Promise<OfficerSummary> {
   const empty: OfficerSummary = {
     total_reports: 0,
+    needs_review_reports: 0,
     critical_reports: 0,
-    avg_severity: 0,
-    top_category: "none",
+    sla_overdue_reports: 0,
+    ai_failed_reports: 0,
+    avg_triage_seconds: null,
     resolved_reports: 0,
     resolution_rate: 0,
-    reports_by_dow: [
-      { day: "sun", count: 0 },
-      { day: "mon", count: 0 },
-      { day: "tue", count: 0 },
-      { day: "wed", count: 0 },
-      { day: "thu", count: 0 },
-      { day: "fri", count: 0 },
-      { day: "sat", count: 0 },
+    volume_7d: [],
+    workload_by_status: [
+      { status: "new", count: 0 },
+      { status: "reviewing", count: 0 },
+      { status: "resolved", count: 0 },
+      { status: "rejected", count: 0 },
     ],
+    top_categories: [],
   };
 
   let query = client
     .from("reports")
-    .select("severity, priority, category, current_status, created_at, latitude, longitude");
+    .select(
+      "severity, priority, category, current_status, created_at, latitude, longitude, triage_status, triaged_at",
+    );
   query = applyReportFilters(query, filters);
   const { data, error } = await query;
   if (error) throw error;
@@ -512,48 +536,45 @@ export async function getReportsSummary(
   if (!rows.length) return empty;
 
   const totalReports = rows.length;
-  const criticalReports = rows.filter((row) => row.priority === "critical").length;
-  const avgSeverity = Number(
-    (
-      rows.reduce((sum, row) => sum + (Number(row.severity) || 0), 0) / totalReports
-    ).toFixed(2),
+  const operational = computeOperationalMetrics(
+    rows.map((row) => ({
+      triage_status:
+        typeof row.triage_status === "string" ? row.triage_status : null,
+      priority: typeof row.priority === "string" ? row.priority : null,
+      current_status:
+        typeof row.current_status === "string" ? row.current_status : null,
+      created_at: row.created_at ? String(row.created_at) : null,
+      triaged_at: row.triaged_at ? String(row.triaged_at) : null,
+    })),
   );
-  const categories = rows
-    .map((row) => row.category)
-    .filter((value): value is string => typeof value === "string" && value.length > 0);
-  const categoryCounts = new Map<string, number>();
-  for (const category of categories) {
-    categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
-  }
-  const topCategory =
-    [...categoryCounts.entries()].sort((left, right) => right[1] - left[1])[0]?.[0] ??
-    "none";
 
-  const dowKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
-  const dowCounts = [0, 0, 0, 0, 0, 0, 0];
   let resolvedReports = 0;
   for (const row of rows) {
     if (row.current_status === "resolved") resolvedReports += 1;
-    const created = row.created_at;
-    if (!created) continue;
-    const date = new Date(String(created).replace("Z", "+00:00"));
-    if (Number.isNaN(date.getTime())) continue;
-    dowCounts[(date.getDay() + 7) % 7] += 1;
   }
+
+  const insightRows = rows.map((row) => ({
+    created_at: row.created_at ? String(row.created_at) : null,
+    current_status:
+      typeof row.current_status === "string" ? row.current_status : null,
+    category: typeof row.category === "string" ? row.category : null,
+  }));
+  const insights = computeSummaryInsights(insightRows);
 
   return {
     total_reports: totalReports,
-    critical_reports: criticalReports,
-    avg_severity: avgSeverity,
-    top_category: topCategory,
+    needs_review_reports: operational.needs_review_reports,
+    critical_reports: operational.critical_reports,
+    sla_overdue_reports: operational.sla_overdue_reports,
+    ai_failed_reports: operational.ai_failed_reports,
+    avg_triage_seconds: operational.avg_triage_seconds,
     resolved_reports: resolvedReports,
     resolution_rate: totalReports
       ? Math.round((resolvedReports / totalReports) * 100)
       : 0,
-    reports_by_dow: dowKeys.map((day, index) => ({
-      day,
-      count: dowCounts[index] ?? 0,
-    })),
+    volume_7d: insights.volume_7d,
+    workload_by_status: insights.workload_by_status,
+    top_categories: insights.top_categories,
   };
 }
 

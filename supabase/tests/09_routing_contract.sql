@@ -1,5 +1,6 @@
 -- Phase 9: routing columns + escalate RPC contract tests.
-\set ON_ERROR_STOP on
+-- Pure PostgreSQL (no psql meta-commands). Run in Supabase SQL Editor or:
+--   node scripts/run-supabase-sql.mjs supabase/tests/09_routing_contract.sql
 
 CREATE OR REPLACE FUNCTION _test_assert(condition boolean, message text)
 RETURNS void
@@ -119,21 +120,33 @@ BEGIN
 END;
 $$;
 
--- 4) escalate_report_to_government is service_role-only.
+-- 4) escalate_report_to_government is service_role-only (catalog check; reliable in SQL Editor).
 DO $$
 BEGIN
-    BEGIN
-        SET LOCAL ROLE anon;
-        PERFORM public.escalate_report_to_government(
-            p_report_id := 'test-routing-anon-' || gen_random_uuid()::text,
-            p_token_hash := encode(digest('anon-denied-escalate', 'sha256'), 'hex')
-        );
-        RESET ROLE;
-        RAISE EXCEPTION 'anon must not execute escalate_report_to_government';
-    EXCEPTION
-        WHEN insufficient_privilege THEN
-            RESET ROLE;
-    END;
+    PERFORM _test_assert(
+        NOT has_function_privilege(
+            'anon',
+            'public.escalate_report_to_government(text, text, text)',
+            'EXECUTE'
+        ),
+        'anon must not have EXECUTE on escalate_report_to_government'
+    );
+    PERFORM _test_assert(
+        NOT has_function_privilege(
+            'authenticated',
+            'public.escalate_report_to_government(text, text, text)',
+            'EXECUTE'
+        ),
+        'authenticated must not have EXECUTE on escalate_report_to_government'
+    );
+    PERFORM _test_assert(
+        has_function_privilege(
+            'service_role',
+            'public.escalate_report_to_government(text, text, text)',
+            'EXECUTE'
+        ),
+        'service_role must have EXECUTE on escalate_report_to_government'
+    );
 END;
 $$;
 

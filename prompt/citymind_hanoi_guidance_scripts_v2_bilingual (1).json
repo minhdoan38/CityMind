@@ -1,0 +1,293 @@
+{
+  "catalog_version": "2.1.0",
+  "locale": "vi-VN",
+  "selection_key": [
+    "guidance_code"
+  ],
+  "template_variables": {
+    "severity_label": {
+      "vi-VN": {
+        "low": "thấp",
+        "medium": "trung bình"
+      },
+      "en-US": {
+        "low": "low",
+        "medium": "medium"
+      }
+    }
+  },
+  "behavior": {
+    "on_valid_code": "script_ready",
+    "on_missing_or_incompatible_code": "generate_later",
+    "allow_nearest_match": false,
+    "high_and_critical": "generate_later",
+    "on_unsupported_locale": "generate_later"
+  },
+  "scripts": [
+    {
+      "script_id": "vi_self_collect_safe_litter_v1",
+      "guidance_code": "self_collect_safe_litter",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ thu gom khi nhìn rõ đó là rác nhẹ, khô, không sắc nhọn và có thể tiếp cận an toàn; sau đó bỏ đúng nơi quy định. Không đi vào khu vực giao thông hoặc chạm vật không rõ tính chất. Nếu bất kỳ điều kiện nào không đạt, hãy dừng lại và gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Collect the item only when it is clearly ordinary, light, dry, non-sharp, and safely reachable; then dispose of it correctly. Do not enter traffic or touch an item of unknown type. If any condition is not met, stop and submit a report."
+      }
+    },
+    {
+      "script_id": "vi_self_clear_loose_safe_obstruction_v1",
+      "guidance_code": "self_clear_loose_safe_obstruction",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ di chuyển vật cản khi nhìn rõ vật nhẹ, khô, ổn định, không sắc nhọn và có thể lấy từ vị trí đứng an toàn. Không đi vào giao thông, không chạm vật không rõ tính chất và không cố di chuyển vật nặng. Nếu không chắc chắn, hãy để nguyên và gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Move the obstruction only when it is clearly light, dry, stable, non-sharp, and reachable from safe footing. Do not enter traffic, touch an unknown item, or attempt to move a heavy object. If uncertain, leave it in place and submit a report."
+      }
+    },
+    {
+      "script_id": "vi_self_clear_loose_drain_obstruction_v1",
+      "guidance_code": "self_clear_loose_drain_obstruction",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ gạt bỏ lá hoặc rác nhẹ nhìn rõ nằm trên bề mặt cống khi nền khô, vị trí đứng an toàn và không cần mở hay nâng nắp cống. Không chạm vật sắc nhọn, hóa chất, rác y tế, nước ngập hoặc vật không rõ tính chất; không đi vào giao thông. Nếu có hư hỏng, lỗ hở hoặc bất kỳ điều kiện nào không đạt, hãy dừng lại và gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Remove only clearly visible loose leaves or light ordinary litter resting on the drain surface when footing is dry and safe and no grate must be opened or lifted. Do not touch sharp items, chemicals, medical waste, floodwater, or unknown material, and do not enter traffic. If damage or an opening is present, stop and submit a report."
+      }
+    },
+    {
+      "script_id": "vi_self_clear_owned_obstruction_v1",
+      "guidance_code": "self_clear_owned_obstruction",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ di chuyển vật thuộc quyền kiểm soát của bạn khi vật nhẹ, ổn định và thao tác không ảnh hưởng giao thông hay tài sản công. Không cố di chuyển vật nặng hoặc không rõ trạng thái. Nếu không thể xử lý an toàn, hãy để nguyên và gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Move only an object under your control when it is light, stable, and the action does not affect traffic or public property. Do not force a heavy or uncertain object. If it cannot be handled safely, leave it in place and submit a report."
+      }
+    },
+    {
+      "script_id": "vi_self_dry_clean_water_v1",
+      "guidance_code": "self_dry_clean_water",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ xử lý lượng nước sạch nhỏ trên khu vực riêng khi nền đứng vững và thao tác an toàn, sau đó làm khô bề mặt. Không tiếp xúc nước không rõ nguồn, không mở cống và không chạm thiết bị công cộng. Nếu điều kiện không an toàn, hãy dừng lại và gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Remove only a small amount of clean household water on private property when footing is stable, then dry the surface. Do not contact water of unknown origin, open a drain, or touch public equipment. If conditions are unsafe, stop and submit a report."
+      }
+    },
+    {
+      "script_id": "vi_self_clean_private_surface_v1",
+      "guidance_code": "self_clean_private_surface",
+      "allowed_severity": [
+        "low"
+      ],
+      "required_handling_type": 1,
+      "officer_intervention_required": false,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 1. Chỉ làm sạch bề mặt thuộc quyền sở hữu của bạn bằng phương pháp an toàn phù hợp. Không làm sạch tài sản công, trèo cao hoặc dùng hóa chất không rõ cách sử dụng. Nếu quyền sở hữu hoặc phương pháp xử lý chưa rõ, hãy gửi báo cáo.",
+        "en-US": "Low-severity incident, type 1 guidance. Clean only a surface you control using a suitable safe method. Do not clean public property, climb, or use a chemical without clear safe-use instructions. If ownership or the method is uncertain, submit a report."
+      }
+    },
+    {
+      "script_id": "vi_report_road_damage_v1",
+      "guidance_code": "report_road_damage",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí và phần mặt đường bị ảnh hưởng từ nơi an toàn, kèm ảnh nếu có thể chụp ngoài làn xe. Không đi vào giao thông, đo hoặc tự sửa mặt đường. Hãy sử dụng lối an toàn khác và chờ đơn vị quản lý kiểm tra.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location and affected road area from a safe position, with a photograph only if it can be taken outside traffic. Do not enter traffic, measure, or repair the road. Use another safe route and wait for the road authority to inspect."
+      }
+    },
+    {
+      "script_id": "vi_report_flooding_v1",
+      "guidance_code": "report_flooding",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí và phạm vi nước quan sát được từ nơi khô ráo; sử dụng lộ trình an toàn khác nếu cần. Không đi bộ hoặc lái xe qua nước, không mở cống và không chạm vật trong nước. Hãy chờ đơn vị phụ trách xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location and visible water extent from dry ground and use another safe route when needed. Do not walk or drive through water, open a drain, or touch objects in the water. Wait for authorized personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_drain_blockage_v1",
+      "guidance_code": "report_drain_blockage",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí cống và vật cản quan sát được từ nơi an toàn. Không mở hoặc nâng nắp cống, không đưa tay hay dụng cụ vào cống và không chạm vật không rõ tính chất. Hãy chờ đơn vị phụ trách làm sạch.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the drain location and visible obstruction from a safe position. Do not open or lift the cover, put a hand or tool into the drain, or touch unknown material. Wait for authorized cleaning personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_drain_damage_v1",
+      "guidance_code": "report_drain_damage",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy tránh phần cống hoặc kết cấu thoát nước bị hư hỏng và báo vị trí cùng ảnh từ nơi an toàn. Không bước lên, đo, che lấp, mở nắp hoặc tự sửa khu vực hư hỏng. Hãy chờ đơn vị kỹ thuật kiểm tra.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Keep away from the damaged drain or drainage structure and report its location with a photograph from a safe position. Do not step on, measure, cover, open, or repair the damaged area. Wait for technical personnel to inspect."
+      }
+    },
+    {
+      "script_id": "vi_report_waste_v1",
+      "guidance_code": "report_waste",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí và phạm vi rác quan sát được từ nơi an toàn. Không chạm vật không rõ tính chất hoặc tự di chuyển lượng rác lớn. Hãy chờ đơn vị vệ sinh xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location and visible extent of the waste from a safe position. Do not touch unknown material or move a large waste pile. Wait for sanitation personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_streetlight_v1",
+      "guidance_code": "report_streetlight",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí hoặc mã cột đèn và sử dụng tuyến có chiếu sáng nếu cần. Không mở, chạm hoặc tự sửa thiết bị. Hãy chờ đơn vị chiếu sáng kiểm tra.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location or pole identifier and use a lit route when needed. Do not open, touch, or repair the fixture. Wait for lighting personnel to inspect."
+      }
+    },
+    {
+      "script_id": "vi_report_traffic_signal_v1",
+      "guidance_code": "report_traffic_signal",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo nút giao và tình trạng tín hiệu từ vị trí ngoài lòng đường; chọn lộ trình khác nếu an toàn. Không đi vào đường hoặc điều khiển giao thông. Hãy chờ lực lượng chuyên trách xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the intersection and signal condition from outside the roadway and use another safe route if available. Do not enter the roadway or direct traffic. Wait for authorized personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_obstruction_v1",
+      "guidance_code": "report_obstruction",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí, loại vật cản quan sát được và sử dụng lối an toàn còn lại nếu có. Không tự di chuyển vật lớn, vật công cộng, vật không ổn định hoặc vật không rõ tính chất. Hãy chờ đơn vị phụ trách xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location and visible type of obstruction and use the remaining safe route if available. Do not move a large, public, unstable, or unknown object. Wait for authorized personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_utility_v1",
+      "guidance_code": "report_utility",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy giữ khoảng cách, báo vị trí và biểu hiện quan sát được của đường ống hoặc thiết bị. Không mở, chạm, vận hành hoặc tự sửa hạ tầng tiện ích. Hãy chờ nhân viên chuyên trách kiểm tra.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Keep a safe distance and report the location and visible condition of the pipe or equipment. Do not open, touch, operate, or repair utility infrastructure. Wait for specialist personnel."
+      }
+    },
+    {
+      "script_id": "vi_report_public_asset_damage_v1",
+      "guidance_code": "report_public_asset_damage",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy tránh sử dụng phần tài sản công bị hư hỏng và báo vị trí cùng ảnh từ nơi an toàn. Không sắp xếp lại, tháo rời hoặc tự sửa bộ phận hư hỏng. Hãy chờ đơn vị quản lý xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Avoid using the damaged public asset and report its location with a photograph from a safe position. Do not rearrange, dismantle, or repair it. Wait for the responsible authority."
+      }
+    },
+    {
+      "script_id": "vi_report_public_surface_v1",
+      "guidance_code": "report_public_surface",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí và phạm vi dấu vẽ trên tài sản công cộng. Không tự làm sạch, trèo cao hoặc dùng hóa chất trên tài sản công. Hãy chờ đơn vị quản lý xử lý.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location and extent of the marking on public property. Do not clean it, climb, or apply chemicals to public property. Wait for the property authority."
+      }
+    },
+    {
+      "script_id": "vi_report_unknown_v1",
+      "guidance_code": "report_unknown",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy gửi vị trí, mô tả và ảnh từ nơi an toàn để đơn vị tiếp nhận xác minh. Không tự can thiệp khi loại sự cố, vật thể hoặc quyền sở hữu chưa rõ. Hãy chờ phản hồi trước khi thực hiện hành động khác.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Submit the location, description, and a photograph taken from a safe position so the receiving team can verify the issue. Do not intervene while the incident type, object safety, or ownership is unclear. Wait for instructions."
+      }
+    },
+    {
+      "script_id": "vi_report_other_service_v1",
+      "guidance_code": "report_other_service",
+      "allowed_severity": [
+        "low",
+        "medium"
+      ],
+      "required_handling_type": 2,
+      "officer_intervention_required": true,
+      "citizen_guidance_templates": {
+        "vi-VN": "Sự cố mức {{severity_label}}, hướng dẫn loại 2. Hãy báo vị trí, thời điểm và dịch vụ đang bị ảnh hưởng từ nơi an toàn. Không đối đầu với người khác hoặc tự can thiệp vào hoạt động công cộng. Hãy chờ đơn vị tiếp nhận xác minh.",
+        "en-US": "{{severity_label}}-severity incident, type 2 guidance. Report the location, time, and affected service from a safe position. Do not confront anyone or interfere with public operations. Wait for the receiving team to verify the report."
+      }
+    }
+  ],
+  "default_locale": "en-US",
+  "supported_locales": [
+    "vi-VN",
+    "en-US"
+  ]
+}
