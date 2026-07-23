@@ -19,6 +19,11 @@ const PNG_BYTES = Uint8Array.from(
   (char) => char.charCodeAt(0),
 );
 
+const JPEG_BYTES = Uint8Array.from([
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x00,
+  0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xd9,
+]);
+
 function expectInvalid(
   result: EvidenceValidationResult,
   code: "empty" | "oversized" | "invalid_type" | "spoofed_mime",
@@ -58,6 +63,26 @@ describe("validateEvidenceBytes", () => {
     expectInvalid(result, "invalid_type");
   });
 
+  it("rejects GIF magic bytes", async () => {
+    const gifBytes = Uint8Array.from([
+      0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00,
+    ]);
+    const result = await validateEvidenceBytes(gifBytes, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+    });
+    expectInvalid(result, "invalid_type");
+  });
+
+  it("rejects SVG snippets", async () => {
+    const svgBytes = new TextEncoder().encode(
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>',
+    );
+    const result = await validateEvidenceBytes(svgBytes, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+    });
+    expectInvalid(result, "invalid_type");
+  });
+
   it("accepts PNG magic bytes", async () => {
     const result = await validateEvidenceBytes(PNG_BYTES, {
       maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
@@ -67,6 +92,42 @@ describe("validateEvidenceBytes", () => {
     expect(result.mimeType).toBe("image/png");
     expect(result.ext).toBe("png");
     expect(ALLOWED_IMAGE_MIME_TYPES.has(result.mimeType)).toBe(true);
+  });
+
+  it("accepts JPEG magic bytes", async () => {
+    const result = await validateEvidenceBytes(JPEG_BYTES, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mimeType).toBe("image/jpeg");
+    expect(result.ext).toBe("jpg");
+  });
+
+  it("accepts image/jpg declared mime when bytes are JPEG", async () => {
+    const result = await validateEvidenceBytes(JPEG_BYTES, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+      declaredMimeType: "image/jpg",
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.mimeType).toBe("image/jpeg");
+  });
+
+  it("accepts application/octet-stream when bytes are JPEG", async () => {
+    const result = await validateEvidenceBytes(JPEG_BYTES, {
+      maxBytes: DEFAULT_MAX_EVIDENCE_BYTES,
+      declaredMimeType: "application/octet-stream",
+    });
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("buildEvidenceObjectPath", () => {
+  it("returns UUID-based WebP object paths", () => {
+    const path = buildEvidenceObjectPath("rep-123", "550e8400-e29b-41d4-a716-446655440000");
+    expect(path).toMatch(/^reports\/rep-123\/.+\.webp$/);
+    expect(path).toBe("reports/rep-123/550e8400-e29b-41d4-a716-446655440000.webp");
   });
 });
 
@@ -118,7 +179,8 @@ describe("uploadEvidence", () => {
       bucketName: "evidence",
     });
 
-    const objectPath = buildEvidenceObjectPath("rep-123", "png");
+    const objectPath = bucket.upload.mock.calls[0]?.[0] as string;
+    expect(objectPath).toMatch(/^reports\/rep-123\/.+\.webp$/);
     expect(uri).toBe(buildSupabaseEvidenceUri("evidence", objectPath));
     expect(bucket.upload).toHaveBeenCalledWith(
       objectPath,
@@ -171,6 +233,6 @@ describe("uploadEvidence", () => {
     });
     const parsed = parseSupabaseEvidenceUri(uri);
     expect(parsed.bucket).toBe("evidence");
-    expect(parsed.objectPath).toBe("reports/rep-dl/evidence.png");
+    expect(parsed.objectPath).toMatch(/^reports\/rep-dl\/.+\.webp$/);
   });
 });
