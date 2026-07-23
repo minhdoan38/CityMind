@@ -28,6 +28,13 @@ export type CitizenStatusRawPayload = {
   summary: string | null;
   recommendation: string | null;
   routing_destination: string | null;
+  description?: string | null;
+  handling_type?: number | null;
+  guidance_code?: string | null;
+  severity_label?: string | null;
+  critical_alert?: boolean | null;
+  allowed_actions?: unknown;
+  prohibited_actions?: unknown;
   history: CitizenStatusHistoryItem[];
 };
 
@@ -64,7 +71,7 @@ export async function getCitizenStatus(
   const { data: reportRow, error: reportError } = await client
     .from("reports")
     .select(
-      "report_id, created_at, triage_status, current_status, category, severity, priority, summary, recommendation, routing_destination",
+      "report_id, created_at, triage_status, current_status, category, severity, priority, summary, recommendation, routing_destination, description, handling_type, guidance_code, severity_label, critical_alert, allowed_actions, prohibited_actions",
     )
     .eq("report_id", reportId)
     .limit(1)
@@ -100,6 +107,13 @@ export async function getCitizenStatus(
     recommendation: (reportRow.recommendation as string | null | undefined) ?? null,
     routing_destination:
       (reportRow.routing_destination as string | null | undefined) ?? null,
+    description: (reportRow.description as string | null | undefined) ?? null,
+    handling_type: (reportRow.handling_type as number | null | undefined) ?? null,
+    guidance_code: (reportRow.guidance_code as string | null | undefined) ?? null,
+    severity_label: (reportRow.severity_label as string | null | undefined) ?? null,
+    critical_alert: (reportRow.critical_alert as boolean | null | undefined) ?? null,
+    allowed_actions: reportRow.allowed_actions,
+    prohibited_actions: reportRow.prohibited_actions,
     history,
   };
 }
@@ -765,5 +779,15 @@ export async function updateOfficerReportRouting(
     if (eventError) {
       throw eventError;
     }
+  }
+}
+
+export async function deleteOfficerReport(
+  client: SupabaseClient,
+  reportId: string,
+): Promise<void> {
+  const { error } = await client.from("reports").delete().eq("report_id", reportId);
+  if (error) {
+    throw error;
   }
 }

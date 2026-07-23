@@ -1,4 +1,4 @@
-export const ROUTING_POLICY_VERSION = "1.0.0";
+export const ROUTING_POLICY_VERSION = "1.1.0";
 
 export const CONFIDENCE_GOV_THRESHOLD = 0.65;
 
@@ -6,6 +6,8 @@ const SELF_HELP_CATEGORIES = new Set(["graffiti", "waste", "pothole", "streetlig
 const GOVERNMENT_PRIORITIES = new Set(["high", "critical"]);
 
 export type RoutingDestination = "self_help" | "government";
+
+export type GuidanceStatus = "script_ready" | "generate_later";
 
 export type RoutingDecision = {
   destination: RoutingDestination;
@@ -19,11 +21,34 @@ export function evaluateRoutingPolicy(input: {
   severity: number | null;
   priority: string | null;
   confidence: number | null;
+  handling_type?: 1 | 2 | 3 | null;
+  guidance_status?: GuidanceStatus | null;
+  critical_alert?: boolean | null;
 }): RoutingDecision {
-  const base = { policyVersion: ROUTING_POLICY_VERSION };
+  const base: Pick<RoutingDecision, "policyVersion"> = {
+    policyVersion: ROUTING_POLICY_VERSION,
+  };
 
   if (input.triageStatus === "manual_review" || input.triageStatus === "failed") {
     return { ...base, destination: "government", reasonCode: "triage_manual_or_failed" };
+  }
+
+  if (input.handling_type != null) {
+    if (input.critical_alert) {
+      return { ...base, destination: "government", reasonCode: "critical_alert" };
+    }
+
+    if (input.handling_type === 2 || input.handling_type === 3) {
+      return { ...base, destination: "government", reasonCode: "handling_type_government" };
+    }
+
+    if (input.guidance_status === "generate_later") {
+      return { ...base, destination: "government", reasonCode: "guidance_pending" };
+    }
+
+    if (input.handling_type === 1 && input.guidance_status === "script_ready") {
+      return { ...base, destination: "self_help", reasonCode: "hanoi_self_guidance" };
+    }
   }
 
   if ((input.severity ?? 0) >= 4 || GOVERNMENT_PRIORITIES.has(input.priority ?? "")) {

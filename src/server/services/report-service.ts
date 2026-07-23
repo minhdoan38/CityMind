@@ -20,8 +20,17 @@ import {
 import {
   createIntakeReportWithAccessToken,
   createReportWithAccessToken,
+  getCitizenStatus,
 } from "@/server/repositories/reports";
 import { issueAccessToken } from "@/server/security/access-tokens";
+import {
+  dispatchTriageAndWait,
+  enqueueTriageDispatch,
+} from "@/server/triage/dispatch";
+import {
+  projectCitizenTriageView,
+  type CitizenServiceStep,
+} from "@/server/services/citizen-status";
 import {
   enforceReportRateLimit,
   type RateLimitRequest,
@@ -50,7 +59,20 @@ export type ReportSubmissionResponse = {
   report_id: string;
   access_token: string;
   intake_status: "received";
-  triage_status: "pending";
+  triage_status: string;
+  service_step?: CitizenServiceStep;
+  routing_destination?: string | null;
+  category?: string | null;
+  severity?: number | null;
+  priority?: string | null;
+  summary?: string | null;
+  recommendation?: string | null;
+  playbook_id?: string | null;
+  can_escalate?: boolean;
+  guidance_script?: string | null;
+  guidance_status?: "script_ready" | "generate_later" | null;
+  allowed_actions?: string[];
+  prohibited_actions?: string[];
 };
 
 export type ReportServiceDeps = {
@@ -58,6 +80,7 @@ export type ReportServiceDeps = {
   provider: AnalysisProvider;
   evidenceBucket?: string;
   maxEvidenceBytes?: number;
+  dispatchTriageAndWait?: typeof dispatchTriageAndWait;
 };
 
 function parseOptionalCoordinate(
@@ -134,9 +157,40 @@ async function parseReportFormData(formData: FormData): Promise<ParsedReportForm
   return { description, latitude, longitude, imageBytes, imageMime };
 }
 
+async function buildIntakeTriageOutcome(
+  client: SupabaseClient,
+  reportId: string,
+): Promise<Omit<ReportSubmissionResponse, "report_id" | "access_token" | "intake_status">> {
+  const raw = await getCitizenStatus(client, reportId);
+  if (!raw) {
+    return { triage_status: "pending" };
+  }
+
+  const view = projectCitizenTriageView(raw);
+  return {
+    triage_status: view.triage_status,
+    service_step: view.service_step,
+    routing_destination: raw.routing_destination,
+    category: view.category,
+    severity: view.severity,
+    priority: view.priority,
+    summary: view.summary,
+    recommendation: view.recommendation,
+    playbook_id: view.playbook_id ?? null,
+    can_escalate: view.can_escalate ?? false,
+    guidance_script: view.guidance_script ?? null,
+    guidance_status: view.guidance_status ?? null,
+    allowed_actions: view.allowed_actions ?? [],
+    prohibited_actions: view.prohibited_actions ?? [],
+  };
+}
+
 export async function submitReport(
   formData: FormData,
-  deps: Pick<ReportServiceDeps, "client" | "evidenceBucket" | "maxEvidenceBytes">,
+  deps: Pick<
+    ReportServiceDeps,
+    "client" | "evidenceBucket" | "maxEvidenceBytes" | "dispatchTriageAndWait"
+  >,
 ): Promise<ReportSubmissionResponse> {
   const parsed = await parseReportFormData(formData);
   const { description, latitude, longitude, imageBytes, imageMime } = parsed;
@@ -173,11 +227,21 @@ export async function submitReport(
         : null,
     });
 
+    const runTriage = deps.dispatchTriageAndWait ?? dispatchTriageAndWait;
+    try {
+      await runTriage(reportId, { client: deps.client });
+    } catch (triageError) {
+      console.error(`submitReport: synchronous triage failed for ${reportId}`, triageError);
+      enqueueTriageDispatch(reportId);
+    }
+
+    const outcome = await buildIntakeTriageOutcome(deps.client, reportId);
+
     return {
       report_id: reportId,
       access_token: plaintext,
       intake_status: "received",
-      triage_status: "pending",
+      ...outcome,
     };
   } catch (error) {
     if (evidenceUri) {

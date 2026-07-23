@@ -98,6 +98,10 @@ export type ReportSubmissionResponse = {
   recommendation?: string | null;
   playbook_id?: string | null;
   can_escalate?: boolean;
+  guidance_script?: string | null;
+  guidance_status?: "script_ready" | "generate_later" | null;
+  allowed_actions?: string[];
+  prohibited_actions?: string[];
 };
 
 type IntakeReportRow = {
@@ -305,6 +309,10 @@ async function buildIntakeTriageOutcome(
     recommendation: view.recommendation,
     playbook_id: view.playbook_id ?? null,
     can_escalate: view.can_escalate ?? false,
+    guidance_script: view.guidance_script ?? null,
+    guidance_status: view.guidance_status ?? null,
+    allowed_actions: view.allowed_actions ?? [],
+    prohibited_actions: view.prohibited_actions ?? [],
   };
 }
 

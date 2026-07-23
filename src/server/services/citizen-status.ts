@@ -20,6 +20,9 @@ import {
   type RateLimitRequest,
 } from "@/server/security/rate-limit";
 import { resolvePlaybookId } from "@/server/routing/playbooks";
+import { resolveGuidanceStatusForReport } from "@/server/routing/apply-routing";
+import { resolveGuidanceScript } from "@/server/domain/guidance-resolver";
+import type { HanoiSeverity } from "@/server/domain/hanoi-analysis";
 
 const CitizenStatusRequestSchema = z.object({
   report_id: z.string().min(1).max(64),
@@ -51,7 +54,75 @@ export type CitizenStatusResponse = {
   history: CitizenStatusHistoryItem[];
   playbook_id?: string | null;
   can_escalate?: boolean;
+  guidance_script?: string | null;
+  guidance_status?: "script_ready" | "generate_later" | null;
+  allowed_actions?: string[];
+  prohibited_actions?: string[];
 };
+
+function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
+export function projectCitizenGuidanceFields(row: CitizenStatusRawPayload): {
+  guidance_script: string | null;
+  guidance_status: "script_ready" | "generate_later" | null;
+  allowed_actions: string[];
+  prohibited_actions: string[];
+} {
+  const guidanceStatus = resolveGuidanceStatusForReport({
+    handling_type: row.handling_type ?? null,
+    guidance_code: row.guidance_code ?? null,
+    severity_label: row.severity_label ?? null,
+    description: row.description ?? null,
+  });
+
+  if (guidanceStatus !== "script_ready") {
+    return {
+      guidance_script: null,
+      guidance_status: guidanceStatus,
+      allowed_actions: [],
+      prohibited_actions: [],
+    };
+  }
+
+  if (
+    row.handling_type !== 1 &&
+    row.handling_type !== 2 &&
+    row.handling_type !== 3
+  ) {
+    return {
+      guidance_script: null,
+      guidance_status: guidanceStatus,
+      allowed_actions: [],
+      prohibited_actions: [],
+    };
+  }
+
+  const resolution = resolveGuidanceScript({
+    guidance_code: row.guidance_code ?? "",
+    handling_type: row.handling_type,
+    severity: (row.severity_label ?? "low") as HanoiSeverity,
+    report_text: row.description ?? "",
+  });
+
+  if (resolution.status !== "script_ready") {
+    return {
+      guidance_script: null,
+      guidance_status: "generate_later",
+      allowed_actions: [],
+      prohibited_actions: [],
+    };
+  }
+
+  return {
+    guidance_script: resolution.text,
+    guidance_status: "script_ready",
+    allowed_actions: parseStringArray(row.allowed_actions),
+    prohibited_actions: parseStringArray(row.prohibited_actions),
+  };
+}
 
 export function projectCitizenTriageView(
   row: CitizenStatusRawPayload,
@@ -70,7 +141,11 @@ export function projectCitizenTriageView(
     history,
   };
 
-  if (row.triage_status === "pending" || row.triage_status === "processing") {
+  if (
+    row.triage_status === "pending" ||
+    row.triage_status === "processing" ||
+    row.triage_status === "retry"
+  ) {
     return {
       ...base,
       service_step: "ai_review_pending",
@@ -99,18 +174,22 @@ export function projectCitizenTriageView(
     row.status !== "resolved" &&
     row.status !== "rejected"
   ) {
+    const guidance = projectCitizenGuidanceFields(row);
     return {
       ...base,
       service_step: "self_help_guidance",
-      category: null,
-      severity: null,
-      priority: null,
-      summary: null,
-      recommendation: null,
+      category: row.category,
+      severity: row.severity,
+      priority: row.priority,
+      summary: row.summary,
+      recommendation: row.recommendation,
       playbook_id: resolvePlaybookId(row.category),
       can_escalate: true,
+      ...guidance,
     };
   }
+
+  const guidance = projectCitizenGuidanceFields(row);
 
   const serviceStep: CitizenServiceStep =
     row.status === "resolved"
@@ -127,6 +206,7 @@ export function projectCitizenTriageView(
     priority: row.priority,
     summary: row.summary,
     recommendation: row.recommendation,
+    ...guidance,
   };
 }
 

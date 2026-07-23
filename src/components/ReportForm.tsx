@@ -23,7 +23,32 @@ import ReportLocationMiniMap from "@/components/ReportLocationMiniMap";
 
 const FLASH_KEY = "citymind:report-success";
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+const ACCEPTED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/pjpeg",
+  "image/png",
+  "image/webp",
+] as const;
+
+const ACCEPTED_IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
+
+function isAcceptedImageFile(file: File): boolean {
+  if (
+    ACCEPTED_IMAGE_TYPES.includes(
+      file.type as (typeof ACCEPTED_IMAGE_TYPES)[number],
+    )
+  ) {
+    return true;
+  }
+
+  if (!file.type || file.type === "application/octet-stream") {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    return ACCEPTED_IMAGE_EXTENSIONS.has(ext);
+  }
+
+  return false;
+}
 
 const reportSchema = z.object({
   description: z.string().min(5).max(3000),
@@ -58,7 +83,7 @@ const reportSchema = z.object({
     }, "Max image size is 8MB.")
     .refine((files) => {
       if (!files || files.length === 0) return true;
-      return ACCEPTED_IMAGE_TYPES.includes(files[0].type);
+      return isAcceptedImageFile(files[0]);
     }, "Only .jpg, .png and .webp formats are supported."),
 });
 
@@ -150,7 +175,26 @@ export default function ReportForm() {
 
       sessionStorage.setItem(
         FLASH_KEY,
-        JSON.stringify({ reportId, accessToken }),
+        JSON.stringify({
+          reportId,
+          accessToken,
+          outcome: {
+            service_step: body.service_step ?? "ai_review_pending",
+            triage_status: body.triage_status ?? "pending",
+            routing_destination: body.routing_destination ?? null,
+            category: body.category ?? null,
+            severity: body.severity ?? null,
+            priority: body.priority ?? null,
+            summary: body.summary ?? null,
+            recommendation: body.recommendation ?? null,
+            playbook_id: body.playbook_id ?? null,
+            can_escalate: body.can_escalate ?? false,
+            guidance_script: body.guidance_script ?? null,
+            guidance_status: body.guidance_status ?? null,
+            allowed_actions: body.allowed_actions ?? [],
+            prohibited_actions: body.prohibited_actions ?? [],
+          },
+        }),
       );
 
       router.push("/report/success");
@@ -207,7 +251,7 @@ export default function ReportForm() {
                     ref={field.ref}
                     onBlur={field.onBlur}
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/jpg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                     disabled={isSubmitting}
                     className="min-h-11 w-full text-sm"
                     onChange={(event) => field.onChange(event.target.files)}
@@ -314,7 +358,7 @@ export default function ReportForm() {
             className="min-h-11 w-full font-semibold"
             disabled={isSubmitting}
           >
-            {isSubmitting ? t("submitting") : t("submitReport")}
+            {isSubmitting ? t("formAnalyzing") : t("submitReport")}
           </Button>
         </form>
       </Form>
