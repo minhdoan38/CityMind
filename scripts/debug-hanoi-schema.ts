@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { buildHanoiSystemPrompt } from "../src/server/ai/hanoi.ts";
-import { HanoiAnalysisSchema } from "../src/server/domain/hanoi-analysis.ts";
+import { buildHanoiSystemPrompt } from "@/server/ai/hanoi";
+import { HanoiAnalysisSchema } from "@/server/domain/hanoi-analysis";
 
 function loadEnvFile(filePath: string): void {
   if (!fs.existsSync(filePath)) return;

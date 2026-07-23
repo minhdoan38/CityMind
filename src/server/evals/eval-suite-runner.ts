@@ -2,6 +2,10 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { ROUTING_POLICY_VERSION } from "../routing/policy";
+import {
+  projectEvaluatorAnalysis,
+  projectHanoiToLegacyRow,
+} from "../domain/analysis-projection";
 
 import {
   aggregateOutcomes,
@@ -249,7 +253,9 @@ CI must use --mock only.`);
       analyzeStructured = async (input) => {
         const result = await analyze({ env: evalEnv }, input);
         return {
-          evaluatorAnalysis: result.evaluatorAnalysis,
+          evaluatorAnalysis: projectEvaluatorAnalysis(
+            projectHanoiToLegacyRow(result.hanoiAnalysis),
+          ),
           rawContent: result.rawContent,
         };
       };

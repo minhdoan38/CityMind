@@ -122,6 +122,14 @@ const COLUMN_ICONS: Record<string, LucideIcon> = {
   summary: FileText,
 };
 
+function columnDefId(column: ColumnDef<ReportRow>): string {
+  if (column.id) return column.id;
+  if ("accessorKey" in column && typeof column.accessorKey === "string") {
+    return column.accessorKey;
+  }
+  return "";
+}
+
 function columnIcon(columnId: string): LucideIcon {
   return COLUMN_ICONS[columnId] ?? Columns3;
 }
@@ -315,7 +323,7 @@ export default function ReportsTable({
     } catch {
       /* ignore */
     }
-    setColumnOrder(columns.map((c) => c.id || (c.accessorKey as string)).filter(Boolean));
+    setColumnOrder(columns.map((c) => columnDefId(c)).filter(Boolean));
     setColumnSizing({});
     setColumnVisibility({ severity: false, confidence: true });
     setDensity("comfortable");
@@ -945,10 +953,10 @@ export default function ReportsTable({
         try {
           setColumnOrder(JSON.parse(savedOrder));
         } catch {
-          setColumnOrder(columns.map((c) => c.id || (c.accessorKey as string)).filter(Boolean));
+          setColumnOrder(columns.map((c) => columnDefId(c)).filter(Boolean));
         }
       } else {
-        setColumnOrder(columns.map((c) => c.id || (c.accessorKey as string)).filter(Boolean));
+        setColumnOrder(columns.map((c) => columnDefId(c)).filter(Boolean));
       }
     }
   }, [columns, columnOrder.length]);

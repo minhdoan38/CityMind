@@ -1,5 +1,5 @@
-import { loadServerEnv } from "../src/server/config/env.ts";
-import { analyzeStructured, AnalysisProviderError } from "../src/server/ai/openai-compatible.ts";
+import { loadServerEnv } from "@/server/config/env";
+import { analyzeStructured, AnalysisProviderError } from "@/server/ai/openai-compatible";
 
 async function main() {
   const env = loadServerEnv();
