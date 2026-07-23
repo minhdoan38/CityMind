@@ -479,7 +479,7 @@ Plans:
 
 **Depends on:** Phase 14
 
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 **Success criteria:**
 - `npm run phase15:gate` passes (unit + legacy contracts + SQL Hanoi column contract)
@@ -496,7 +496,7 @@ Plans:
 
 **Wave 2** *(depends on 15-01)*
 
-- [ ] 15-02-PLAN.md — **Chat intake API** — intake/start, intake/messages, intake/submit, citizen-chat-intake service
+- [x] 15-02-PLAN.md — **Chat intake API** — intake/start, intake/messages, intake/submit, citizen-chat-intake service
 
 **Wave 3** *(depends on 15-01, 15-02)*
 
