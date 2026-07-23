@@ -62,11 +62,15 @@ export class SlidingWindowLimiter {
 export const reportLimiter = new SlidingWindowLimiter();
 export const statusLimiter = new SlidingWindowLimiter();
 export const publicStatsLimiter = new SlidingWindowLimiter();
+export const coachLimiter = new SlidingWindowLimiter();
+export const intakeLimiter = new SlidingWindowLimiter();
 
 export function resetRateLimiters(): void {
   reportLimiter.clear();
   statusLimiter.clear();
   publicStatsLimiter.clear();
+  coachLimiter.clear();
+  intakeLimiter.clear();
 }
 
 /** Trusted client hop for rate limiting (rightmost platform hop by default). */
@@ -139,6 +143,42 @@ export function enforcePublicStatsRateLimit(
     return {
       status: 429,
       detail: "Public stats rate limit exceeded",
+      retryAfter: RETRY_AFTER_SECONDS,
+    };
+  }
+  return null;
+}
+
+const COACH_RATE_LIMIT_PER_MINUTE = 10;
+
+export function enforceCoachRateLimit(
+  request: RateLimitRequest,
+  reportId: string,
+): RateLimitViolation | null {
+  const ip = clientIp(request);
+  const key = `coach:${reportId}:${ip}`;
+  if (!coachLimiter.allow(key, COACH_RATE_LIMIT_PER_MINUTE)) {
+    return {
+      status: 429,
+      detail: "Coach message rate limit exceeded",
+      retryAfter: RETRY_AFTER_SECONDS,
+    };
+  }
+  return null;
+}
+
+const INTAKE_RATE_LIMIT_PER_MINUTE = 10;
+
+export function enforceIntakeRateLimit(
+  request: RateLimitRequest,
+  reportId: string,
+): RateLimitViolation | null {
+  const ip = clientIp(request);
+  const key = `intake:${reportId}:${ip}`;
+  if (!intakeLimiter.allow(key, INTAKE_RATE_LIMIT_PER_MINUTE)) {
+    return {
+      status: 429,
+      detail: "Intake message rate limit exceeded",
       retryAfter: RETRY_AFTER_SECONDS,
     };
   }
