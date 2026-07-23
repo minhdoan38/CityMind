@@ -479,7 +479,7 @@ Plans:
 
 **Depends on:** Phase 14
 
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 **Success criteria:**
 - `npm run phase15:gate` passes (unit + legacy contracts + SQL Hanoi column contract)
@@ -500,7 +500,7 @@ Plans:
 
 **Wave 3** *(depends on 15-01, 15-02)*
 
-- [ ] 15-03-PLAN.md — **Citizen UX + routing** — ChatIntakePanel, handling_type policy, GuidanceScriptCard on success/status
+- [x] 15-03-PLAN.md — **Citizen UX + routing** — ChatIntakePanel, handling_type policy, GuidanceScriptCard on success/status
 - [ ] 15-04-PLAN.md — **Gate + traceability** — phase15:gate, SQL contract, legacy tests, UAT checkpoint
 
 ---
